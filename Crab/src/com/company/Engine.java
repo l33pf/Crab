@@ -3,10 +3,7 @@ package com.company;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,6 +24,8 @@ public class Engine {
     void startCrawl() throws IOException {
 
         while(URLSeed.stck.size() > 1){
+            int counter = 0;
+            TreeMap<Integer,Stack> map = new TreeMap<Integer,Stack>();
 
             if(!crawlStatus.containsKey(URLSeed.stck.peek())){
                 running = true;
@@ -41,9 +40,6 @@ public class Engine {
                     //Need to remove artifacts from extracted URL (regex)
                     for(Element link : links){
                         linkStack.push(link.attr("abs:href").toString());
-
-
-
                     }
 
                     textData.put(current,body.text());
@@ -53,6 +49,9 @@ public class Engine {
                         LOGGER.setLevel(Level.WARNING);
                 }
             }
+            map.put(counter,linkStack);
+            linkStack.flushStack(linkStack); //clear the link stack
+            counter++;
         }
     }
 

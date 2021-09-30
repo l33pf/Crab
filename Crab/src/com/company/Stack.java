@@ -32,4 +32,13 @@ public class  Stack {
         return lst.size();
     }
 
+    //Clears stack - O(n) time
+    void flushStack(Stack stck){
+        int N = stck.size();
+
+        if(N != 0){
+            for(int i = 0; i < N; i++)
+                stck.pop();
+        }
+    }
 }
