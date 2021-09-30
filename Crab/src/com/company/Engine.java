@@ -1,23 +1,28 @@
 package com.company;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-
-
-
 public class Engine {
 
     HashMap<String,Boolean> crawlStatus = new HashMap<String,Boolean>();
     HashMap<String,String> textData = new HashMap<String,String>();
-
+    public List<String> keyWords = new ArrayList<String>();
     Stack linkStack = new Stack();
     boolean running = false;
+    private final static Logger LOGGER = Logger.getLogger(Engine.class.getName());
 
     void startCrawl() throws IOException {
 
@@ -36,47 +41,57 @@ public class Engine {
                     //Need to remove artifacts from extracted URL (regex)
                     for(Element link : links){
                         linkStack.push(link.attr("abs:href").toString());
+
+
+
                     }
 
                     textData.put(current,body.text());
 
                 } catch(Exception ex){
-
+                        ex.printStackTrace();
+                        LOGGER.setLevel(Level.WARNING);
                 }
             }
         }
     }
 
-    // Here we'll utilise weka and look for specifics that may indicate trading signals
-    void textualAnalysis(HashMap<String,String> textData){
-
-    }
-
     //Used to Submit Jobs/Thread Pool
-    void jobCentre(OPTIONS opt){
+    void jobCentre(OPTIONS opt) throws IOException {
 
-      if(opt == OPTIONS.Crawl){
+      switch(opt){
 
+          case Crawl:
+              startCrawl();
+              break;
+
+          case Info:
+              info();
+              break;
+
+          case Add:
+              while(true){
+                    System.out.println("Please enter key word indicators\n");
+                    System.out.println("Enter '/' to quit adding indicators.\n");
+                    Scanner reader = new Scanner(System.in);
+                    keyWords.add(reader.next());
+                    if(reader.next().contains("/")){
+                        reader.close();
+                        break;
+                    }
+              }
+              break;
       }
-      else if(opt == OPTIONS.Search){
-
-      }
-      else if(opt == OPTIONS.Add){
-
-      }
-
     }
 
     public enum OPTIONS{
         Crawl,
-        Search,
-        LastRan,
         Info,
         Add,
         Stall
     }
 
-    void UI(){
+    void UI() throws IOException {
 
         OPTIONS opt;
         opt = OPTIONS.Stall;
@@ -90,14 +105,6 @@ public class Engine {
                 opt = OPTIONS.Crawl;
                 break;
 
-            case "S" : case "s":
-                opt = OPTIONS.Search;
-                break;
-
-            case "L" : case "l":
-                opt = OPTIONS.LastRan;
-                break;
-
             case "I" : case "i":
                 opt = OPTIONS.Info;
                 break;
@@ -108,12 +115,19 @@ public class Engine {
         }
 
         reader.close();
+        jobCentre(opt);
     }
 
-
-
-
-
-
-
+    //prints out the info page
+    void info(){
+        try (BufferedReader br = new BufferedReader(new FileReader("info.txt"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            LOGGER.setLevel(Level.WARNING);
+        }
+    }
 }
