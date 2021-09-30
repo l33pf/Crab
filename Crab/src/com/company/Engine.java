@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.opencsv.exceptions.CsvException;
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -56,7 +57,7 @@ public class Engine {
     }
 
     //Used to Submit Jobs/Thread Pool
-    void jobCentre(OPTIONS opt) throws IOException {
+    void jobCentre(OPTIONS opt) throws IOException, CsvException {
 
       switch(opt){
 
@@ -80,6 +81,18 @@ public class Engine {
                     }
               }
               break;
+
+          case ChangeCandidate:
+                System.out.println("Please enter the file path to the candidate CSV file");
+                Scanner reader = new Scanner(System.in);
+                URLSeed.SAMPLE_CSV_FILE_PATH = reader.next();
+                URLSeed replacement = new URLSeed();
+                if(replacement.readIn()){
+                    System.out.println("Candidate CSV changed");
+                }else{
+                    System.out.println("Unable to change Candidate CSV");
+                    LOGGER.setLevel(Level.WARNING);
+                }
       }
     }
 
@@ -87,10 +100,11 @@ public class Engine {
         Crawl,
         Info,
         Add,
-        Stall
+        Stall,
+        ChangeCandidate
     }
 
-    void UI() throws IOException {
+    void UI() throws IOException, CsvException {
 
         OPTIONS opt;
         opt = OPTIONS.Stall;
@@ -110,6 +124,10 @@ public class Engine {
 
             case "A" : case "a":
                 opt = OPTIONS.Add;
+                break;
+
+            case "CH" : case "ch":
+                opt = OPTIONS.ChangeCandidate;
                 break;
         }
 
