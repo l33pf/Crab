@@ -2,9 +2,12 @@ package com.company;
 
 import opennlp.tools.tokenize.SimpleTokenizer;
 
+import java.util.HashMap;
+
 public class TA
 {
         SimpleTokenizer tokenize = SimpleTokenizer.INSTANCE;
+        OverlapMeasures measure = new OverlapMeasures();
 
         public TA(){
         }
@@ -51,7 +54,31 @@ public class TA
                 return ((matches / lengthOne) + ((matches / lengthTwo) + ((matches - t/2.0) / matches))) / 3.0;
         }
 
-        void analyseReport(String [] tokens, String indicatorWord){
+        //This function takes each indicator word and analyses with the extracted text
+        //Uses both Jaccard and Jaro distance measures
+        void analyseReport(String [] tokens, HashMap<Integer,String> indicatorWords){
+
+                float [] jaccardTotalIndicator = new float[indicatorWords.size()];
+                double [] jaroTotalIndicator = new double[indicatorWords.size()];
+
+                for(int i = 0; i < indicatorWords.size(); i++){
+
+                        String currentIndicator = indicatorWords.get(i);
+                        String [] current = tokenizePage(currentIndicator);
+                        float jaccardTotal = 0;
+                        double jaroTotal = 0;
+
+                        for(int j = 0; j < tokens.length; j++){
+                                //Look for similiarity by doing Fuzzy String analysis
+                                jaccardTotal += measure.jaccard(tokens[i].toCharArray(),currentIndicator.toCharArray());
+                                jaroTotal += jaroDistance(tokens[i],currentIndicator);
+                        }
+
+                        jaccardTotalIndicator[i] = jaccardTotal;
+                        jaroTotalIndicator[i] = jaroTotal;
+                }
+
+
 
         }
 
