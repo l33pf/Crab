@@ -18,18 +18,15 @@ public class URLSeed {
 
     public static Stack stck = new Stack();
 
-    //Read in Database
-    public boolean readIn() throws IOException, CsvException {
+    public static boolean readIn() throws IOException, CsvException {
         try (
                 Reader reader = Files.newBufferedReader(Paths.get(SAMPLE_CSV_FILE_PATH));
                 CSVReader csvReader = new CSVReader(reader);
         ) {
             // Reading Records One by One in a String array
             String[] nextURL;
-            int i = 0;
             while ((nextURL = csvReader.readNext()) != null) {
-                stck.push(nextURL[i]);
-                i++;
+                stck.push(nextURL[0]);
             }
             return true;
         } catch (IOException | CsvValidationException e) {
