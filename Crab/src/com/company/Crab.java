@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 
 import com.opencsv.exceptions.CsvException;
 import org.jsoup.*;
@@ -54,6 +56,16 @@ public class Engine {
             linkStack.flushStack(linkStack); //clear the link stack
             counter++;
         }
+
+        //Create a thread pool
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+        for(Stack stack : map.values()){
+            executorService.execute(new CrawlRunnable(stack,keyWords));
+        }
+
+        executorService.shutdown();
+
     }
 
     //Used to Submit Jobs/Thread Pool
