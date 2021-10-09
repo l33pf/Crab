@@ -1,6 +1,6 @@
 package com.company;
 
-public class  Stack {
+public final class  Stack {
 
     //This is an abstract stack where we use a linked list to mirror a stack
 

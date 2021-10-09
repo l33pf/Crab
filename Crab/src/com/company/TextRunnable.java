@@ -1,11 +1,10 @@
 package com.company;
 
-//This class will be used as a thread to instantiate Weka's textual analysis on the text extracted
-
-
-public class TextRunnable implements Runnable{
+public final class TextRunnable implements Runnable{
 
     String textToAnalyse;
+    //need to pass the link
+
 
     public TextRunnable(String txtA){
         this.textToAnalyse = txtA;
@@ -13,6 +12,6 @@ public class TextRunnable implements Runnable{
 
     public void run(){
 
-    }
 
+    }
 }

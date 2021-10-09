@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
 
 import com.opencsv.exceptions.CsvException;
 import org.jsoup.*;
@@ -15,60 +13,66 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class Engine {
+public final class Crab {
 
     HashMap<String,Boolean> crawlStatus = new HashMap<String,Boolean>();
     HashMap<String,String> textData = new HashMap<String,String>();
     public List<String> keyWords = new ArrayList<String>();
+
+    public final static HashMap<Integer,String> indicatorWords = new HashMap<Integer,String>();
+
     Stack linkStack = new Stack();
     boolean running = false;
-    private final static Logger LOGGER = Logger.getLogger(Engine.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(Crab.class.getName());
+    TreeMap<Integer,Stack> map = new TreeMap<Integer,Stack>();
 
-    void startCrawl() throws IOException {
+    Stack urlStack = new Stack();
 
-        while(URLSeed.stck.size() > 1){
-            int counter = 0;
-            TreeMap<Integer,Stack> map = new TreeMap<Integer,Stack>();
+    void startCrawl() throws IOException, CsvException {
+        int counter = 0;
+        URLSeed.readIn(urlStack);
 
-            if(!crawlStatus.containsKey(URLSeed.stck.peek())){
-                running = true;
-                crawlStatus.put(URLSeed.stck.peek(),true);
-                String current = URLSeed.stck.pop();
+        while(urlStack.size() > 1){
 
-                try{
-                    Document doc = Jsoup.connect(current).get();
-                    Element body = doc.body();
-                    Elements links = doc.select("a[href]");
+            String current = urlStack.pop();
 
-                    //Need to remove artifacts from extracted URL (regex)
-                    for(Element link : links){
-                        linkStack.push(link.attr("abs:href").toString());
-                    }
+            try{
 
-                    textData.put(current,body.text());
+                Document doc = Jsoup.connect(current).get();
+                Element body = doc.body();
+                Elements links = doc.select("a[href]");
 
-                } catch(Exception ex){
-                        ex.printStackTrace();
-                        LOGGER.setLevel(Level.WARNING);
+                textData.put(current,body.text());
+
+                System.out.println(current);
+                System.out.println(textData.size());
+
+                for(Element link : links){
+                    linkStack.push(link.attr("abs:href").toString());
                 }
+
+            } catch (Exception ex){
+                ex.printStackTrace();
             }
+
             map.put(counter,linkStack);
             linkStack.flushStack(linkStack); //clear the link stack
             counter++;
         }
 
+        //Submit a Text Analysis stack from the URLSeeds
+        TA textAnalysis = new TA(textData,indicatorWords);
+
         //Create a thread pool
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
+     //   ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-        for(Stack stack : map.values()){
-            executorService.execute(new CrawlRunnable(stack,keyWords));
-        }
+  //      for(Stack stack : map.values()){
+    //        executorService.execute(new CrawlRunnable(stack,keyWords));
+     //   }
 
-        executorService.shutdown();
-
+      //  executorService.shutdown();
     }
 
-    //Used to Submit Jobs/Thread Pool
     void jobCentre(OPTIONS opt) throws IOException, CsvException {
 
       switch(opt){
@@ -95,7 +99,7 @@ public class Engine {
               break;
 
           case ChangeCandidate:
-                System.out.println("Please enter the file path to the candidate CSV file");
+/*                System.out.println("Please enter the file path to the candidate CSV file");
                 Scanner reader = new Scanner(System.in);
                 URLSeed.SAMPLE_CSV_FILE_PATH = reader.next();
                 URLSeed replacement = new URLSeed();
@@ -104,7 +108,7 @@ public class Engine {
                 }else{
                     System.out.println("Unable to change Candidate CSV");
                     LOGGER.setLevel(Level.WARNING);
-                }
+                }*/
       }
     }
 
@@ -159,4 +163,8 @@ public class Engine {
             LOGGER.setLevel(Level.WARNING);
         }
     }
+
+
+
+
 }

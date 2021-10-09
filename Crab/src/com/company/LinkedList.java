@@ -3,7 +3,7 @@ package com.company;
 //Simple linked list class
 //Can store URL's within the list
 
-public class LinkedList {
+public final class LinkedList {
 
     private Node head;
     private Node tail;

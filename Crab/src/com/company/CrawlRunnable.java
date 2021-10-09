@@ -8,7 +8,7 @@ import org.jsoup.*;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-public class CrawlRunnable implements Runnable {
+public final class CrawlRunnable implements Runnable {
 
     Stack links = new Stack();
     public List<String> keyWords = new ArrayList<String>();
@@ -46,10 +46,8 @@ public class CrawlRunnable implements Runnable {
                     if(searchText(body.text().toString(),keyWords) > 3){
                         // Call a Text Analysis Thread
                         TextRunnable txtAnalysis = new TextRunnable(body.text().toString());
-                        Thread t1 = new Thread();
+                        Thread t1 = new Thread(txtAnalysis);
                         t1.start();
-                        // add log message
-                        t1.join(); //wait for the thread to finish
                     }
 
                 }catch(Exception e){

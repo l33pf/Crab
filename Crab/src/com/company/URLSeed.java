@@ -9,24 +9,26 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class URLSeed {
+public final class URLSeed {
 
     //used to take a database and create a URL Seed Set
     //uses a stack to store URL's
 
-    private static final String SAMPLE_CSV_FILE_PATH = "./test.csv";
+    public static String SAMPLE_CSV_FILE_PATH = "./test.csv";
 
-    public static Stack stck = new Stack();
+    public static Stack stack = new Stack();
 
-    public static boolean readIn() throws IOException, CsvException {
+    //Read in Database
+    public static boolean readIn(Stack stack) throws IOException, CsvException {
         try (
                 Reader reader = Files.newBufferedReader(Paths.get(SAMPLE_CSV_FILE_PATH));
                 CSVReader csvReader = new CSVReader(reader);
         ) {
             // Reading Records One by One in a String array
             String[] nextURL;
+            int i = 0;
             while ((nextURL = csvReader.readNext()) != null) {
-                stck.push(nextURL[0]);
+                stack.push(nextURL[0]);
             }
             return true;
         } catch (IOException | CsvValidationException e) {
@@ -36,15 +38,15 @@ public class URLSeed {
     }
 
     public String getURL(){
-        return stck.pop();
+        return stack.pop();
     }
 
     public String lastURLStored(){
-        return stck.peek();
+        return stack.peek();
     }
 
     public void addURL(String value){
-        stck.push(value);
+        stack.push(value);
     }
 
 }
