@@ -3,6 +3,7 @@ package com.company;
 import java.lang.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
@@ -12,10 +13,13 @@ public final class CrawlRunnable implements Runnable {
 
     Stack links = new Stack();
     public List<String> keyWords = new ArrayList<String>();
+    public TreeMap<Integer,String> linksToAnalyse = new TreeMap<Integer,String>();
+    int threshold = 0, counter = 0, result = 0;
 
-    public CrawlRunnable(Stack links, List<String> words){
+    public CrawlRunnable(Stack links, List<String> words, int matchThreshold){
             this.links = links;
             this.keyWords = words;
+            this.threshold = matchThreshold;
     }
 
     //This function looks for the key word indicators set
@@ -39,16 +43,19 @@ public final class CrawlRunnable implements Runnable {
 
                 String current = links.pop();
 
+                System.out.println("Now Crawling: " + current + "\n" );
+                counter++;
+                result = 0;
+
                 try{
                     Document doc = Jsoup.connect(current).get();
                     Element body = doc.body();
 
-                    if(searchText(body.text().toString(),keyWords) > 3){
-                        // Call a Text Analysis Thread
-                        TextRunnable txtAnalysis = new TextRunnable(body.text().toString());
-                        Thread t1 = new Thread(txtAnalysis);
-                        t1.start();
-                    }
+                    System.out.println("key word search commenced\n");
+
+                    result = searchText(body.text().toString(), keyWords);
+
+                    if(result>=threshold) {linksToAnalyse.put(counter,current); System.out.println("Match found");}
 
                 }catch(Exception e){
                     e.printStackTrace();

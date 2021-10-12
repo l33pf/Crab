@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,20 +19,29 @@ public final class Crab {
 
     HashMap<String,Boolean> crawlStatus = new HashMap<String,Boolean>();
     HashMap<String,String> textData = new HashMap<String,String>();
-    public List<String> keyWords = new ArrayList<String>();
+    public static List<String> keyWords = new ArrayList<String>();
 
     public final static HashMap<Integer,String> indicatorWords = new HashMap<Integer,String>();
 
-    Stack linkStack = new Stack();
     boolean running = false;
     private final static Logger LOGGER = Logger.getLogger(Crab.class.getName());
     TreeMap<Integer,Stack> map = new TreeMap<Integer,Stack>();
 
     Stack urlStack = new Stack();
 
+    public final String INDICATOR_FILE_PATH = "./Indicators.csv";
+    public final String KEYWORD_FILE_PATH = "./KeyWords.csv";
+
+    /* This is the key word threshold, Crab will only crawl further if a page hits this threshold */
+    final int threshold = 3;
+
     void startCrawl() throws IOException, CsvException {
         int counter = 0;
         URLSeed.readIn(urlStack);
+
+        Utility.readToCSV(KEYWORD_FILE_PATH,keyWords);
+
+        Stack linkStack = new Stack();
 
         while(urlStack.size() > 1){
 
@@ -44,9 +55,6 @@ public final class Crab {
 
                 textData.put(current,body.text());
 
-                System.out.println(current);
-                System.out.println(textData.size());
-
                 for(Element link : links){
                     linkStack.push(link.attr("abs:href").toString());
                 }
@@ -56,21 +64,22 @@ public final class Crab {
             }
 
             map.put(counter,linkStack);
-            linkStack.flushStack(linkStack); //clear the link stack
             counter++;
         }
 
         //Submit a Text Analysis stack from the URLSeeds
         TA textAnalysis = new TA(textData,indicatorWords);
+        //
 
         //Create a thread pool
-     //   ExecutorService executorService = Executors.newFixedThreadPool(10);
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-  //      for(Stack stack : map.values()){
-    //        executorService.execute(new CrawlRunnable(stack,keyWords));
-     //   }
+        for(Stack stack : map.values()){
+            executorService.execute(new CrawlRunnable(stack,keyWords,threshold));
+        }
 
-      //  executorService.shutdown();
+        executorService.shutdown();
+
     }
 
     void jobCentre(OPTIONS opt) throws IOException, CsvException {
@@ -164,7 +173,15 @@ public final class Crab {
         }
     }
 
+    void testMethod(){
+            List<String> keyIndicators = new ArrayList<>();
+            Utility.readToCSV(INDICATOR_FILE_PATH,keyIndicators);
 
+            for(String word : keyIndicators){
+                System.out.println(word);
+            }
+
+    }
 
 
 }
