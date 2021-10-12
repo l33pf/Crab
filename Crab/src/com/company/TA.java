@@ -3,22 +3,20 @@ package com.company;
 import opennlp.tools.tokenize.SimpleTokenizer;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.TreeMap;
 
 public final class TA
 {
         SimpleTokenizer tokenize = SimpleTokenizer.INSTANCE;
         OverlapMeasures measure = new OverlapMeasures();
-        boolean finished = false;
         float jaccardAvg = 0;
-        double jaroAvg = 0.0;
 
-        HashMap<Integer,String> indicatorWords = new HashMap<Integer,String>();
-        HashMap<String,String> textData = new HashMap<String,String>();
+        TreeMap<Integer,String> textMap = new TreeMap<Integer,String>();
 
         //Constructor for URL Seed
-        TA(final HashMap<String,String> txtData, final HashMap<Integer,String> words){
-                this.textData = txtData;
-                this.indicatorWords = words;
+        TA(final TreeMap<Integer,String> textToAnalyse){
+                this.textMap = textToAnalyse;
         }
 
         //Takes the text of the page and tokenizes it, returns an array of tokens in string format
@@ -66,39 +64,29 @@ public final class TA
         //This function takes each indicator word and analyses with the extracted text
         //Uses both Jaccard and Jaro distance measures
         //Try to optimise this function, pushing over cubic run time currently.
-        boolean analyseReport(String [] tokens, HashMap<Integer,String> indicatorWords){
+        float analyseReport(String [] tokens, List<String> list){
 
-                float [] jaccardTotalIndicator = new float[indicatorWords.size()];
-                double [] jaroTotalIndicator = new double[indicatorWords.size()];
+                float [] jaccardTotalIndicator = new float[list.size()];
 
-                for(int i = 0; i < indicatorWords.size(); i++){
+                for(int i = 0; i < list.size(); i++){
 
-                        String currentIndicator = indicatorWords.get(i);
+                        String currentIndicator = list.get(i);
                         String [] current = tokenize.tokenize(currentIndicator);
                         float jaccardTotal = 0;
-                        double jaroTotal = 0;
 
                         for(int j = 0; j < tokens.length; j++){
                                 //Look for similiarity by doing Fuzzy String analysis
                                 jaccardTotal += measure.jaccard(tokens[i].toCharArray(),currentIndicator.toCharArray());
-                                jaroTotal += jaroDistance(tokens[i],currentIndicator);
                         }
 
                         jaccardTotalIndicator[i] = jaccardTotal;
-                        jaroTotalIndicator[i] = jaroTotal;
                 }
 
                 //calculate the averages
                 for(int i = 0; i < jaccardTotalIndicator.length; i++){
                         jaccardAvg += jaccardTotalIndicator[i];
-                        for(int j = 0; i < jaroTotalIndicator.length; i++){
-                                jaroAvg += jaroTotalIndicator[j];
-                        }
                 }
 
-                jaccardAvg = jaccardAvg/jaccardTotalIndicator.length;
-                jaroAvg = jaroAvg/jaroTotalIndicator.length;
-
-                return finished = true;
+                return jaccardAvg = jaccardAvg/jaccardTotalIndicator.length;
         }
 }

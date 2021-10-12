@@ -4,6 +4,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +12,8 @@ import java.util.List;
 //I/O with CSV etc.
 
 public final class Utility {
+
+    public static final String RESULTS_FILE_PATH = "./CrabResults.csv";
 
     public static void writeToCSV(final String file, String [] a){
     }
@@ -36,6 +39,21 @@ public final class Utility {
             e.printStackTrace();
         }
     }
+
+    public static synchronized void writeResults(final float [] results){
+
+        try{;
+            FileWriter fileWriter = new FileWriter(RESULTS_FILE_PATH);
+
+            CSVWriter writer = new CSVWriter(fileWriter);
+
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+
+    }
+
 
 
 

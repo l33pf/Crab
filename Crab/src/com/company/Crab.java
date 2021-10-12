@@ -68,7 +68,7 @@ public final class Crab {
         }
 
         //Submit a Text Analysis stack from the URLSeeds
-        TA textAnalysis = new TA(textData,indicatorWords);
+        //TA textAnalysis = new TA(textData,indicatorWords);
         //
 
         //Create a thread pool
@@ -180,7 +180,6 @@ public final class Crab {
             for(String word : keyIndicators){
                 System.out.println(word);
             }
-
     }
 
 
