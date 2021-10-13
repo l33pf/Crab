@@ -4,28 +4,27 @@ import opennlp.tools.tokenize.SimpleTokenizer;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeMap;
 
 public final class TA
 {
-        SimpleTokenizer tokenize = SimpleTokenizer.INSTANCE;
-        OverlapMeasures measure = new OverlapMeasures();
-        float jaccardAvg = 0;
-
-        TreeMap<Integer,String> textMap = new TreeMap<Integer,String>();
+        private SimpleTokenizer tokenize = SimpleTokenizer.INSTANCE;
+        private OverlapMeasures measure = new OverlapMeasures();
+        private TreeMap<Integer,String> textMap = new TreeMap<Integer,String>();
 
         //Constructor for URL Seed
         TA(final TreeMap<Integer,String> textToAnalyse){
-                this.textMap = textToAnalyse;
+                Objects.requireNonNull(this.textMap = textToAnalyse);
         }
 
         //Takes the text of the page and tokenizes it, returns an array of tokens in string format
         public String [] tokenizePage(String text) {
-                 return tokenize.tokenize(text);
+                return tokenize.tokenize(text);
         }
 
         //Compute the Jaro distance of two strings
-        public static double jaroDistance(String a, String b){
+        private static double jaroDistance(String a, String b){
                 int nMatches = 0;
                 int t = 0; //number of transpositions
 
@@ -64,7 +63,9 @@ public final class TA
         //This function takes each indicator word and analyses with the extracted text
         //Uses both Jaccard and Jaro distance measures
         //Try to optimise this function, pushing over cubic run time currently.
-        float analyseReport(String [] tokens, List<String> list){
+        public float analyseReport(String [] tokens, List<String> list){
+
+                float jaccardAvg = 0;
 
                 float [] jaccardTotalIndicator = new float[list.size()];
 

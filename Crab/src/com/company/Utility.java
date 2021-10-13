@@ -5,18 +5,14 @@ import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 //This class is the Utility class for Crab
 //I/O with CSV etc.
 
 public final class Utility {
 
-    public static final String RESULTS_FILE_PATH = "./CrabResults.csv";
-
-    public static void writeToCSV(final String file, String [] a){
-    }
+    private static final String RESULTS_FILE_PATH = "./CrabResults.csv";
 
     public static void readToCSV(final String file, List<String> lst){
 
@@ -40,16 +36,37 @@ public final class Utility {
         }
     }
 
-    public static synchronized void writeResults(final float [] results){
+    public static synchronized void writeResults(TreeMap<String,Float> resultMap){
 
-        try{;
-            FileWriter fileWriter = new FileWriter(RESULTS_FILE_PATH);
+        int counter = 0;
+        String[] x = new String[resultMap.size()];
+        String[] y = new String[resultMap.size()];
 
-            CSVWriter writer = new CSVWriter(fileWriter);
+        String [][] xy = new String[resultMap.size()][resultMap.size()];
 
+        for (Map.Entry<String, Float> entry : resultMap.entrySet()){
+/*            x[counter] = entry.getKey();
+            y[counter] = Float.toString(entry.getValue());
+            counter++;*/
+            xy[counter][0] = entry.getKey();
+            xy[0][counter] = Float.toString(entry.getValue());
+            counter++;
         }
-        catch(Exception e){
-            e.printStackTrace();
+
+        counter = 0;
+        while(counter != resultMap.size()){
+
+            try{
+                FileWriter fileWriter = new FileWriter(RESULTS_FILE_PATH);
+
+                CSVWriter writer = new CSVWriter(fileWriter);
+
+                counter++;
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+
         }
 
     }

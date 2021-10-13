@@ -14,9 +14,9 @@ public final class URLSeed {
     //used to take a database and create a URL Seed Set
     //uses a stack to store URL's
 
-    public static String SAMPLE_CSV_FILE_PATH = "./test.csv";
+    public static final String SAMPLE_CSV_FILE_PATH = "./test.csv";
 
-    public static Stack stack = new Stack();
+    public static final Stack stack = new Stack();
 
     //Read in Database
     public static boolean readIn(Stack stack) throws IOException, CsvException {
@@ -37,15 +37,15 @@ public final class URLSeed {
         }
     }
 
-    public String getURL(){
+    public static String getURL(){
         return stack.pop();
     }
 
-    public String lastURLStored(){
+    public static String lastURLStored(){
         return stack.peek();
     }
 
-    public void addURL(String value){
+    public static void addURL(String value){
         stack.push(value);
     }
 

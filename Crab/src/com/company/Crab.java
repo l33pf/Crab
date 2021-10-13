@@ -35,13 +35,27 @@ public final class Crab {
     /* This is the key word threshold, Crab will only crawl further if a page hits this threshold */
     final int threshold = 3;
 
+    /**
+     * Starts The crawl process. The method utilises a Thread pool to analyse links and the extracted text
+     * from the URLSeed.
+
+     @throws IllegalArgumentException if urlStack or keyWords is set to zero.
+     @throws IOException if files can't be read
+     @throws CsvException if CSV file can't be obtained.
+
+    */
     void startCrawl() throws IOException, CsvException {
         int counter = 0;
+
         URLSeed.readIn(urlStack);
 
         Utility.readToCSV(KEYWORD_FILE_PATH,keyWords);
 
         Stack linkStack = new Stack();
+
+        if(urlStack.size() <= 0){
+            throw new IllegalArgumentException("URLSeed is empty\n");
+        } else if(keyWords.size() <= 0) { throw new IllegalArgumentException("No Keywords set.\n");}
 
         while(urlStack.size() > 1){
 
@@ -82,6 +96,10 @@ public final class Crab {
 
     }
 
+    /**
+    * This method assigns a job based on user input from the UI.
+
+     */
     void jobCentre(OPTIONS opt) throws IOException, CsvException {
 
       switch(opt){
@@ -121,6 +139,12 @@ public final class Crab {
       }
     }
 
+    /**
+     * This enum lists the options available in Crab.
+     * used to reflect user choices and start the job centre.
+     * can be amended if new features are added.
+
+     */
     public enum OPTIONS{
         Crawl,
         Info,
@@ -160,7 +184,9 @@ public final class Crab {
         jobCentre(opt);
     }
 
-    //prints out the info page
+    /**
+        Method prints the info page out.
+     */
     void info(){
         try (BufferedReader br = new BufferedReader(new FileReader("info.txt"))) {
             String line;

@@ -2,25 +2,26 @@ package com.company;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeMap;
 
 public final class TextRunnable implements Runnable{
 
-    String textToAnalyse;
-    TreeMap<Integer,String> textMap = new TreeMap<Integer,String>();
-    ArrayList<String> test = new ArrayList<>();
-    List<String> indicatorWords = new ArrayList<String>();
+    private final String textToAnalyse;
+    private TreeMap<Integer,String> textMap = new TreeMap<Integer,String>();
+    private List<String> indicatorWords = new ArrayList<String>();
+    final TreeMap<String,Float> resultMap = new TreeMap<String,Float>();
 
     public TextRunnable(String txtA, TreeMap<Integer,String> map, List<String> keyIndicatorWords){
-        this.textToAnalyse = txtA;
-        this.textMap = map;
-        this.indicatorWords = keyIndicatorWords;
+        Objects.requireNonNull(this.textToAnalyse = txtA);
+        Objects.requireNonNull(this.textMap = map);
+        Objects.requireNonNull(this.indicatorWords = keyIndicatorWords);
     }
 
     public void run(){
 
         //Create a Text Analysis objects
-        TA textAnalysis = new TA(textMap);
+        final TA textAnalysis = new TA(textMap);
 
         String current;
 
@@ -32,9 +33,11 @@ public final class TextRunnable implements Runnable{
             String [] add = textAnalysis.tokenizePage(current);
 
             results[i] = textAnalysis.analyseReport(add,indicatorWords);
+
+            resultMap.put(current,results[i]);
         }
 
-
+        /*Write results to CSV */
 
 
     }
