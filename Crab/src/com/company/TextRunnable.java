@@ -38,7 +38,6 @@ public final class TextRunnable implements Runnable{
         }
 
         /*Write results to CSV */
-
-
+        Utility.writeResults(resultMap);
     }
 }

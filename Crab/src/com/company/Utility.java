@@ -14,6 +14,8 @@ public final class Utility {
 
     private static final String RESULTS_FILE_PATH = "./CrabResults.csv";
 
+    private static final String [] writeOut = new String[1];
+
     public static void readToCSV(final String file, List<String> lst){
 
         int counter = 0;
@@ -38,36 +40,23 @@ public final class Utility {
 
     public static synchronized void writeResults(TreeMap<String,Float> resultMap){
 
-        int counter = 0;
-        String[] x = new String[resultMap.size()];
-        String[] y = new String[resultMap.size()];
-
-        String [][] xy = new String[resultMap.size()][resultMap.size()];
-
-        for (Map.Entry<String, Float> entry : resultMap.entrySet()){
-/*            x[counter] = entry.getKey();
-            y[counter] = Float.toString(entry.getValue());
-            counter++;*/
-            xy[counter][0] = entry.getKey();
-            xy[0][counter] = Float.toString(entry.getValue());
-            counter++;
-        }
-
-        counter = 0;
-        while(counter != resultMap.size()){
-
             try{
                 FileWriter fileWriter = new FileWriter(RESULTS_FILE_PATH);
 
                 CSVWriter writer = new CSVWriter(fileWriter);
 
-                counter++;
+                for(Map.Entry<String,Float>entry : resultMap.entrySet()){
+                        String xx = entry.getKey();
+                        String yy = Float.toString(entry.getValue());
+                        writeOut[0] = xx;
+                        writeOut[1] = yy;
+                        writer.writeNext(writeOut);
+                }
+
             }
             catch(Exception e){
                 e.printStackTrace();
             }
-
-        }
 
     }
 
