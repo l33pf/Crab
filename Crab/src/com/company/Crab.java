@@ -17,15 +17,11 @@ import org.jsoup.select.Elements;
 
 public final class Crab {
 
-    HashMap<String,Boolean> crawlStatus = new HashMap<String,Boolean>();
     HashMap<String,String> textData = new HashMap<String,String>();
     public static List<String> keyWords = new ArrayList<String>();
-
-    public final static HashMap<Integer,String> indicatorWords = new HashMap<Integer,String>();
-
-    boolean running = false;
     private final static Logger LOGGER = Logger.getLogger(Crab.class.getName());
     TreeMap<Integer,Stack> map = new TreeMap<Integer,Stack>();
+    public static List<String> nonVisitURLs = new ArrayList<String>();
 
     Stack urlStack = new Stack();
 
@@ -81,19 +77,14 @@ public final class Crab {
             counter++;
         }
 
-        //Submit a Text Analysis stack from the URLSeeds
-        //TA textAnalysis = new TA(textData,indicatorWords);
-        //
-
         //Create a thread pool
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        ExecutorService executorService = Executors.newFixedThreadPool(64);
 
         for(Stack stack : map.values()){
             executorService.execute(new CrawlRunnable(stack,keyWords,threshold));
         }
 
         executorService.shutdown();
-
     }
 
     /**
@@ -125,8 +116,8 @@ public final class Crab {
               }
               break;
 
-          case ChangeCandidate:
-/*                System.out.println("Please enter the file path to the candidate CSV file");
+/*          case ChangeCandidate:
+              System.out.println("Please enter the file path to the candidate CSV file");
                 Scanner reader = new Scanner(System.in);
                 URLSeed.SAMPLE_CSV_FILE_PATH = reader.next();
                 URLSeed replacement = new URLSeed();
@@ -134,8 +125,24 @@ public final class Crab {
                     System.out.println("Candidate CSV changed");
                 }else{
                     System.out.println("Unable to change Candidate CSV");
-                    LOGGER.setLevel(Level.WARNING);
-                }*/
+                    LOGGER.setLevel(Level.WARNING);*/
+
+          case Blocked:
+              System.out.println("The following is the URL's not visited or analysed: \n");
+              Iterator<String> iterator = nonVisitURLs.iterator();
+              while(iterator.hasNext()){
+                  System.out.println(iterator.next());
+              }
+
+              System.out.println("to update the list please press u, or to exit press q");
+              Scanner reader = new Scanner(System.in);
+              if(reader.next().contains("u")){
+                    updateNonVisitList(reader);
+              }else {
+                    reader.close();
+                    UI();
+              }
+              break;
       }
     }
 
@@ -150,10 +157,13 @@ public final class Crab {
         Info,
         Add,
         Stall,
-        ChangeCandidate
+        ChangeCandidate,
+        Blocked
     }
 
     void UI() throws IOException, CsvException {
+
+        info();
 
         OPTIONS opt;
         opt = OPTIONS.Stall;
@@ -178,6 +188,10 @@ public final class Crab {
             case "CH" : case "ch":
                 opt = OPTIONS.ChangeCandidate;
                 break;
+
+            case "B" : case "b":
+                opt = OPTIONS.Blocked;
+                break;
         }
 
         reader.close();
@@ -187,7 +201,7 @@ public final class Crab {
     /**
         Method prints the info page out.
      */
-    void info(){
+    private static void info(){
         try (BufferedReader br = new BufferedReader(new FileReader("info.txt"))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -197,16 +211,15 @@ public final class Crab {
             e.printStackTrace();
             LOGGER.setLevel(Level.WARNING);
         }
+        System.out.println("\n");
     }
 
-    void testMethod(){
-            List<String> keyIndicators = new ArrayList<>();
-            Utility.readToCSV(INDICATOR_FILE_PATH,keyIndicators);
-
-            for(String word : keyIndicators){
-                System.out.println(word);
-            }
+    private static void updateNonVisitList(final Scanner reader){
+        System.out.println("Type/paste in URL to add to the Non-Visit URL list. \n");
+        System.out.println("to quit entering type qq \n");
+        while(!reader.next().contains("qq")){
+            nonVisitURLs.add(reader.next());
+        }
+        reader.close();
     }
-
-
 }

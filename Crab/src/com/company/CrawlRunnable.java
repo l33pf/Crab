@@ -3,28 +3,34 @@ package com.company;
 import java.lang.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+/** CrawlRunnable.java
+ *  This is the thread class which applies the top-level search on the links gathered from the URL Seed set.
+ *  From here, links are stored which match the user-defined threshold and then sent for further textual analysis.
+
+ */
 public final class CrawlRunnable implements Runnable {
 
     Stack links = new Stack();
-    public List<String> keyWords = new ArrayList<String>();
+    private List<String> keyWords = new ArrayList<String>();
     public TreeMap<Integer,String> linksToAnalyse = new TreeMap<Integer,String>();
     int threshold = 0, counter = 0, result = 0;
 
     public CrawlRunnable(Stack links, List<String> words, int matchThreshold){
-            this.links = links;
-            this.keyWords = words;
-            this.threshold = matchThreshold;
+        Objects.requireNonNull(this.links = links);
+        Objects.requireNonNull(this.keyWords = words);
+        Objects.requireNonNull(this.threshold = matchThreshold);
     }
 
     //This function looks for the key word indicators set
     //Returns the overall score of the page looked at
-    public int searchText(String body, List<String> keyWords ){
+    private final int searchText(String body, final List<String> keyWords ){
 
         int score = 0;
 

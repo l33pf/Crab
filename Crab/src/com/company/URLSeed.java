@@ -9,12 +9,12 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public final class URLSeed {
+public class URLSeed {
 
     //used to take a database and create a URL Seed Set
     //uses a stack to store URL's
 
-    public static final String SAMPLE_CSV_FILE_PATH = "./test.csv";
+    public static String SAMPLE_CSV_FILE_PATH = "./test.csv";
 
     public static final Stack stack = new Stack();
 
