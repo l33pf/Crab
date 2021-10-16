@@ -31,6 +31,8 @@ public final class Crab {
     /* This is the key word threshold, Crab will only crawl further if a page hits this threshold */
     final int threshold = 3;
 
+    private static int numOfThreads = 65;
+
     /**
      * Starts The crawl process. The method utilises a Thread pool to analyse links and the extracted text
      * from the URLSeed.
@@ -78,7 +80,7 @@ public final class Crab {
         }
 
         //Create a thread pool
-        ExecutorService executorService = Executors.newFixedThreadPool(64);
+        ExecutorService executorService = Executors.newFixedThreadPool(numOfThreads);
 
         for(Stack stack : map.values()){
             executorService.execute(new CrawlRunnable(stack,keyWords,threshold));
@@ -92,7 +94,7 @@ public final class Crab {
 
      */
     void jobCentre(OPTIONS opt) throws IOException, CsvException {
-
+        Scanner reader = new Scanner(System.in);
       switch(opt){
 
           case Crawl:
@@ -107,12 +109,14 @@ public final class Crab {
               while(true){
                     System.out.println("Please enter key word indicators\n");
                     System.out.println("Enter '/' to quit adding indicators.\n");
-                    Scanner reader = new Scanner(System.in);
+
                     keyWords.add(reader.next());
                     if(reader.next().contains("/")){
                         reader.close();
                         break;
                     }
+                    reader.close();
+                    UI();
               }
               break;
 
@@ -135,13 +139,29 @@ public final class Crab {
               }
 
               System.out.println("to update the list please press u, or to exit press q");
-              Scanner reader = new Scanner(System.in);
               if(reader.next().contains("u")){
                     updateNonVisitList(reader);
               }else {
                     reader.close();
                     UI();
               }
+              break;
+
+          case Threads:
+              System.out.println("The current number of threads used is: " + " " + numOfThreads + "\n");
+              System.out.println("Do you want to update the number of threads used in crab ? (y/n)  \n");
+              if(reader.next().contains("y")){
+                  System.out.println("Enter the number of threads you wish to use. \n");
+                  System.out.println("NOTE: performance will vary. \n");
+                  numOfThreads = Integer.parseInt(reader.next());
+                  System.out.println("Number of threads used is now: " + numOfThreads + "\n");
+              }
+              else{
+                  reader.close();
+                  UI();
+              }
+              reader.close();
+              UI();
               break;
       }
     }
@@ -158,7 +178,8 @@ public final class Crab {
         Add,
         Stall,
         ChangeCandidate,
-        Blocked
+        Blocked,
+        Threads
     }
 
     void UI() throws IOException, CsvException {
