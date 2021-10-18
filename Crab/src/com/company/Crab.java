@@ -120,16 +120,16 @@ public final class Crab {
               }
               break;
 
-/*          case ChangeCandidate:
+          case ChangeCandidate:
               System.out.println("Please enter the file path to the candidate CSV file");
-                Scanner reader = new Scanner(System.in);
-                URLSeed.SAMPLE_CSV_FILE_PATH = reader.next();
-                URLSeed replacement = new URLSeed();
-                if(replacement.readIn()){
-                    System.out.println("Candidate CSV changed");
-                }else{
-                    System.out.println("Unable to change Candidate CSV");
-                    LOGGER.setLevel(Level.WARNING);*/
+              URLSeed.SAMPLE_CSV_FILE_PATH = reader.next();
+
+              if(URLSeed.readIn(URLSeed.stack)){
+                  System.out.println("Candidate CSV changed");
+              } else {
+                  System.out.println("Unable to change candidate CSV");
+              }
+              break;
 
           case Blocked:
               System.out.println("The following is the URL's not visited or analysed: \n");
@@ -176,9 +176,9 @@ public final class Crab {
         Crawl,
         Info,
         Add,
-        Stall,
         ChangeCandidate,
         Blocked,
+        Stall,
         Threads
     }
 
