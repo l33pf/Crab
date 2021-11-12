@@ -60,8 +60,23 @@ is for Crawling Crypto newsites, another is for Sport and another for general ne
 
 <!-- JVM -->
 ## JVM
+Crab utilises the following garbage collector:
+```
+-XX:UseParallelOldGC
+```
+given it has no impact on the running time until the collection occurs, and uses threads for both minor and major collections. More
+info can be found [Here](https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/parallel.html).
+```
+-XX:TieredCompilation
+```
+Tiered Compilation is used so that all methods are interpreted/compiled at C2, This is part of the JVM warmup.
+```
+-XgcPrio:throughput
+```
+This flag is set so the garbage collection is optimised for application throughput. Optimisation can also be achieved by
+altering the min ```-Xms``` and max heap ```-Xmx``` sizes further info can be found [Here](https://docs.oracle.com/cd/E13150_01/jrockit_jvm/jrockit/geninfo/diagnos/bestpractices.html#wp1089834).
 
-
+Profiling on an ``` Intel i5 @2.9 GHz ```   with the JVM optimisations in place showed a GC time of 1.4s on one crawling run.
 
 <!-- CONTRIBUTING -->
 ## Contributing
