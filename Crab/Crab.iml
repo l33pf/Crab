@@ -9,5 +9,22 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="opencsv" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
+    <orderEntry type="library" name="apache.opennlp.tools" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$USER_HOME$/Documents/stanford-corenlp-4.3.1" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$USER_HOME$/Documents/stanford-corenlp-4.3.1" />
+          <root url="file://$USER_HOME$/Documents/stanford-corenlp-4.3.1" />
+        </SOURCES>
+        <jarDirectory url="file://$USER_HOME$/Documents/stanford-corenlp-4.3.1" recursive="false" />
+        <jarDirectory url="file://$USER_HOME$/Documents/stanford-corenlp-4.3.1" recursive="false" type="SOURCES" />
+        <jarDirectory url="file://$USER_HOME$/Documents/stanford-corenlp-4.3.1" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="log4j" level="project" />
   </component>
 </module>

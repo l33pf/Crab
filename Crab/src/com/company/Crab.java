@@ -1,188 +1,306 @@
 package com.company;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+/*
+ ***LICENSE***
+ Copyright (c) 2021 l33pf (https://github.com/l33pf) & jelph (https://github.com/jelph)
 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+ **/
+
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
 import com.opencsv.exceptions.CsvException;
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import org.apache.log4j.Logger;
 
 public final class Crab {
 
-    HashMap<String,String> textData = new HashMap<String,String>();
-    public static List<String> keyWords = new ArrayList<String>();
-    private final static Logger LOGGER = Logger.getLogger(Crab.class.getName());
-    TreeMap<Integer,Stack> map = new TreeMap<Integer,Stack>();
-    public static List<String> nonVisitURLs = new ArrayList<String>();
+    public static List<String> nonVisitURLs = new ArrayList<>();
 
-    Stack urlStack = new Stack();
+    public final static Stack urlStack = new Stack();
 
     public final String INDICATOR_FILE_PATH = "./Indicators.csv";
     public final String KEYWORD_FILE_PATH = "./KeyWords.csv";
 
-    /* This is the key word threshold, Crab will only crawl further if a page hits this threshold */
-    final int threshold = 3;
+    private static final int numOfThreads = (Runtime.getRuntime().availableProcessors())+1;
+    private static final int CAPACITY = 5;
 
-    private static int numOfThreads = 65;
+    public static final List<String> keyWordsList = new ArrayList<>();
 
-    /**
-     * Starts The crawl process. The method utilises a Thread pool to analyse links and the extracted text
-     * from the URLSeed.
+    public static ConcurrentHashMap<String,SentimentType> con_map = new ConcurrentHashMap<>();
 
-     @throws IllegalArgumentException if urlStack or keyWords is set to zero.
-     @throws IOException if files can't be read
-     @throws CsvException if CSV file can't be obtained.
+     /* Setting this will record logging in Crab */
+     public static final boolean logging = false;
+     public final static Logger logger = Logger.getLogger(Crab.class);
 
-    */
-    void startCrawl() throws IOException, CsvException {
-        int counter = 0;
+     Crab() throws IOException {
+         Utility.SerializeConMap(con_map);
+     }
 
-        URLSeed.readIn(urlStack);
+    public static void sentiment(final String URL){
 
-        Utility.readToCSV(KEYWORD_FILE_PATH,keyWords);
+        try{
+            Document doc = Jsoup.connect(URL).get();
+            String toAnalyse = doc.title();
 
-        Stack linkStack = new Stack();
+            switch(SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse))){
 
-        if(urlStack.size() <= 0){
-            throw new IllegalArgumentException("URLSeed is empty\n");
-        } else if(keyWords.size() <= 0) { throw new IllegalArgumentException("No Keywords set.\n");}
+                case VERY_POSITIVE:
+                        if(con_map.get(URL) == null){
+                            System.out.println("Added: " + URL + "\n");
+                            con_map.put(URL,SentimentType.VERY_POSITIVE);
+                        }
+                    break;
 
-        while(urlStack.size() > 1){
+                case POSITIVE:
+                    if(con_map.get(URL) == null){
+                        System.out.println("Added: " + URL + "\n");
+                        con_map.put(URL,SentimentType.POSITIVE);
+                    }
+                    break;
+            }
+        } catch (IOException e) {
+            if(Crab.logging){
 
-            String current = urlStack.pop();
+            }
+        }
+    }
+
+    public static void full_sentimentKeyword(final String URL){
 
             try{
 
-                Document doc = Jsoup.connect(current).get();
-                Element body = doc.body();
-                Elements links = doc.select("a[href]");
+                Document doc = Jsoup.connect(URL).get();
+                String toAnalyse = doc.title();
 
-                textData.put(current,body.text());
+                switch(SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse))){
 
-                for(Element link : links){
-                    linkStack.push(link.attr("abs:href").toString());
+                    case VERY_POSITIVE:
+                        if(con_map.get(URL) == null){
+                            con_map.put(URL,SentimentType.VERY_POSITIVE);
+                            urlStack.safePush(URL);
+                        }
+                        break;
+
+                    case POSITIVE:
+                        if(con_map.get(URL) == null){
+                            con_map.put(URL,SentimentType.POSITIVE);
+                            urlStack.safePush(URL);
+                        }
+                        break;
                 }
 
-            } catch (Exception ex){
-                ex.printStackTrace();
+            } catch (Exception e){
+                    if(Crab.logging){
+
+                    }
             }
-
-            map.put(counter,linkStack);
-            counter++;
-        }
-
-        //Create a thread pool
-        ExecutorService executorService = Executors.newFixedThreadPool(numOfThreads);
-
-        for(Stack stack : map.values()){
-            executorService.execute(new CrawlRunnable(stack,keyWords,threshold));
-        }
-
-        executorService.shutdown();
     }
 
-    /**
-    * This method assigns a job based on user input from the UI.
+    public static void CrabCrawl(final Crawl_Type crawl) throws IOException, CsvException, ClassNotFoundException {
 
-     */
-    void jobCentre(OPTIONS opt) throws IOException, CsvException {
-        Scanner reader = new Scanner(System.in);
-      switch(opt){
+        /* Read in the URL Seed set supplied into a stack */
+        URLSeed.readIn(urlStack);
 
-          case Crawl:
-              startCrawl();
-              break;
+        if(urlStack.size()==0){
+            if(Crab.logging){
+                logger.error("URL stack size given is size zero");
+            }
 
-          case Info:
-              info();
-              break;
+            throw new IllegalArgumentException("no URL Seed set supplied. \n");
+        }
 
-          case Add:
-              while(true){
-                    System.out.println("Please enter key word indicators\n");
-                    System.out.println("Enter '/' to quit adding indicators.\n");
+       ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads/2, numOfThreads,
+                0L, TimeUnit.MILLISECONDS,
+               new LinkedBlockingQueue<>(CAPACITY),
+                Executors.defaultThreadFactory(),
+                new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
 
-                    keyWords.add(reader.next());
-                    if(reader.next().contains("/")){
-                        reader.close();
-                        break;
-                    }
-                    reader.close();
-                    UI();
-              }
-              break;
+        switch(crawl){
 
-          case ChangeCandidate:
-              System.out.println("Please enter the file path to the candidate CSV file");
-              URLSeed.SAMPLE_CSV_FILE_PATH = reader.next();
+            /* This option will do a single sentiment crawl based on what is within the URL seed set */
+            case Sentiment:
 
-              if(URLSeed.readIn(URLSeed.stack)){
-                  System.out.println("Candidate CSV changed");
-              } else {
-                  System.out.println("Unable to change candidate CSV");
-              }
-              break;
+      //          con_map = Utility.DeserializeConMap();
 
-          case Blocked:
-              System.out.println("The following is the URL's not visited or analysed: \n");
-              Iterator<String> iterator = nonVisitURLs.iterator();
-              while(iterator.hasNext()){
-                  System.out.println(iterator.next());
-              }
+                while(urlStack.size() != 0){
+                    exec.submit(new SentimentCrawlBasisRunnable(urlStack.safePop()));
+                }
 
-              System.out.println("to update the list please press u, or to exit press q");
-              if(reader.next().contains("u")){
-                    updateNonVisitList(reader);
-              }else {
-                    reader.close();
-                    UI();
-              }
-              break;
+                break;
 
-          case Threads:
-              System.out.println("The current number of threads used is: " + " " + numOfThreads + "\n");
-              System.out.println("Do you want to update the number of threads used in crab ? (y/n)  \n");
-              if(reader.next().contains("y")){
-                  System.out.println("Enter the number of threads you wish to use. \n");
-                  System.out.println("NOTE: performance will vary. \n");
-                  numOfThreads = Integer.parseInt(reader.next());
-                  System.out.println("Number of threads used is now: " + numOfThreads + "\n");
-              }
-              else{
-                  reader.close();
-                  UI();
-              }
-              reader.close();
-              UI();
-              break;
-      }
+                /* This option does a full sentiment crawl */
+            case FullSentiment:
+
+                con_map = Utility.DeserializeConMap();
+
+                while(urlStack.size() != 0){
+                    exec.submit(new SentimentCrawlRunnable(urlStack.safePop()));
+                }
+
+                break;
+
+                /* This option does a single sentiment crawl based on keywords provided  */
+            case keyWordSentiment:
+
+                con_map = Utility.DeserializeConMap();
+
+                while(urlStack.size() != 0){
+                    /* Each thread reads the key words defined by the user */
+                    exec.submit(new SentimentCrawlKeywordRunnable(urlStack.safePop()));
+                }
+
+                break;
+        }
+
+        exec.shutdown();
+
+        Utility.writeToCSV(con_map);
+//        Utility.SerializeConMap(con_map);
     }
 
     /**
      * This enum lists the options available in Crab.
      * used to reflect user choices and start the job centre.
      * can be amended if new features are added.
-
      */
     public enum OPTIONS{
         Crawl,
         Info,
-        Add,
         ChangeCandidate,
         Blocked,
         Stall,
-        Threads
+        CrawlType,
+        Help
     }
 
-    void UI() throws IOException, CsvException {
+    /**
+     * Enum for the Crawl Type used
+     */
+    public enum Crawl_Type {
+        Sentiment,
+        FullSentiment,
+        keyWordSentiment
+    }
+
+    /**
+     * Assigns a job to the Crawler based on User input
+     * @param opt
+     */
+    private static void jobCentre(OPTIONS opt) throws IOException, CsvException, ClassNotFoundException {
+
+        Scanner reader = new Scanner(System.in);
+        Crawl_Type crawl;
+
+        /* Default Crawl Type */
+        crawl = Crawl_Type.Sentiment;
+
+        switch (opt) {
+            case Crawl -> CrabCrawl(crawl);
+            case Info -> info();
+            case ChangeCandidate -> {
+                System.out.println("Please enter the file path to the candidate CSV file \n");
+                URLSeed.SAMPLE_CSV_FILE_PATH = reader.next();
+                if (URLSeed.readIn(URLSeed.stack)) {
+                    System.out.println("Candidate CSV changed");
+                } else {
+                    System.out.println("Unable to change candidate CSV");
+                }
+            }
+
+            case Blocked -> {
+                System.out.println("The following is the URL's not visited or analysed: \n");
+                for (String nonVisitURL : nonVisitURLs) {
+                    System.out.println(nonVisitURL);
+                }
+                System.out.println("to update the list please press u, or to exit press q");
+                if (reader.next().contains("u")) {
+                    updateNonVisitList(reader);
+                } else {
+                    reader.close();
+                    UI();
+                }
+            }
+
+            case CrawlType -> {
+                System.out.println("The current crawl type is: " + crawl);
+                System.out.println("Do you want to change the crawl type (y/n) ?\n");
+                if (reader.next().contains("y")) {
+                    switch (crawl) {
+
+                        case Sentiment -> {
+                            System.out.println("currently the crawl is a Sentiment Crawl\n");
+                            System.out.println("the remaining crawl options to choose from are: \n");
+                            System.out.println("Full Sentiment\n");
+                            System.out.println("keyword Sentiment\n");
+                            System.out.print("'fs' for Full sentiment, 'ks' for keyword sentiment \n");
+                            if (reader.next().contains("fs")) {
+                                crawl = Crawl_Type.FullSentiment;
+                            } else if (reader.next().contains("ks")) {
+                                crawl = Crawl_Type.keyWordSentiment;
+                            } else {
+                                UI();
+                            }
+                        }
+
+                        case FullSentiment -> {
+                            System.out.println("currently the crawl is a Full Sentiment Crawl\n");
+                            System.out.println("the remaining crawl options to choose from are: \n");
+                            System.out.println("Sentiment\n");
+                            System.out.println("keyword Sentiment\n");
+                            System.out.print("'s' for sentiment, 'ks' for keyword sentiment \n");
+                            if (reader.next().contains("s")) {
+                                crawl = Crawl_Type.Sentiment;
+                            } else if (reader.next().contains("ks")) {
+                                crawl = Crawl_Type.keyWordSentiment;
+                            } else {
+                                UI();
+                            }
+                        }
+
+                        case keyWordSentiment -> {
+                            System.out.println("currently the crawl is a Key word Sentiment Crawl\n");
+                            System.out.println("the remaining crawl options to choose from are: \n");
+                            System.out.println("Sentiment\n");
+                            System.out.println("Full Sentiment\n");
+                            System.out.print("'s' for sentiment, 'fs' for full sentiment \n");
+                            if (reader.next().contains("s")) {
+                                crawl = Crawl_Type.Sentiment;
+                            } else if (reader.next().contains("fs")) {
+                                crawl = Crawl_Type.FullSentiment;
+                            } else {
+                                UI();
+                            }
+                        }
+                    }
+                } else {
+                    reader.close();
+                    UI();
+                }
+            }
+        }
+
+    }
+
+    private static void UI() throws IOException, CsvException, ClassNotFoundException {
 
         info();
 
@@ -192,35 +310,23 @@ public final class Crab {
         Scanner reader = new Scanner(System.in);
         String userInput = reader.next();
 
-        switch(userInput){
-
-            case "C" : case "c" :
-                opt = OPTIONS.Crawl;
-                break;
-
-            case "I" : case "i":
-                opt = OPTIONS.Info;
-                break;
-
-            case "A" : case "a":
-                opt = OPTIONS.Add;
-                break;
-
-            case "CH" : case "ch":
-                opt = OPTIONS.ChangeCandidate;
-                break;
-
-            case "B" : case "b":
-                opt = OPTIONS.Blocked;
-                break;
-        }
+        opt = switch (userInput) {
+            case "C", "c" -> OPTIONS.Crawl;
+            case "I", "i" -> OPTIONS.Info;
+            case "CH", "ch" -> OPTIONS.ChangeCandidate;
+            case "B", "b" -> OPTIONS.Blocked;
+            case "CT", "ct" -> OPTIONS.CrawlType;
+            case "H", "h" -> OPTIONS.Help;
+            default -> opt;
+        };
 
         reader.close();
         jobCentre(opt);
+
     }
 
     /**
-        Method prints the info page out.
+     Method prints the info page out to console.
      */
     private static void info(){
         try (BufferedReader br = new BufferedReader(new FileReader("info.txt"))) {
@@ -229,12 +335,17 @@ public final class Crab {
                 System.out.println(line);
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            LOGGER.setLevel(Level.WARNING);
+            if(logging){
+                logger.error("error in info()",e);
+            }
         }
         System.out.println("\n");
     }
 
+    /**
+     * This method allows the user to update the Non-Visit list (i.e. Youtube) through the console.
+     * @param reader
+     */
     private static void updateNonVisitList(final Scanner reader){
         System.out.println("Type/paste in URL to add to the Non-Visit URL list. \n");
         System.out.println("to quit entering type qq \n");
@@ -243,4 +354,5 @@ public final class Crab {
         }
         reader.close();
     }
+
 }

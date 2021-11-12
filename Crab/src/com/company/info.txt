@@ -1,0 +1,61 @@
+
+      ::::::::  :::::::::      :::     ::::::::: 
+    :+:    :+: :+:    :+:   :+: :+:   :+:    :+: 
+   +:+        +:+    +:+  +:+   +:+  +:+    +:+  
+  +#+        +#++:++#:  +#++:++#++: +#++:++#+    
+ +#+        +#+    +#+ +#+     +#+ +#+    +#+    
+#+#    #+# #+#    #+# #+#     #+# #+#    #+#     
+########  ###    ### ###     ### #########       
+
+CRAB - Focused Web Crawler
+
+***ABOUT***
+CRAB is a focused web crawler, in which currently
+takes a CSV of "candidate" files and searches for
+occurences of the word indicators defined in links
+of the URL seed pages. deemed relevant pages 
+are textually analysed in Weka for patterns which 
+can then be used further i.e. Trading signals.
+
+The candidate files we use are an array of Crypto
+news sites, in the demo we are crawling through the 
+seed set to find relevant links with our indicator 
+words in this then may generate 
+a signal i.e "BTC down 0.2%" in real time.
+
+To run CRAB will require the following libraries:
+OpenCSV: http://opencsv.sourceforge.net/
+jsoup: https://jsoup.org/
+Weka: https://www.cs.waikato.ac.nz/ml/weka/
+
+***AUTHORS***
+Designed and Developed by l33pf (github.com/l33pf) 
+and jelph (github.com/jelph). CRAB has mainly been
+designed as a programming exercise in Java focusing
+on Multithreading and NLP.
+
+***CURRENT STATUS***
+CRAB is currently a work in progress mainly seen 
+as a programming/learning exercise of developing a focused
+web crawler.
+
+***LICENSE***
+Copyright (c) <2021> <l33pf & jelph>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
