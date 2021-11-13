@@ -39,6 +39,19 @@ public final class Utility {
 
     public static ConcurrentHashMap<String,SentimentType> map = new ConcurrentHashMap<>();
 
+    private static FileWriter fileWriter;
+
+    static {
+        try {
+            fileWriter = new FileWriter(RESULTS_FILE_PATH);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Utility() throws IOException {
+    }
+
     /**
         Read a CSV file into a list
      */
@@ -100,15 +113,10 @@ public final class Utility {
 
             CSVWriter writer = new CSVWriter(fileWriter);
 
-            String [] test = (String[]) con_map.keySet().toArray();
-            String [] testTwo = (String[]) con_map.values().toArray();
-
-            System.out.println("test");
-
-/*            for(Map.Entry<String,SentimentType> entry : con_map.entrySet()){
+           for(Map.Entry<String,SentimentType> entry : con_map.entrySet()){
                         String[] data = {entry.getKey(),String.valueOf(entry.getValue())};
                         writer.writeNext(data);
-            }*/
+            }
 
             writer.close();
 
@@ -118,4 +126,5 @@ public final class Utility {
             }
         }
     }
+
 }

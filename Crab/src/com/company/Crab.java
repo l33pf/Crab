@@ -26,6 +26,9 @@ package com.company;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import com.opencsv.exceptions.CsvException;
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
@@ -51,30 +54,43 @@ public final class Crab {
      public static final boolean logging = false;
      public final static Logger logger = Logger.getLogger(Crab.class);
 
+    final static ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+    final static Lock r = rwl.readLock();
+    final static Lock w = rwl.writeLock();
+
      Crab() throws IOException {
          Utility.SerializeConMap(con_map);
+     }
+
+     /*
+         Re-entrant lock method for placing sentiment results into data structure.
+      */
+     public static void put(String val, SentimentType sentiment){
+                r.lock();
+                try{
+                    con_map.putIfAbsent(val, sentiment);
+                }finally {
+                    r.unlock();
+                }
      }
 
     public static void sentiment(final String URL){
 
         try{
+
             Document doc = Jsoup.connect(URL).get();
             String toAnalyse = doc.title();
 
             switch(SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse))){
 
                 case VERY_POSITIVE:
-                        if(con_map.get(URL) == null){
                             System.out.println("Added: " + URL + "\n");
-                            con_map.put(URL,SentimentType.VERY_POSITIVE);
-                        }
+                            put(URL,SentimentType.VERY_POSITIVE);
                     break;
 
                 case POSITIVE:
-                    if(con_map.get(URL) == null){
                         System.out.println("Added: " + URL + "\n");
-                        con_map.put(URL,SentimentType.POSITIVE);
-                    }
+                        put(URL,SentimentType.POSITIVE);
                     break;
             }
         } catch (IOException e) {
@@ -103,6 +119,13 @@ public final class Crab {
                     case POSITIVE:
                         if(con_map.get(URL) == null){
                             con_map.put(URL,SentimentType.POSITIVE);
+                            urlStack.safePush(URL);
+                        }
+                        break;
+
+                    case NEUTRAL:
+                        if(con_map.get(URL) == null){
+                            con_map.put(URL,SentimentType.NEUTRAL);
                             urlStack.safePush(URL);
                         }
                         break;
@@ -173,7 +196,8 @@ public final class Crab {
 
         exec.shutdown();
 
-        Utility.writeToCSV(con_map);
+
+           Utility.writeToCSV(con_map);
 //        Utility.SerializeConMap(con_map);
     }
 
