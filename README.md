@@ -37,18 +37,20 @@ knowledge whilst aiming to develop something practical as a potential aid for th
 
 ### Built With
 
-Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j for logging purposes.(<b>NOTE</b>: This list may change as development advances)
+Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j for logging purposes and OpenCSV for storage.(<b>NOTE</b>: This list may change as development advances)
 
 * [CoreNLP](https://stanfordnlp.github.io/CoreNLP/)
 * [Jsoup](https://jsoup.org/)
 * [Log4j](https://logging.apache.org/log4j/)
+* [OpenCSV](http://opencsv.sourceforge.net/)
 
 <!-- ROADMAP -->
 ## Roadmap
 
 -  Microbenchmarking with JMH
 -  Full textual sentiment analysis using Naive Bayes in Apache Mahout
--  Zeppelin notebooks utilisation to present results graphically
+-  notebooks utilisation to present results graphically
+-  Concurrent logging
 
 See the [open issues](https://github.com/l33pf/Crab/issues) for a full list of proposed features (and known issues).
 
