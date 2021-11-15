@@ -10,23 +10,7 @@
 CRAB - Focused Web Crawler
 
 ***ABOUT***
-CRAB is a focused web crawler, in which currently
-takes a CSV of "candidate" files and searches for
-occurences of the word indicators defined in links
-of the URL seed pages. deemed relevant pages 
-are textually analysed in Weka for patterns which 
-can then be used further i.e. Trading signals.
-
-The candidate files we use are an array of Crypto
-news sites, in the demo we are crawling through the 
-seed set to find relevant links with our indicator 
-words in this then may generate 
-a signal i.e "BTC down 0.2%" in real time.
-
-To run CRAB will require the following libraries:
-OpenCSV: http://opencsv.sourceforge.net/
-jsoup: https://jsoup.org/
-Weka: https://www.cs.waikato.ac.nz/ml/weka/
+https://github.com/l33pf/Crab
 
 ***AUTHORS***
 Designed and Developed by l33pf (github.com/l33pf) 
@@ -35,9 +19,6 @@ designed as a programming exercise in Java focusing
 on Multithreading and NLP.
 
 ***CURRENT STATUS***
-CRAB is currently a work in progress mainly seen 
-as a programming/learning exercise of developing a focused
-web crawler.
 
 ***LICENSE***
 Copyright (c) <2021> <l33pf & jelph>

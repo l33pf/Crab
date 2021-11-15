@@ -1,6 +1,5 @@
 package com.company;
 
-
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.neural.rnn.RNNCoreAnnotations;
 import edu.stanford.nlp.pipeline.Annotation;
@@ -12,7 +11,6 @@ import edu.stanford.nlp.util.CoreMap;
 import java.util.Properties;
 
 /* Class is used for Sentiment analysis using Stanford's CoreNLP package */
-
 
 public final class SentimentAnalyser {
 
@@ -38,6 +36,7 @@ public final class SentimentAnalyser {
     /**
      *
      * @return - sentiment average over a page
+     * TODO
      */
     public int analysePage(){
         return 0;
