@@ -1,54 +1,39 @@
 # Crab
 
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
-
 <!-- ABOUT THE PROJECT -->
 ## About Crab
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+Crab is a Sentiment focused web crawler developed in Java. Sentiment analysis is done in Crab on the anchor text of linked pages from a crawled page. Crab is useful for crawling web pages which are related to a  set of topics.
 
-Crab is a Sentiment focused web crawler built in Java. The idea of Crab was based off the following paper:
-https://dl.acm.org/doi/10.1145/2396761.2398564 (copy also available in the repo). The original goal for Crab was just a refresh of the author's (l33pf) programming skills and 
-knowledge whilst aiming to develop something practical as a potential aid for the author's trading, This however has morphed into a somewhat of a hobby project which can be used to do news mining through sentiment analysis. Crab is still currently in development as such bugs will exist, it is suggested that any results derived from it to be taken with a pinch of salt !
+The idea of Crab was based off the following paper:
+
+https://dl.acm.org/doi/10.1145/2396761.2398564
+
+The Crawler is still in early stages of development, currently the following can be done in Crab:
+
+-	***Single Crawl from the URL Set*** (Crab evaluates all links on pages that are defined in the URL Seed set)
+- ***Sentiment Crawl based on keywords*** (Crab can receive keywords and crawl for pages which contain the given keywords in their anchor text and apply sentiment analysis on the anchor text matched with the keyword)
+- ***Full Sentiment Crawl*** (Crab will crawl until exhausted, exhaustion being non linked pages are deemed to have the desired Sentiment value)
+
+Further development will see:
+- Sentiment evaluation of  a given page based on the total sentiment scores of its linked pages.
+- Text mining of pages deemed to have good initial sentiment score
 
 ### Built With
 
-Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j for logging purposes.(<b>NOTE</b>: This list may change as development advances)
+Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j for logging purposes and OpenCSV for storage.(<b>NOTE</b>: This list may change as development advances)
 
 * [CoreNLP](https://stanfordnlp.github.io/CoreNLP/)
 * [Jsoup](https://jsoup.org/)
 * [Log4j](https://logging.apache.org/log4j/)
+* [OpenCSV](http://opencsv.sourceforge.net/)
 
 <!-- ROADMAP -->
 ## Roadmap
-
--  Microbenchmarking with JMH
--  Full textual sentiment analysis using Naive Bayes in Apache Mahout
--  Zeppelin notebooks utilisation to present results graphically
+- [ ] Microbenchmarking with JMH
+- [ ] Full textual sentiment analysis using Naive Bayes in Apache Mahout
+- [ ] Notebooks utilisation to present results graphically
+- [ ] Concurrent logging
 
 See the [open issues](https://github.com/l33pf/Crab/issues) for a full list of proposed features (and known issues).
 
