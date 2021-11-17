@@ -26,6 +26,7 @@ package com.company;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -46,7 +47,8 @@ public final class Crab {
     private static final int numOfThreads = (Runtime.getRuntime().availableProcessors())+1;
     private static final int CAPACITY = 5;
 
-    public static final List<String> keyWordsList = new ArrayList<>();
+    public static final Queue<String> keyWordsList = new ConcurrentLinkedQueue<String>();
+    public static final Queue<String> visitedList = new ConcurrentLinkedQueue<>();
 
     public static ConcurrentHashMap<String,SentimentType> con_map = new ConcurrentHashMap<>();
 
@@ -57,6 +59,10 @@ public final class Crab {
     final static ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     final static Lock r = rwl.readLock();
     final static Lock w = rwl.writeLock();
+
+    /* Variables for Average Sentiment Crawl */
+    public static final AtomicInteger bestSentiment = new AtomicInteger(0);
+    public static ConcurrentHashMap<String,Integer> avg_sentiment = new ConcurrentHashMap<>();
 
      Crab() throws IOException {
          Utility.SerializeConMap(con_map);
@@ -83,9 +89,9 @@ public final class Crab {
 
             switch(SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse))){
 
-                case VERY_POSITIVE:
+                case NEUTRAL:
                             System.out.println("Added: " + URL + "\n");
-                            put(URL,SentimentType.VERY_POSITIVE);
+                            put(URL,SentimentType.NEUTRAL);
                     break;
 
                 case POSITIVE:
@@ -109,25 +115,23 @@ public final class Crab {
 
                 switch(SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse))){
 
-                    case VERY_POSITIVE:
-                        if(con_map.get(URL) == null){
-                            con_map.put(URL,SentimentType.VERY_POSITIVE);
-                            urlStack.safePush(URL);
-                        }
-                        break;
-
                     case POSITIVE:
-                        if(con_map.get(URL) == null){
-                            con_map.put(URL,SentimentType.POSITIVE);
-                            urlStack.safePush(URL);
-                        }
+                            put(URL,SentimentType.POSITIVE);
+                            if(!visitedList.contains(URL))
+                            {
+                                urlStack.safePush(URL);
+                                System.out.println("Added: " + URL + "\n");
+                            }
+                            visitedList.add(URL);
                         break;
 
-                    case NEUTRAL:
-                        if(con_map.get(URL) == null){
-                            con_map.put(URL,SentimentType.NEUTRAL);
-                            urlStack.safePush(URL);
-                        }
+                    case NEGATIVE:
+                            put(URL,SentimentType.NEGATIVE);
+                            if(!visitedList.contains(URL)){
+                                urlStack.safePush(URL);
+                                System.out.println("Added: " + URL + "\n");
+                            }
+                            visitedList.add(URL);
                         break;
                 }
 
@@ -192,6 +196,19 @@ public final class Crab {
                 }
 
                 break;
+
+            case AverageSentiment:
+
+                //First Phase
+                while(urlStack.size() != 0){
+                    exec.submit(new SentimentCrawlAverageRunnable(urlStack.safePop()));
+                }
+
+                //Second Phase
+
+                break;
+
+
         }
 
         exec.shutdown();
@@ -222,7 +239,8 @@ public final class Crab {
     public enum Crawl_Type {
         Sentiment,
         FullSentiment,
-        keyWordSentiment
+        keyWordSentiment,
+        AverageSentiment
     }
 
     /**
