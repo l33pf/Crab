@@ -54,9 +54,9 @@ public final class Crab {
 
     public static ConcurrentHashMap<String,SentimentType> con_map = new ConcurrentHashMap<>();
 
-     /* Setting this will record logging in Crab */
-     public static final boolean logging = false;
-     public final static Logger logger = Logger.getLogger(Crab.class);
+    /* Setting this will record logging in Crab */
+    public static final boolean logging = false;
+    public final static Logger logger = Logger.getLogger(Crab.class);
 
     final static ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     final static Lock r = rwl.readLock();
@@ -67,21 +67,21 @@ public final class Crab {
     public static ConcurrentHashMap<String,Integer> avg_sentiment = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<String,Integer> data = new ConcurrentHashMap<>();
 
-     Crab() throws IOException {
-         Utility.SerializeConMap(con_map);
-     }
+    Crab() throws IOException {
+        Utility.SerializeConMap(con_map);
+    }
 
-     /*
-         Re-entrant lock method for placing sentiment results into data structure.
-      */
-     public static void put(String val, SentimentType sentiment){
-                r.lock();
-                try{
-                    con_map.putIfAbsent(val, sentiment);
-                }finally {
-                    r.unlock();
-                }
-     }
+    /*
+        Re-entrant lock method for placing sentiment results into data structure.
+     */
+    public static void put(String val, SentimentType sentiment){
+        r.lock();
+        try{
+            con_map.putIfAbsent(val, sentiment);
+        }finally {
+            r.unlock();
+        }
+    }
 
     public static void sentiment(final String URL){
 
@@ -93,8 +93,8 @@ public final class Crab {
             switch(SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse))){
 
                 case POSITIVE:
-                        System.out.println("Added: " + URL + "\n");
-                        put(URL,SentimentType.POSITIVE);
+                    System.out.println("Added: " + URL + "\n");
+                    put(URL,SentimentType.POSITIVE);
                     break;
             }
         } catch (IOException e) {
@@ -106,42 +106,74 @@ public final class Crab {
 
     public static void full_sentimentKeyword(final String URL){
 
-            try{
+        try{
 
-                Document doc = Jsoup.connect(URL).get();
-                String toAnalyse = doc.title();
+            Document doc = Jsoup.connect(URL).get();
+            String toAnalyse = doc.title();
 
-                switch(SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse))){
+            switch(SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse))){
 
-                    case POSITIVE:
-                            put(URL,SentimentType.POSITIVE);
-                            if(!visitedList.contains(URL))
-                            {
-                                urlStack.safePush(URL);
-                                System.out.println("Added: " + URL + "\n");
-                            }
-                            visitedList.add(URL);
-                        break;
-
-                    case NEGATIVE:
-                            put(URL,SentimentType.NEGATIVE);
-                            if(!visitedList.contains(URL)){
-                                urlStack.safePush(URL);
-                                System.out.println("Added: " + URL + "\n");
-                            }
-                            visitedList.add(URL);
-                        break;
-                }
-
-            } catch (Exception e){
-                    if(Crab.logging){
-
+                case POSITIVE:
+                    put(URL,SentimentType.POSITIVE);
+                    if(!visitedList.contains(URL))
+                    {
+                        urlStack.safePush(URL);
+                        System.out.println("Added: " + URL + "\n");
                     }
+                    visitedList.add(URL);
+                    break;
+
+                case NEGATIVE:
+                    put(URL,SentimentType.NEGATIVE);
+                    if(!visitedList.contains(URL)){
+                        urlStack.safePush(URL);
+                        System.out.println("Added: " + URL + "\n");
+                    }
+                    visitedList.add(URL);
+                    break;
             }
+
+        } catch (Exception e){
+            if(Crab.logging){
+
+            }
+        }
     }
 
-    public static void avg_crawl_rec(ThreadPoolExecutor exec, Stack urlStack) throws InterruptedException, IOException {
+    public static void avg_crawl_rec(Stack urlStack) throws InterruptedException, IOException, ClassNotFoundException, CsvException {
+            int optimal = 0;
+            String link_title;
+            int sentiment_score = 0;
+            String optimal_page = null;
 
+            while(urlStack.size() != 0){
+
+                String URL = urlStack.pop();
+
+                try{
+                    Document doc = Jsoup.connect(URL).get();
+                    Elements links = doc.select("a[href]");
+
+                    for(Element link : links){
+                        link_title = link.attr("abs:href");
+                        sentiment_score += SentimentAnalyser.analyse(link_title);
+                    }
+
+                    if(sentiment_score > optimal){
+                        optimal = sentiment_score;
+                        optimal_page = URL;
+                        System.out.println("New Optimal URL: " + optimal_page);
+                    }
+                }catch(Exception e){
+                    if(logging){
+                    }
+                }
+            }
+
+            /* Push the optimal URL onto the stack */
+            urlStack.push(optimal_page);
+            Crab.Crawl_Type c = Crawl_Type.Sentiment;
+            CrabCrawl(c); /* Move onto a normal sentiment  */
     }
 
     public static void CrabCrawl(Crawl_Type crawl) throws IOException, CsvException, ClassNotFoundException, InterruptedException {
@@ -157,9 +189,9 @@ public final class Crab {
             throw new IllegalArgumentException("no URL Seed set supplied. \n");
         }
 
-       ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads/2, numOfThreads,
+        ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads/2, numOfThreads,
                 0L, TimeUnit.MILLISECONDS,
-               new LinkedBlockingQueue<>(CAPACITY),
+                new LinkedBlockingQueue<>(CAPACITY),
                 Executors.defaultThreadFactory(),
                 new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
 
@@ -176,7 +208,7 @@ public final class Crab {
 
                 break;
 
-                /* This option does a full sentiment crawl */
+            /* This option does a full sentiment crawl */
             case FullSentiment:
 
                 con_map = Utility.DeserializeConMap();
@@ -187,7 +219,7 @@ public final class Crab {
 
                 break;
 
-                /* This option does a single sentiment crawl based on keywords provided  */
+            /* This option does a single sentiment crawl based on keywords provided  */
             case keyWordSentiment:
 
                 con_map = Utility.DeserializeConMap();
@@ -201,23 +233,9 @@ public final class Crab {
 
             case AverageSentiment:
 
-                avg_crawl_rec(exec,urlStack);
+                avg_crawl_rec(urlStack);
 
-                exec.shutdown();
-                boolean finished = exec.awaitTermination(1, TimeUnit.MINUTES);
 
-                if(finished){
-                   Utility.writeToCSV_Avg(data);
-
-                    for(String link : data.keySet()){
-                        Crab.urlStack.push(link);
-                    }
-
-                    System.out.print("Commencing single sentiment crawl.\n");
-                    Crab.Crawl_Type c = Crawl_Type.Sentiment;
-                    CrabCrawl(c); /* Move onto a normal sentiment  */
-                }
-                
                 break;
         }
 
@@ -225,8 +243,8 @@ public final class Crab {
             exec.shutdown();
         }
 
-           Utility.writeToCSV(con_map);
-           Utility.SerializeConMap(con_map);
+        Utility.writeToCSV(con_map);
+        Utility.SerializeConMap(con_map);
     }
 
     /**
