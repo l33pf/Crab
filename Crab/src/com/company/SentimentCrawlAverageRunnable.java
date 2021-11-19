@@ -36,7 +36,6 @@ public class SentimentCrawlAverageRunnable implements Runnable {
     String URL;
     int totalLinks;
     String link_title;
-    int counter = 0;
     int sentiment_score = 0;
 
     SentimentCrawlAverageRunnable(String link){
@@ -54,13 +53,13 @@ public class SentimentCrawlAverageRunnable implements Runnable {
             for(Element link : links){
                 link_title = link.attr("abs:href");
                 sentiment_score += SentimentAnalyser.analyse(link_title);
-                counter++;
             }
 
             // If The overall sentiment of the links is better than the current optimal score recorded
             // set that as the new local optimum, and record the parent URL for later
             if(sentiment_score > Crab.bestSentiment.get()){
                 Crab.bestSentiment.set(sentiment_score);
+                Crab.avg_sentiment.clear(); /* Remove the previous optimal */
                 Crab.avg_sentiment.put(URL,sentiment_score);
             }
 

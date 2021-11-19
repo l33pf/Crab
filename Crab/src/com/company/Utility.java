@@ -34,20 +34,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Utility {
 
     public static final String RESULTS_FILE_PATH = "./CrabResults.csv";
+    public static final String AVERAGE_CRAWL_RESULTS_FILE_PATH = "./AverageOptimal.csv";
 
     private static final String [] writeOut = new String[2];
 
     public static ConcurrentHashMap<String,SentimentType> map = new ConcurrentHashMap<>();
 
-    private static FileWriter fileWriter;
 
-    static {
-        try {
-            fileWriter = new FileWriter(RESULTS_FILE_PATH);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public Utility() throws IOException {
     }
@@ -125,6 +118,29 @@ public final class Utility {
                     Crab.logger.error("error in writeToCSV",e);
             }
         }
+    }
+
+    public static void writeToCSV_Avg(final ConcurrentHashMap<String,Integer> con_map){
+
+        try{
+            FileWriter fileWriter = new FileWriter(AVERAGE_CRAWL_RESULTS_FILE_PATH);
+
+            CSVWriter writer = new CSVWriter(fileWriter);
+
+            for(Map.Entry<String,Integer> entry : con_map.entrySet()){
+                String[] data = {entry.getKey(),String.valueOf(entry.getValue())};
+                writer.writeNext(data);
+            }
+
+            writer.close();
+
+        }catch(Exception e){
+            if(Crab.logging){
+                Crab.logger.error("error in writeToCSV",e);
+            }
+        }
+
+
     }
 
 }

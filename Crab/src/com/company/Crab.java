@@ -34,6 +34,8 @@ import com.opencsv.exceptions.CsvException;
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
 import org.apache.log4j.Logger;
+import org.jsoup.select.Elements;
+import org.jsoup.nodes.Element;
 
 public final class Crab {
 
@@ -63,6 +65,7 @@ public final class Crab {
     /* Variables for Average Sentiment Crawl */
     public static final AtomicInteger bestSentiment = new AtomicInteger(0);
     public static ConcurrentHashMap<String,Integer> avg_sentiment = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<String,Integer> data = new ConcurrentHashMap<>();
 
      Crab() throws IOException {
          Utility.SerializeConMap(con_map);
@@ -88,11 +91,6 @@ public final class Crab {
             String toAnalyse = doc.title();
 
             switch(SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse))){
-
-                case NEUTRAL:
-                            System.out.println("Added: " + URL + "\n");
-                            put(URL,SentimentType.NEUTRAL);
-                    break;
 
                 case POSITIVE:
                         System.out.println("Added: " + URL + "\n");
@@ -142,7 +140,40 @@ public final class Crab {
             }
     }
 
-    public static void CrabCrawl(final Crawl_Type crawl) throws IOException, CsvException, ClassNotFoundException {
+    public static void avg_crawl_rec(ThreadPoolExecutor exec, Stack urlStack) throws InterruptedException, IOException {
+
+         while(urlStack.size() != 0){
+             exec.submit(new SentimentCrawlAverageRunnable(urlStack.safePop()));
+         }
+
+        exec.shutdown();
+        boolean finished = exec.awaitTermination(1, TimeUnit.MINUTES);
+
+        if(finished){
+            String link_title;
+            for(String URL : avg_sentiment.keySet()){ // Take the local optimal link from the run
+
+                    data.putIfAbsent(URL,avg_sentiment.get(URL));
+
+                    Document doc = Jsoup.connect(URL).get();
+                    Elements links = doc.select("a[href]");
+                    for(Element link : links){
+                        link_title = link.attr("abs:href");
+                        urlStack.push(link_title);
+                    }
+            }
+            avg_sentiment.clear();
+        }
+
+        if(urlStack.size() == 0){
+            return;
+        }else{
+            bestSentiment.set(0); /* Refresh local optimal on each crawl */
+            avg_crawl_rec(exec,urlStack);
+        }
+    }
+
+    public static void CrabCrawl(Crawl_Type crawl) throws IOException, CsvException, ClassNotFoundException, InterruptedException {
 
         /* Read in the URL Seed set supplied into a stack */
         URLSeed.readIn(urlStack);
@@ -166,7 +197,7 @@ public final class Crab {
             /* This option will do a single sentiment crawl based on what is within the URL seed set */
             case Sentiment:
 
-      //          con_map = Utility.DeserializeConMap();
+                con_map = Utility.DeserializeConMap();
 
                 while(urlStack.size() != 0){
                     exec.submit(new SentimentCrawlBasisRunnable(urlStack.safePop()));
@@ -199,23 +230,32 @@ public final class Crab {
 
             case AverageSentiment:
 
-                //First Phase
-                while(urlStack.size() != 0){
-                    exec.submit(new SentimentCrawlAverageRunnable(urlStack.safePop()));
+                avg_crawl_rec(exec,urlStack);
+
+                exec.shutdown();
+                boolean finished = exec.awaitTermination(1, TimeUnit.MINUTES);
+
+                if(finished){
+                   Utility.writeToCSV_Avg(data);
+
+                    for(String link : data.keySet()){
+                        Crab.urlStack.push(link);
+                    }
+
+                    System.out.print("Commencing single sentiment crawl.\n");
+                    Crab.Crawl_Type c = Crawl_Type.Sentiment;
+                    CrabCrawl(c); /* Move onto a normal sentiment  */
                 }
-
-                //Second Phase
-
+                
                 break;
-
-
         }
 
-        exec.shutdown();
-
+        if((crawl == Crawl_Type.Sentiment) || (crawl == Crawl_Type.FullSentiment) || (crawl == Crawl_Type.keyWordSentiment)){
+            exec.shutdown();
+        }
 
            Utility.writeToCSV(con_map);
-//        Utility.SerializeConMap(con_map);
+           Utility.SerializeConMap(con_map);
     }
 
     /**
@@ -247,7 +287,7 @@ public final class Crab {
      * Assigns a job to the Crawler based on User input
      * @param opt
      */
-    private static void jobCentre(OPTIONS opt) throws IOException, CsvException, ClassNotFoundException {
+    private static void jobCentre(OPTIONS opt) throws IOException, CsvException, ClassNotFoundException, InterruptedException {
 
         Scanner reader = new Scanner(System.in);
         Crawl_Type crawl;
@@ -342,7 +382,7 @@ public final class Crab {
 
     }
 
-    private static void UI() throws IOException, CsvException, ClassNotFoundException {
+    private static void UI() throws IOException, CsvException, ClassNotFoundException, InterruptedException {
 
         info();
 
