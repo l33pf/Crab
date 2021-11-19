@@ -142,35 +142,6 @@ public final class Crab {
 
     public static void avg_crawl_rec(ThreadPoolExecutor exec, Stack urlStack) throws InterruptedException, IOException {
 
-         while(urlStack.size() != 0){
-             exec.submit(new SentimentCrawlAverageRunnable(urlStack.safePop()));
-         }
-
-        exec.shutdown();
-        boolean finished = exec.awaitTermination(1, TimeUnit.MINUTES);
-
-        if(finished){
-            String link_title;
-            for(String URL : avg_sentiment.keySet()){ // Take the local optimal link from the run
-
-                    data.putIfAbsent(URL,avg_sentiment.get(URL));
-
-                    Document doc = Jsoup.connect(URL).get();
-                    Elements links = doc.select("a[href]");
-                    for(Element link : links){
-                        link_title = link.attr("abs:href");
-                        urlStack.push(link_title);
-                    }
-            }
-            avg_sentiment.clear();
-        }
-
-        if(urlStack.size() == 0){
-            return;
-        }else{
-            bestSentiment.set(0); /* Refresh local optimal on each crawl */
-            avg_crawl_rec(exec,urlStack);
-        }
     }
 
     public static void CrabCrawl(Crawl_Type crawl) throws IOException, CsvException, ClassNotFoundException, InterruptedException {
