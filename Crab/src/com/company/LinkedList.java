@@ -1,12 +1,38 @@
 package com.company;
 
-//Simple linked list class
-//Can store URL's within the list
+/*
+***LICENSE***
+        Copyright (c) 2021 l33pf (https://github.com/l33pf)
+
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+**/
+
+/**
+ * Updates:
+ * (22/11/21) - Updated to use Sentinel node, allows to reduce the amount of constant operations and not having to update
+ * head and tail pointers - Ideal given the amount of URL's expected in the Crawler's URL seed set. Tested on 22/11/21
+ * on Sentiment Crawl set to Neutral/Positive.
+ */
 
 public final class LinkedList {
 
-    private Node head;
-    private Node tail;
+    private Node sentinel;
     int N;
 
     private class Node {
@@ -20,106 +46,33 @@ public final class LinkedList {
 
     //Creates an empty list
     //NOTE: head will point to tail
-    public Node createNewList(){
-        head = new Node();
-        tail = new Node();
-        head.next = tail;
-        tail.next = null;
-        N=2;
-        return head;
+    public void createNewList(){
+        sentinel = new Node();
+        sentinel.URL = null;
+        sentinel.next = null;
+        N =0;
     }
 
     //Change from boolean value
-    public boolean insertAtHead(String value){
-        Node oldHead = head;
-        head = new Node();
-        head.URL = value;
-        head.next = oldHead;
-        N++;
-        return true;
-    }
-
-    public void insertAtTail(String value){
-        Node oldTail = tail;
-        tail = new Node();
-        tail.URL = value;
-        oldTail.next = tail;
-        tail.next = null;
+    public void insertAtTop(String value){
+        Node node = new Node();
+        node.URL = value;
+        Node old = new Node();
+        old = sentinel.next;
+        sentinel.next = node;
+        node.next = old;
         N++;
     }
 
-    public boolean insertAtIndex(String value, int index){
-        Node pointer = head;
-        int counter = 0;
-
-        if(index == 0 || index < 0){
-            return false;
-        }
-
-        while(pointer.next != null){
-
-            if(counter == index){
-                  Node temp = new Node();
-                  temp = pointer;
-                  temp.URL = value;
-                  temp.next = pointer.next;
-                  N++;
-                  return true; //success
-            }
-            counter++;
-            pointer = pointer.next;
-        }
-
-        return false; //fail
-    }
-
-    //Note this runtime is proportional to N-1
-    //Used to find if a URL already exists in the URL seed
-    public boolean searchList(String value){
-            Node pointer = head;
-
-            if(value.isBlank()){
-                return false;
-            }
-
-            while(pointer.next != null){
-
-                if(pointer.URL.equals(value)){
-                    return true;
-                }
-                pointer = pointer.next;
-            }
-            return false;
-    }
-
-    public String removeHead(){
-        Node oldHead = head;
-        head = oldHead.next;
+    public String removeTop(){
+        Node old = sentinel.next;
+        sentinel.next = old.next;
         N--;
-        return oldHead.URL;
-    }
-
-    public String removeTail(){
-        int counter = 0;
-        Node pointer = head;
-        Node oldTail = new Node();
-
-        while(pointer.next != null){
-
-            if(pointer.next == tail){
-                oldTail = tail;
-                tail = pointer;
-                tail.next = null;
-
-            }
-            pointer = pointer.next;
-        }
-        N--;
-        return oldTail.URL;
+        return old.URL;
     }
 
     //Used for Peek()
     public String returnHeadVal(){
-        return head.URL;
+        return sentinel.next.URL;
     }
 }

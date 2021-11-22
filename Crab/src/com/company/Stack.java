@@ -2,28 +2,34 @@ package com.company;
 import java.util.concurrent.locks.*;
 
 /*
- ***LICENSE***
- Copyright (c) 2021 l33pf (https://github.com/l33pf) & jelph (https://github.com/jelph)
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
- The above copyright notice and this permission notice shall be included in all
- copies or substantial portions of the Software.
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
- **/
+***LICENSE***
+        Copyright (c) 2021 l33pf (https://github.com/l33pf)
+
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+**/
 
 /**
  * Simple Stack data structure used for the URL Seed Set
-   also implemented is Thread safe methods for a RW lock.
+ *
+ * UPDATES:
+ * 12/11/21 - Added in Reentrant Lock features
+ * 22/11/21 - Updated and removed methods to reflect changes in Linked List class (Tested on 22/11/21)
  */
 
 public final class  Stack {
@@ -43,6 +49,7 @@ public final class  Stack {
     }
 
     Stack(){
+        lst.createNewList();
     }
 
     void createStack(){
@@ -54,12 +61,12 @@ public final class  Stack {
         if(value.isBlank()){
             throw new IllegalArgumentException();
         }
-        lst.insertAtHead(value);
+        lst.insertAtTop(value);
     }
 
     //Pops an element off the stack
     String pop(){
-        return lst.removeHead();
+        return lst.removeTop();
     }
 
     //Displays the current element at the top of the stack
@@ -97,5 +104,4 @@ public final class  Stack {
             r.unlock();
         }
     }
-
 }
