@@ -53,6 +53,7 @@ public final class Crab {
     public static final Queue<String> visitedList = new ConcurrentLinkedQueue<>();
 
     public static ConcurrentHashMap<String,SentimentType> con_map = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<String,SentimentType> full_doc_map = new ConcurrentHashMap<>();
 
     /* Setting this will record logging in Crab */
     public static final boolean logging = false;
@@ -67,6 +68,8 @@ public final class Crab {
     public static ConcurrentHashMap<String,Integer> avg_sentiment = new ConcurrentHashMap<>();
     public static ConcurrentHashMap<String,Integer> data = new ConcurrentHashMap<>();
 
+    public static Crawl_Type crab_crawl_type;
+
     Crab() throws IOException {
         Utility.SerializeConMap(con_map);
     }
@@ -77,7 +80,10 @@ public final class Crab {
     public static void put(String val, SentimentType sentiment){
         r.lock();
         try{
-            con_map.putIfAbsent(val, sentiment);
+            switch (crab_crawl_type) {
+                case Sentiment -> con_map.putIfAbsent(val, sentiment);
+                case FullSentiment -> full_doc_map.putIfAbsent(val, sentiment);
+            }
         }finally {
             r.unlock();
         }
@@ -91,6 +97,11 @@ public final class Crab {
             String toAnalyse = doc.title();
 
             switch(SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse))){
+
+                case NEUTRAL:
+                    System.out.println("Added: " + URL + "\n");
+                    put(URL,SentimentType.NEUTRAL);
+                    break;
 
                 case POSITIVE:
                     System.out.println("Added: " + URL + "\n");
@@ -140,7 +151,7 @@ public final class Crab {
         }
     }
 
-    public static void avg_crawl_rec(Stack urlStack) throws InterruptedException, IOException, ClassNotFoundException, CsvException {
+    public static void avg_crawl_rec(final Stack urlStack) throws InterruptedException, IOException, ClassNotFoundException, CsvException {
             int optimal = 0;
             String link_title;
             int sentiment_score = 0;
@@ -176,6 +187,10 @@ public final class Crab {
             CrabCrawl(c); /* Move onto a normal sentiment  */
     }
 
+    public static void my_method(String text){
+
+    }
+
     public static void CrabCrawl(Crawl_Type crawl) throws IOException, CsvException, ClassNotFoundException, InterruptedException {
 
         /* Read in the URL Seed set supplied into a stack */
@@ -199,6 +214,7 @@ public final class Crab {
 
             /* This option will do a single sentiment crawl based on what is within the URL seed set */
             case Sentiment:
+                crab_crawl_type = Crawl_Type.Sentiment;
 
                 con_map = Utility.DeserializeConMap();
 
@@ -210,6 +226,7 @@ public final class Crab {
 
             /* This option does a full sentiment crawl */
             case FullSentiment:
+                crab_crawl_type = Crawl_Type.FullSentiment;
 
                 con_map = Utility.DeserializeConMap();
 
@@ -222,7 +239,7 @@ public final class Crab {
             /* This option does a single sentiment crawl based on keywords provided  */
             case keyWordSentiment:
 
-                con_map = Utility.DeserializeConMap();
+             //   con_map = Utility.DeserializeConMap();
 
                 while(urlStack.size() != 0){
                     /* Each thread reads the key words defined by the user */
