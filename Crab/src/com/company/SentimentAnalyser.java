@@ -7,6 +7,8 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
 import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.util.CoreMap;
+import edu.stanford.nlp.util.logging.RedwoodConfiguration;
+
 
 import java.util.Properties;
 
@@ -22,6 +24,7 @@ public final class SentimentAnalyser {
     public static int analyse(final String title){
 
         Properties pp = new Properties();
+		RedwoodConfiguration.current().clear().apply();
         pp.setProperty("annotators", "tokenize, ssplit, pos, parse, sentiment");
         StanfordCoreNLP pipeline = new StanfordCoreNLP(pp);
         Annotation annotation = pipeline.process(title);
