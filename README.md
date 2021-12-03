@@ -9,15 +9,7 @@ The idea of Crab was based off the following paper:
 
 https://dl.acm.org/doi/10.1145/2396761.2398564
 
-The Crawler is still in early stages of development, currently the following can be done in Crab:
-
--	***Single Crawl from the URL Set*** (Crab evaluates all links on pages that are defined in the URL Seed set)
-- ***Sentiment Crawl based on keywords*** (Crab can receive keywords and crawl for pages which contain the given keywords in their anchor text and apply sentiment analysis on the anchor text matched with the keyword)
-- ***Full Sentiment Crawl*** (Crab will crawl until exhausted, exhaustion being non linked pages are deemed to have the desired Sentiment value)
-
-Further development will see:
-- Sentiment evaluation of  a given page based on the total sentiment scores of its linked pages.
-- Text mining of pages deemed to have good initial sentiment score
+The Crawler is still in early stages of development.
 
 ### Built With
 
