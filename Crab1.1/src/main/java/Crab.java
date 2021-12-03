@@ -31,7 +31,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import com.opencsv.exceptions.CsvException;
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
-import org.apache.log4j.Logger;
+
 import org.jsoup.select.Elements;
 import org.jsoup.nodes.Element;
 
@@ -40,7 +40,7 @@ public final class Crab {
     public static final CrabStack urlStack = new CrabStack();
 
     private static final int numOfThreads = (Runtime.getRuntime().availableProcessors())+1;
-    private static final int CAPACITY = 10;
+    private static final int CAPACITY = Integer.MAX_VALUE; //10
 
     public static final Queue<String> keyWordsList = new ConcurrentLinkedQueue<String>();
     public static final Queue<String> visitedList = new ConcurrentLinkedQueue<>();
@@ -55,6 +55,13 @@ public final class Crab {
     final static Lock w = rwl.writeLock();
 
     public static Crawl_Type crab_crawl_type;
+
+    public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads/2, numOfThreads,
+            1L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(CAPACITY),
+            Executors.defaultThreadFactory(),
+            new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
+
 
     Crab() throws IOException {
         Utility.SerializeConMap(con_map);
@@ -77,69 +84,50 @@ public final class Crab {
 
     public synchronized static void sentiment(final String URL){
 
+        w.lock();
         try{
 
-            Document doc = Jsoup.connect(URL).get();
-            String toAnalyse = doc.title();
+                Document doc = Jsoup.connect(URL).get();
+                String toAnalyse = doc.title();
 
-            switch(SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse))){
+                put(URL,SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse)));
 
-                case POSITIVE:
-                    if (con_map.containsKey(URL)) {
-                        break;
-                    }
+                System.out.println("Added and Visited: " + URL + "\n");
 
-                    System.out.println("Added: " + URL + "\n");
+                Utility.writeURLSentimentResult(URL,SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse)));
 
-                    put(URL,SentimentType.POSITIVE);
+                int full_result = analyseFullPage(URL);
 
-                    if(url_queue.contains(URL)){
-                        break;
-                    }
+                urlStack.safePush(URL); //add to the stack to look at the  links
 
-                    Utility.writeURLSentimentResult(URL,SentimentType.POSITIVE);
+                full_sentiment_map.put(URL,SentimentType.fromInt(full_result));
 
-                    url_queue.add(URL);
-                    visitedList.add(URL);
-                    urlStack.safePush(URL);
+                System.out.println("Full analysis done on: " + URL + "\n");
 
-                    break;
+                Utility.writeSentimentResult(URL,SentimentType.fromInt(full_result));
 
-                case NEUTRAL:
-                    if(con_map.containsKey(URL)){
-                        break;
-                    }
+                visitedList.add(URL);
 
-                    System.out.println("Added: " + URL + "\n");
+            }catch (Exception e){
 
-                    put(URL,SentimentType.NEUTRAL);
-
-                    if(url_queue.contains(URL)){
-                        break;
-                    }
-
-                    url_queue.add(URL);
-
-                    Utility.writeURLSentimentResult(URL,SentimentType.NEUTRAL);
-
-                    visitedList.add(URL);
-                    urlStack.safePush(URL);
-
-                    break;
             }
-        } catch (IOException e) {
-
+        finally {
+            w.unlock();
         }
     }
 
     public static int analyseFullPage(String URL){
 
         int sentiment = 0;
+        int headerSentiment = 0;
+        int hSentiment = 0;
 
-        try {
+        try{
             Document doc = Jsoup.connect(URL).get();
             Elements content = doc.select("article");
             Elements contents = content.select("p");
+            String heading = doc.head().text();
+            hSentiment = SentimentAnalyser.analyse(heading);
 
             if (content.size() == 0) {
                 contents = doc.select("p");
@@ -153,11 +141,31 @@ public final class Crab {
                 }
             }
 
-            return sentiment;
+            //Look at header tags for any further info, May get better accuracy
+            Elements hTags = doc.select("h1, h2, h3, h4, h5, h6");
+
+            for(Element h : hTags){
+                headerSentiment += SentimentAnalyser.analyse(h.text());
+            }
+
+            if(headerSentiment > sentiment){
+                if(headerSentiment < hSentiment){
+                    return hSentiment;
+                }
+                return headerSentiment;
+            }else if(headerSentiment < sentiment){
+                if(headerSentiment < hSentiment){
+                    return hSentiment;
+                }
+                return sentiment;
+            }else{
+                return sentiment;
+            }
+
         }catch(Exception e){
 
         }
-        return sentiment;
+        return 0;
     }
 
     public static void CrabCrawl(Crawl_Type crawl) throws IOException, CsvException, ClassNotFoundException, InterruptedException {
@@ -165,15 +173,11 @@ public final class Crab {
         /* Read in the URL Seed set supplied into a stack */
         URLSeed.readIn(urlStack);
 
+        exec.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+
         if(urlStack.size()==0){
             throw new IllegalArgumentException("no URL Seed set supplied. \n");
         }
-
-        ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
-                0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(CAPACITY),
-                Executors.defaultThreadFactory(),
-                new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
 
         switch(crawl){
 
@@ -183,15 +187,13 @@ public final class Crab {
 
                 con_map = Utility.DeserializeConMap();
 
-                full_sentiment_map = Utility.DeserializeConMap("f_map_ser");
+           //     full_sentiment_map = Utility.DeserializeConMap("f_map_ser");
 
                 while(urlStack.size() != 0){
                     exec.submit(new SentimentCrawlBasisRunnable(urlStack.safePop()));
-                    if(!url_queue.isEmpty()){
-                        System.out.println("Doing full analysis on: " + url_queue.peek() + "\n");
-                        exec.submit(new FullSentimentRunnable(url_queue.poll()));
-                    }
                 }
+
+                exec.shutdown();
 
                 break;
         }
