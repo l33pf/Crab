@@ -23,7 +23,6 @@ Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j f
 <!-- ROADMAP -->
 ## Roadmap
 - [ ] Microbenchmarking with JMH
-- [ ] Full textual sentiment analysis using Naive Bayes in Apache Mahout
 - [ ] Notebooks utilisation to present results graphically
 - [ ] Concurrent logging
 
