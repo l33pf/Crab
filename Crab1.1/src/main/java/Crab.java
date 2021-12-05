@@ -94,7 +94,7 @@ public final class Crab {
 
                 System.out.println("Added and Visited: " + URL + "\n");
 
-                Utility.writeURLSentimentResult(URL,SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse)));
+                Utility.writeURLSentimentResult(URL,SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse)),toAnalyse);
 
                 int full_result = analyseFullPage(URL);
 

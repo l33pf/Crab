@@ -170,7 +170,7 @@ public final class Utility {
         }
     }
 
-    public final static void writeURLSentimentResult(final String url, final SentimentType sentiment){
+    public final static void writeURLSentimentResult(final String url, final SentimentType sentiment, final String title){
         w.lock();
 
         try{
@@ -179,7 +179,7 @@ public final class Utility {
 
                 CSVWriter writer = new CSVWriter(fileWriter);
 
-                String [] record = {url,String.valueOf(sentiment)};
+                String [] record = {url,String.valueOf(sentiment),title};
 
                 writer.writeNext(record);
 
