@@ -23,7 +23,6 @@
 
 import java.io.*;
 import java.util.*;
-import java.util.Stack;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -40,15 +39,12 @@ public final class Crab {
     public static final CrabStack urlStack = new CrabStack();
 
     private static final int numOfThreads = (Runtime.getRuntime().availableProcessors())+1;
-    private static final int CAPACITY = Integer.MAX_VALUE; //10
+    private static final int CAPACITY = 10; //10
 
-    public static final Queue<String> keyWordsList = new ConcurrentLinkedQueue<String>();
     public static final Queue<String> visitedList = new ConcurrentLinkedQueue<>();
 
     public static ConcurrentHashMap<String,SentimentType> con_map = new ConcurrentHashMap<>();
-    public static ConcurrentHashMap<String,SentimentType> full_sentiment_map = new ConcurrentHashMap<>();
-
-    public static ConcurrentLinkedQueue<String> url_queue = new ConcurrentLinkedQueue<>();
+    public static final ConcurrentHashMap<String,SentimentType> full_sentiment_map = new ConcurrentHashMap<>();
 
     final static ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     final static Lock r = rwl.readLock();
@@ -56,8 +52,8 @@ public final class Crab {
 
     public static Crawl_Type crab_crawl_type;
 
-    public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads/2, numOfThreads,
-            1L, TimeUnit.MILLISECONDS,
+    public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
+            10L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(CAPACITY),
             Executors.defaultThreadFactory(),
             new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
@@ -68,65 +64,17 @@ public final class Crab {
         Utility.SerializeConMap(full_sentiment_map,"f_map_ser");
     }
 
-    /*
-        Re-entrant lock method for placing sentiment results into data structure.
-     */
-    public static void put(String val, SentimentType sentiment){
-        w.lock();
-        try{
-            switch (crab_crawl_type) {
-                case Sentiment -> con_map.putIfAbsent(val, sentiment);
-            }
-        }finally {
-            w.unlock();
-        }
-    }
-
-    public synchronized static void sentiment(final String URL){
-
-        w.lock();
-        try{
-
-                Document doc = Jsoup.connect(URL).get();
-                String toAnalyse = doc.title();
-
-                put(URL,SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse)));
-
-                System.out.println("Added and Visited: " + URL + "\n");
-
-                Utility.writeURLSentimentResult(URL,SentimentType.fromInt(SentimentAnalyser.analyse(toAnalyse)),toAnalyse);
-
-                int full_result = analyseFullPage(URL);
-
-                urlStack.safePush(URL); //add to the stack to look at the  links
-
-                full_sentiment_map.put(URL,SentimentType.fromInt(full_result));
-
-                System.out.println("Full analysis done on: " + URL + "\n");
-
-                Utility.writeSentimentResult(URL,SentimentType.fromInt(full_result));
-
-                visitedList.add(URL);
-
-            }catch (Exception e){
-
-            }
-        finally {
-            w.unlock();
-        }
-    }
-
-    public static int analyseFullPage(String URL){
+    public static int analyseFullPage(final String URL){
 
         int sentiment = 0;
         int headerSentiment = 0;
-        int hSentiment = 0;
+        int hSentiment;
 
         try{
-            Document doc = Jsoup.connect(URL).get();
-            Elements content = doc.select("article");
+            final Document doc = Jsoup.connect(URL).get();
+            final Elements content = doc.select("article");
             Elements contents = content.select("p");
-            String heading = doc.head().text();
+            final String heading = doc.head().text();
             hSentiment = SentimentAnalyser.analyse(heading);
 
             if (content.size() == 0) {
@@ -142,17 +90,14 @@ public final class Crab {
             }
 
             //Look at header tags for any further info, May get better accuracy
-            Elements hTags = doc.select("h1, h2, h3, h4, h5, h6");
+            final Elements hTags = doc.select("h1, h2, h3, h4, h5, h6");
 
             for(Element h : hTags){
                 headerSentiment += SentimentAnalyser.analyse(h.text());
             }
 
             if(headerSentiment > sentiment){
-                if(headerSentiment < hSentiment){
-                    return hSentiment;
-                }
-                return headerSentiment;
+                return Math.max(headerSentiment, hSentiment);
             }else if(headerSentiment < sentiment){
                 if(headerSentiment < hSentiment){
                     return hSentiment;
@@ -190,7 +135,7 @@ public final class Crab {
            //     full_sentiment_map = Utility.DeserializeConMap("f_map_ser");
 
                 while(urlStack.size() != 0){
-                    exec.submit(new SentimentCrawlBasisRunnable(urlStack.safePop()));
+                    exec.submit(new SentimentBasisRunnable(urlStack.safePop())); //need to add in full crawl to
                 }
 
                 exec.shutdown();

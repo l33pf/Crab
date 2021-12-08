@@ -36,15 +36,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public final class Utility {
 
     public static final String RESULTS_FILE_PATH = "./CrabResults.csv";
-    public static final String AVERAGE_CRAWL_RESULTS_FILE_PATH = "./AverageOptimal.csv";
     public static final String FULL_RESULTS_FILE_PATH = "./CrabFullAnalysisSentimentCrawl.csv";
-
-    private static final String [] writeOut = new String[2];
+    public static final String OPTIMAL_RESULTS_FILE_PATH = "./CrabOptimalCrawl.csv";
 
     public static ConcurrentHashMap map = new ConcurrentHashMap<>();
 
     private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-    private static final Lock r = rwl.readLock();
     private static final Lock w = rwl.writeLock();
 
     public Utility() throws IOException {
@@ -124,29 +121,8 @@ public final class Utility {
         return map;
     }
 
-    /**
-       Write Sentiment results to CSV file
-     */
-    public static void writeToCSV(final ConcurrentHashMap<String,SentimentType> con_map){
 
-        try{
-            FileWriter fileWriter = new FileWriter(RESULTS_FILE_PATH);
-
-            CSVWriter writer = new CSVWriter(fileWriter);
-
-           for(Map.Entry<String,SentimentType> entry : con_map.entrySet()){
-                        String[] data = {entry.getKey(),String.valueOf(entry.getValue())};
-                        writer.writeNext(data);
-            }
-
-            writer.close();
-
-        }catch(Exception e){
-
-        }
-    }
-
-    public final static void writeSentimentResult(final String url, final SentimentType sentiment){
+    public static void writeSentimentResult(final String url, final SentimentType sentiment){
         w.lock();
 
         try{
@@ -170,7 +146,7 @@ public final class Utility {
         }
     }
 
-    public final static void writeURLSentimentResult(final String url, final SentimentType sentiment, final String title){
+    public synchronized static void writeURLSentimentResult(final String url, final int sentiment, final String title){
         w.lock();
 
         try{
@@ -179,7 +155,7 @@ public final class Utility {
 
                 CSVWriter writer = new CSVWriter(fileWriter);
 
-                String [] record = {url,String.valueOf(sentiment),title};
+                String [] record = {url,String.valueOf(SentimentType.fromInt(sentiment)),title};
 
                 writer.writeNext(record);
 
@@ -194,32 +170,27 @@ public final class Utility {
         }
     }
 
-
-
-    public static void writeToCSV_FullAnalysis(final ConcurrentHashMap<String,SentimentType> con_map){
+    public synchronized static void writeURLOptimalSentimentResult(final String url, final int sentiment, final String title){
+        w.lock();
 
         try{
-            FileWriter fileWriter = new FileWriter(FULL_RESULTS_FILE_PATH,true);
+            try{
+                FileWriter fileWriter = new FileWriter(OPTIMAL_RESULTS_FILE_PATH,true);
 
-            CSVWriter writer = new CSVWriter(fileWriter);
+                CSVWriter writer = new CSVWriter(fileWriter);
 
-            for(Map.Entry<String,SentimentType> entry : con_map.entrySet()){
-                String[] data = {entry.getKey(),String.valueOf(entry.getValue())};
-                writer.writeNext(data);
+                String [] record = {url,String.valueOf(SentimentType.fromInt(sentiment)),title};
+
+                writer.writeNext(record);
+
+                writer.close();
+
             }
+            catch(Exception e){
 
-            writer.close();
-
-        }catch(Exception e){
-
+            }
+        }finally {
+            w.unlock();
         }
     }
-
-
-
-
-
-
-
-
 }
