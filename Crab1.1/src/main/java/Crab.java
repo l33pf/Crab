@@ -24,13 +24,10 @@
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.opencsv.exceptions.CsvException;
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
-
 import org.jsoup.select.Elements;
 import org.jsoup.nodes.Element;
 
@@ -39,18 +36,13 @@ public final class Crab {
     public static final CrabStack urlStack = new CrabStack();
 
     private static final int numOfThreads = (Runtime.getRuntime().availableProcessors())+1;
-    private static final int CAPACITY = 10; //10
+    private static final int CAPACITY = 10;
 
     public static final Queue<String> visitedList = new ConcurrentLinkedQueue<>();
 
     public static ConcurrentHashMap<String,SentimentType> con_map = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap<String,SentimentType> full_sentiment_map = new ConcurrentHashMap<>();
 
-    final static ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-    final static Lock r = rwl.readLock();
-    final static Lock w = rwl.writeLock();
-
-    public static Crawl_Type crab_crawl_type;
 
     public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
             10L, TimeUnit.SECONDS,
@@ -113,10 +105,10 @@ public final class Crab {
         return 0;
     }
 
-    public static void CrabCrawl(Crawl_Type crawl) throws IOException, CsvException, ClassNotFoundException, InterruptedException {
+    public static void CrabCrawl() throws IOException, CsvException, ClassNotFoundException, InterruptedException {
 
         /* Read in the URL Seed set supplied into a stack */
-        URLSeed.readIn(urlStack);
+        Utility.readIn(urlStack);
 
         exec.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 
@@ -124,48 +116,16 @@ public final class Crab {
             throw new IllegalArgumentException("no URL Seed set supplied. \n");
         }
 
-        switch(crawl){
+        con_map = Utility.DeserializeConMap();
 
-            /* This option will do a single sentiment crawl based on what is within the URL seed set */
-            case Sentiment:
-                crab_crawl_type = Crawl_Type.Sentiment;
-
-                con_map = Utility.DeserializeConMap();
-
-           //     full_sentiment_map = Utility.DeserializeConMap("f_map_ser");
-
-                while(urlStack.size() != 0){
-                    exec.submit(new SentimentBasisRunnable(urlStack.safePop())); //need to add in full crawl to
-                }
-
-                exec.shutdown();
-
-                break;
+        while(urlStack.size() != 0){
+            exec.submit(new SentimentBasisRunnable(urlStack.safePop())); //need to add in full crawl to
         }
 
-        if((crawl == Crawl_Type.Sentiment) || (crawl == Crawl_Type.FullSentiment) || (crawl == Crawl_Type.keyWordSentiment)){
-            exec.shutdown();
-        }
+        exec.shutdown();
 
-        switch(crawl){
-            case Sentiment: case AverageSentiment:
-       //         Utility.writeToCSV(con_map);
-       //         Utility.writeToCSV_FullAnalysis(full_sentiment_map);
-                break;
-
-        }
         Utility.SerializeConMap(con_map);
         Utility.SerializeConMap(full_sentiment_map,"f_map_ser");
-    }
-
-    /**
-     * Enum for the Crawl Type used
-     */
-    public enum Crawl_Type {
-        Sentiment,
-        FullSentiment,
-        keyWordSentiment,
-        AverageSentiment
     }
 
 }

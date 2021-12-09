@@ -60,7 +60,7 @@ public final class SentimentBasisRunnable implements Runnable {
                     final String linkTitle = docTwo.title();
 
                     if(Crab.visitedList.contains(link.attr("abs:href"))){
-                        //do nothing
+                        //do nothing - want to avoid this as we are wasting cycles
                     }else{
                         System.out.println("Visited: " + link.attr("abs:href") + "\n");
 

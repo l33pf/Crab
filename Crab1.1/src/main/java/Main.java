@@ -17,8 +17,6 @@ public class Main {
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException, CsvException {
         Crab c = new Crab();
 
-        Crab.Crawl_Type crawl = Crab.Crawl_Type.Sentiment;
-
-        Crab.CrabCrawl(crawl);
+        Crab.CrabCrawl();
     }
 }

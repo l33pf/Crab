@@ -23,10 +23,13 @@
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
+import com.opencsv.exceptions.CsvException;
+import com.opencsv.exceptions.CsvValidationException;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -38,6 +41,7 @@ public final class Utility {
     public static final String RESULTS_FILE_PATH = "./CrabResults.csv";
     public static final String FULL_RESULTS_FILE_PATH = "./CrabFullAnalysisSentimentCrawl.csv";
     public static final String OPTIMAL_RESULTS_FILE_PATH = "./CrabOptimalCrawl.csv";
+    public static String SAMPLE_CSV_FILE_PATH = "./test.csv";
 
     public static ConcurrentHashMap map = new ConcurrentHashMap<>();
 
@@ -45,6 +49,25 @@ public final class Utility {
     private static final Lock w = rwl.writeLock();
 
     public Utility() throws IOException {
+    }
+
+    //Read in Database
+    public static boolean readIn(CrabStack crabStack) throws IOException, CsvException {
+        try (
+                Reader reader = Files.newBufferedReader(Paths.get(SAMPLE_CSV_FILE_PATH));
+                CSVReader csvReader = new CSVReader(reader)
+        ) {
+            // Reading Records One by One in a String array
+            String[] nextURL;
+            int i = 0;
+            while ((nextURL = csvReader.readNext()) != null) {
+                crabStack.push(nextURL[0]);
+            }
+            return true;
+        } catch (IOException | CsvValidationException e) {
+
+            return false;
+        }
     }
 
     /**
