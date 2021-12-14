@@ -23,6 +23,7 @@
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvException;
@@ -89,6 +90,8 @@ public final class Utility {
         final JsonGenerator gen = factory.createGenerator(
                 new File(RESULTS_JSON_PATH), JsonEncoding.UTF8);
 
+        gen.setPrettyPrinter(new MinimalPrettyPrinter(""));
+
         for(final String url : con_map.keySet()){
             //We'll use Jsoup in here just for testing at the moment to extract the title
                 final Document doc = Jsoup.connect(url).get();
@@ -98,7 +101,7 @@ public final class Utility {
                 gen.writeStringField("Sentiment",String.valueOf(con_map.get(url)));
                 gen.writeStringField("Title",doc.title());
                 gen.writeEndObject();
-
+                gen.writeRaw('\n');
         }
         gen.close();
     }
