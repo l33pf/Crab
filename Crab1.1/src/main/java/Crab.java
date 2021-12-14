@@ -38,6 +38,8 @@ public final class Crab {
     private static final int numOfThreads = (Runtime.getRuntime().availableProcessors())+1;
     private static final int CAPACITY = 10;
 
+    public static boolean writeJson = true;
+
     public static final Queue<String> visitedList = new ConcurrentLinkedQueue<>();
 
     public static ConcurrentHashMap<String,SentimentType> con_map = new ConcurrentHashMap<>();
@@ -124,8 +126,11 @@ public final class Crab {
 
         exec.shutdown();
 
-        Utility.SerializeConMap(con_map);
-        Utility.SerializeConMap(full_sentiment_map,"f_map_ser");
-    }
+        if(Crab.writeJson){
+            Utility.writeResultsToJSON(con_map);
+        }
 
+  //      Utility.SerializeConMap(con_map);
+  //      Utility.SerializeConMap(full_sentiment_map,"f_map_ser");
+    }
 }

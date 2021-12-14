@@ -21,12 +21,19 @@
  SOFTWARE.
  **/
 
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvException;
 import com.opencsv.exceptions.CsvValidationException;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
 import java.io.*;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -42,6 +49,8 @@ public final class Utility {
     public static final String FULL_RESULTS_FILE_PATH = "./CrabFullAnalysisSentimentCrawl.csv";
     public static final String OPTIMAL_RESULTS_FILE_PATH = "./CrabOptimalCrawl.csv";
     public static String SAMPLE_CSV_FILE_PATH = "./test.csv";
+
+    public static final String RESULTS_JSON_PATH = "./CrabResults.json";
 
     public static ConcurrentHashMap map = new ConcurrentHashMap<>();
 
@@ -68,6 +77,30 @@ public final class Utility {
 
             return false;
         }
+    }
+
+    /**
+     Writes crawl data to a JSON file
+     */
+    public static void writeResultsToJSON(final ConcurrentHashMap<String,SentimentType> con_map) throws IOException {
+
+        final JsonFactory factory = new JsonFactory();
+
+        final JsonGenerator gen = factory.createGenerator(
+                new File(RESULTS_JSON_PATH), JsonEncoding.UTF8);
+
+        for(final String url : con_map.keySet()){
+            //We'll use Jsoup in here just for testing at the moment to extract the title
+                final Document doc = Jsoup.connect(url).get();
+
+                gen.writeStartObject();
+                gen.writeStringField("URL",url);
+                gen.writeStringField("Sentiment",String.valueOf(con_map.get(url)));
+                gen.writeStringField("Title",doc.title());
+                gen.writeEndObject();
+
+        }
+        gen.close();
     }
 
     /**
