@@ -127,7 +127,8 @@ public final class Crab {
         exec.shutdown();
 
         if(Crab.writeJson){
-            Utility.writeResultsToJSON(con_map);
+            Utility.writeResultsToJSON(con_map,Utility.RESULTS_JSON_PATH);
+            Utility.writeResultsToJSON(full_sentiment_map,Utility.OPTIMAL_RESULTS_JSON_PATH);
         }
 
   //      Utility.SerializeConMap(con_map);

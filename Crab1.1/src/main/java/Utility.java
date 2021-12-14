@@ -52,6 +52,7 @@ public final class Utility {
     public static String SAMPLE_CSV_FILE_PATH = "./test.csv";
 
     public static final String RESULTS_JSON_PATH = "./CrabResults.json";
+    public static final String OPTIMAL_RESULTS_JSON_PATH = "./CrabOptimalCrawlResults.json";
 
     public static ConcurrentHashMap map = new ConcurrentHashMap<>();
 
@@ -83,12 +84,12 @@ public final class Utility {
     /**
      Writes crawl data to a JSON file
      */
-    public static void writeResultsToJSON(final ConcurrentHashMap<String,SentimentType> con_map) throws IOException {
+    public static void writeResultsToJSON(final ConcurrentHashMap<String,SentimentType> con_map, final String file_addr) throws IOException {
 
         final JsonFactory factory = new JsonFactory();
 
         final JsonGenerator gen = factory.createGenerator(
-                new File(RESULTS_JSON_PATH), JsonEncoding.UTF8);
+                new File(file_addr), JsonEncoding.UTF8);
 
         gen.setPrettyPrinter(new MinimalPrettyPrinter(""));
 
