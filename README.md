@@ -13,18 +13,19 @@ The Crawler is still in early stages of development.
 
 ### Built With
 
-Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j for logging purposes and OpenCSV for storage.(<b>NOTE</b>: This list may change as development advances)
+Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j for logging purposes, OpenCSV for storage and Jackson for JSON exporting.(<b>NOTE</b>: This list may change as development advances)
 
 * [CoreNLP](https://stanfordnlp.github.io/CoreNLP/)
 * [Jsoup](https://jsoup.org/)
 * [Log4j](https://logging.apache.org/log4j/)
 * [OpenCSV](http://opencsv.sourceforge.net/)
+* [Jackson](https://github.com/FasterXML/jackson)
 
 <!-- ROADMAP -->
 ## Roadmap
 - [ ] Microbenchmarking with JMH
-- [ ] Notebooks utilisation to present results graphically
 - [ ] Concurrent logging
+- [ ] REST API
 
 See the [open issues](https://github.com/l33pf/Crab/issues) for a full list of proposed features (and known issues).
 
