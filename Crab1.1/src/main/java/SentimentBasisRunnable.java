@@ -21,7 +21,7 @@
  SOFTWARE.
  **/
 
-/**
+/*
  * SentimentBasisRunnable:
  * This class takes a URL and then runs sentiment analysis on all child-links of the URL,
  * it will look for the optimally sentiment-best link and when finished will push the best
@@ -35,6 +35,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
 import java.util.Objects;
 
 public final class SentimentBasisRunnable implements Runnable {
@@ -70,12 +71,22 @@ public final class SentimentBasisRunnable implements Runnable {
 
                         Utility.writeURLSentimentResult(link.attr("abs:href"),sentiment,linkTitle);
 
+                        if(Crab.writeJson){
+                            Crab.con_map.putIfAbsent(link.attr("abs:href"),SentimentType.fromInt(sentiment));
+                        }
+
                         if(sentiment > bestSentiment){
                             bestSentiment = sentiment; //change the optimal
                             bestLink = link.attr("abs:href");
                             Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,Jsoup.connect(bestLink).get().title()); //test
+
+                            if(Crab.writeJson){
+                                Crab.full_sentiment_map.putIfAbsent(bestLink,SentimentType.fromInt(bestSentiment));
+                            }
+
                             System.out.println("Best Sentiment Link for: " + URL + " currently: " + bestLink + "\n" );
                         }
+
                     }
             }
             final String title = (Jsoup.connect(bestLink).get()).title();

@@ -34,10 +34,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.*;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -59,9 +57,6 @@ public final class Utility {
     private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private static final Lock w = rwl.writeLock();
 
-    public Utility() throws IOException {
-    }
-
     //Read in Database
     public static boolean readIn(CrabStack crabStack) throws IOException, CsvException {
         try (
@@ -70,7 +65,6 @@ public final class Utility {
         ) {
             // Reading Records One by One in a String array
             String[] nextURL;
-            int i = 0;
             while ((nextURL = csvReader.readNext()) != null) {
                 crabStack.push(nextURL[0]);
             }
@@ -105,31 +99,6 @@ public final class Utility {
                 gen.writeRaw('\n');
         }
         gen.close();
-    }
-
-    /**
-        Read a CSV file into a list
-     */
-    public static void readToCSV(final String file, List<String> lst){
-
-        int counter = 0;
-
-        try{
-            FileReader filereader = new FileReader(file);
-
-            CSVReader csvReader = new CSVReader(filereader);
-            String[] line;
-
-            while ((line = csvReader.readNext()) != null) {
-                for (String cell : line) {
-                    lst.add(counter,cell);
-                    counter++;
-                }
-            }
-
-        }catch(Exception e){
-
-        }
     }
 
     /**
@@ -170,7 +139,6 @@ public final class Utility {
 
     /**
      Deserialize the Sentiment map
-     * @return
      */
     public static ConcurrentHashMap DeserializeConMap(String fname) throws IOException, ClassNotFoundException {
         FileInputStream fs = new FileInputStream(fname);

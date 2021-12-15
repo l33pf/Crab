@@ -33,22 +33,12 @@ public final class CrabStack {
     //This is an abstract stack where we use a linked list to mirror a stack
 
     LinkedList lst = new LinkedList();
-    String initialValue;
 
     private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private final Lock r = rwl.readLock();
     private final Lock w = rwl.writeLock();
 
-    CrabStack(String val){
-        this.initialValue = val;
-        push(initialValue);
-    }
-
     CrabStack(){
-        lst.createNewList();
-    }
-
-    void createStack(){
         lst.createNewList();
     }
 
@@ -65,23 +55,8 @@ public final class CrabStack {
         return lst.removeTop();
     }
 
-    //Displays the current element at the top of the stack
-    String peek(){
-        return lst.returnHeadVal();
-    }
-
     int size(){
         return lst.size();
-    }
-
-    //Clears stack - O(n) time
-    void flushStack(CrabStack stck){
-        int N = stck.size();
-
-        if(N != 0){
-            for(int i = 0; i < N; i++)
-                stck.pop();
-        }
     }
 
     public String safePop(){
@@ -93,11 +68,11 @@ public final class CrabStack {
     }
 
     public void safePush(final String val){
-        r.lock();
+        w.lock();
         try{
             push(val);
         } finally{
-            r.unlock();
+            w.unlock();
         }
     }
 }

@@ -34,13 +34,4 @@ public final class SentimentAnalyser {
         return 0; /* no sentiment */
     }
 
-    /**
-     *
-     * @return - sentiment average over a page
-     * TODO
-     */
-    public int analysePage(){
-        return 0;
-    }
-
 }
