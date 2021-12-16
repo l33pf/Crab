@@ -36,12 +36,52 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 public final class SentimentBasisRunnable implements Runnable {
 
     String URL, bestLink;
     int bestSentiment, sentiment;
+    HashMap<String,SentimentType> map = new HashMap<>();
+
+    /**
+     Used to calculate the sentiment distribution of all links associated to the parent URL
+     */
+    public void calculatePercentages(){
+            int neg =0,pos =0,ntrl = 0;
+            int N = map.size();
+
+            for(String key : map.keySet()){
+
+                SentimentType a = map.get(key);
+
+                switch(map.get(key)){
+
+
+                    case POSITIVE:
+                        pos++;
+                        break;
+
+                    case NEUTRAL:
+                        ntrl++;
+                        break;
+
+                    case NEGATIVE:
+                        neg++;
+                        break;
+                }
+            }
+
+            double test = ((double)ntrl/N)*100;
+            double test_two = Math.floor(test);
+
+            double negPercent = ((double)neg/N)*100;
+            double ntrlPercent = ((double)ntrl/N)*100;
+            double posPercent = Math.floor((double)(pos/N)*100);
+
+            Utility.writeSentimentDistribution(URL,Math.floor(negPercent),Math.floor(ntrlPercent),Math.floor(posPercent));
+    }
 
     public SentimentBasisRunnable(String link){
         Objects.requireNonNull(this.URL = link);
@@ -71,6 +111,8 @@ public final class SentimentBasisRunnable implements Runnable {
 
                         Utility.writeURLSentimentResult(link.attr("abs:href"),sentiment,linkTitle);
 
+                        map.put(link.attr("abs:href"),SentimentType.fromInt(sentiment)); //used to calculate sentiment distribution
+
                         if(Crab.writeJson){
                             Crab.con_map.putIfAbsent(link.attr("abs:href"),SentimentType.fromInt(sentiment));
                         }
@@ -81,7 +123,7 @@ public final class SentimentBasisRunnable implements Runnable {
                             Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,Jsoup.connect(bestLink).get().title()); //test
 
                             if(Crab.writeJson){
-                                Crab.full_sentiment_map.putIfAbsent(bestLink,SentimentType.fromInt(bestSentiment));
+                               // Crab.full_sentiment_map.putIfAbsent(bestLink,SentimentType.fromInt(bestSentiment));
                             }
 
                             System.out.println("Best Sentiment Link for: " + URL + " currently: " + bestLink + "\n" );
@@ -93,6 +135,9 @@ public final class SentimentBasisRunnable implements Runnable {
             Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,title);
 
             Crab.urlStack.safePush(bestLink);
+
+            calculatePercentages(); // calculate the sentiment distribution of the parent URL
+
 
         }catch(Exception e){
 

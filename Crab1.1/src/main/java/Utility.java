@@ -48,6 +48,7 @@ public final class Utility {
     public static final String FULL_RESULTS_FILE_PATH = "./CrabFullAnalysisSentimentCrawl.csv";
     public static final String OPTIMAL_RESULTS_FILE_PATH = "./CrabOptimalCrawl.csv";
     public static String SAMPLE_CSV_FILE_PATH = "./test.csv";
+    public static final String SENTIMENT_DISTRIBUTION_PATH = "./CrabParentSentimentDistribution.csv";
 
     public static final String RESULTS_JSON_PATH = "./CrabResults.json";
     public static final String OPTIMAL_RESULTS_JSON_PATH = "./CrabOptimalCrawlResults.json";
@@ -173,6 +174,28 @@ public final class Utility {
             w.unlock();
         }
     }
+
+    public static void writeSentimentDistribution(final String url, final double neg, final double ntrl, final double pos){
+        w.lock();
+        try{
+            FileWriter fileWriter = new FileWriter(SENTIMENT_DISTRIBUTION_PATH,true);
+
+            CSVWriter writer = new CSVWriter(fileWriter);
+
+            String [] record = {url,String.valueOf(neg),String.valueOf(ntrl),String.valueOf(pos)};
+
+            writer.writeNext(record);
+
+            writer.close();
+
+        }catch(Exception e){
+
+        }
+        finally{
+            w.unlock();
+        }
+    }
+
 
     public synchronized static void writeURLSentimentResult(final String url, final int sentiment, final String title){
         w.lock();
