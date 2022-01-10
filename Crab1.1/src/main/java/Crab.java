@@ -26,10 +26,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.opencsv.exceptions.CsvException;
-import org.jsoup.*;
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
-import org.jsoup.nodes.Element;
 
 public final class Crab {
 
@@ -45,7 +41,6 @@ public final class Crab {
     public static ConcurrentHashMap<String,SentimentType> con_map = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap<String,SentimentType> full_sentiment_map = new ConcurrentHashMap<>();
 
-
     public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
             10L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(CAPACITY),
@@ -56,55 +51,6 @@ public final class Crab {
     Crab() throws IOException {
         Utility.SerializeConMap(con_map);
         Utility.SerializeConMap(full_sentiment_map,"f_map_ser");
-    }
-
-    public static int analyseFullPage(final String URL){
-
-        int sentiment = 0;
-        int headerSentiment = 0;
-        int hSentiment;
-
-        try{
-            final Document doc = Jsoup.connect(URL).get();
-            final Elements content = doc.select("article");
-            Elements contents = content.select("p");
-            final String heading = doc.head().text();
-            hSentiment = SentimentAnalyser.analyse(heading);
-
-            if (content.size() == 0) {
-                contents = doc.select("p");
-
-                for(Element e : contents){
-                    sentiment += SentimentAnalyser.analyse(e.text());
-                }
-            } else {
-                for (Element e : contents) {
-                    sentiment += SentimentAnalyser.analyse(e.text());
-                }
-            }
-
-            //Look at header tags for any further info, May get better accuracy
-            final Elements hTags = doc.select("h1, h2, h3, h4, h5, h6");
-
-            for(Element h : hTags){
-                headerSentiment += SentimentAnalyser.analyse(h.text());
-            }
-
-            if(headerSentiment > sentiment){
-                return Math.max(headerSentiment, hSentiment);
-            }else if(headerSentiment < sentiment){
-                if(headerSentiment < hSentiment){
-                    return hSentiment;
-                }
-                return sentiment;
-            }else{
-                return sentiment;
-            }
-
-        }catch(Exception e){
-
-        }
-        return 0;
     }
 
     public static void CrabCrawl() throws IOException, CsvException, ClassNotFoundException, InterruptedException {
@@ -128,7 +74,7 @@ public final class Crab {
 
         if(Crab.writeJson){
             Utility.writeResultsToJSON(con_map,Utility.RESULTS_JSON_PATH);
-            Utility.writeResultsToJSON(full_sentiment_map,Utility.OPTIMAL_RESULTS_JSON_PATH);
+            //Utility.writeResultsToJSON(full_sentiment_map,Utility.OPTIMAL_RESULTS_JSON_PATH);
         }
 
   //      Utility.SerializeConMap(con_map);
