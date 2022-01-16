@@ -41,12 +41,16 @@ public final class Crab {
     public static ConcurrentHashMap<String,SentimentType> con_map = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap<String,SentimentType> full_sentiment_map = new ConcurrentHashMap<>();
 
+    /* For Keyword article gathering */
+    public static final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb = new ConcurrentHashMap<>();
+    public static final HashSet<String> keyWords = new HashSet<>();
+    public static boolean keyWordCrawl = false;
+
     public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
             10L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(CAPACITY),
             Executors.defaultThreadFactory(),
             new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
-
 
     Crab() throws IOException {
         Utility.SerializeConMap(con_map);
