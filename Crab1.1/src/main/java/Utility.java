@@ -244,4 +244,29 @@ public final class Utility {
             w.unlock();
         }
     }
+
+    public synchronized static void writeKeywordSentimentResult(final String keyword, final String URL, final SentimentType sentiment){
+        w.lock();
+
+        final String KEYWORD_FILE_PATH = "./" + keyword + ".csv";
+
+        try{
+            try{
+                FileWriter fileWriter = new FileWriter(KEYWORD_FILE_PATH,true);
+
+                CSVWriter writer = new CSVWriter(fileWriter);
+
+                String [] record = {keyword,URL, String.valueOf(sentiment)};
+
+                writer.writeNext(record);
+
+                writer.close();
+
+            }catch(Exception e){
+
+            }
+        }finally{
+            w.unlock();
+        }
+    }
 }
