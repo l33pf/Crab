@@ -23,8 +23,9 @@
 
 /*
  * SentimentKeyWordRunnable
- * This class takes a URL and then looks if the title contains a keyword then runs sentiment analysis.
- * Otherwise it will return.
+ * This runnable class takes a URL and then looks if the titles of its links contains a keyword then runs sentiment analysis and
+ * based on the result will then add the link to the URL onto the crawler's stack. Note that the Crawl only goes for neutral-positive
+ * links it doesn't look at any displaying negative sentiment (this can be changed).
  *
  * Created: 16/1/2022
 
@@ -35,9 +36,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 public class SentimentKeyWordRunnable implements Runnable {
 
     String link;
+    int sentiment;
 
     SentimentKeyWordRunnable(String URL){
         this.link = URL;
@@ -47,34 +51,35 @@ public class SentimentKeyWordRunnable implements Runnable {
 
         try{
             final Document doc = Jsoup.connect(link).get();
+            Document docTwo;
 
-            for(String keyword : Crab.keyWords){
-                if(doc.title().contains(keyword)){
+            final Elements links = doc.select("a[href]");
 
-                    Document docTwo;
-                    final Elements links = doc.select("a[href]");
+            for(Element linkage : links){
 
+                docTwo = Jsoup.connect(linkage.attr("abs:href")).get();
 
+                for(String keyword : Crab.keyWords){
+                    if(docTwo.title().contains(keyword)){
+                        sentiment = SentimentAnalyser.analyse(doc.title()); //run sentiment analysis on the title
 
+                        if(SentimentType.fromInt(sentiment) != SentimentType.NEGATIVE || SentimentType.fromInt(sentiment) != SentimentType.VERY_NEGATIVE){
+                            //Messy way but works
+                            ConcurrentHashMap<String,SentimentType> inner_map = new ConcurrentHashMap<>();
+                            inner_map.put(link,SentimentType.fromInt(sentiment));
+                            Crab.keywordDb.put(keyword,inner_map);
+                        }
 
-                    break; //don't loop again given we have already done the analysis
+                        //add the link to the crawler stack to see if any further relevant links can be found
+                        Crab.urlStack.safePush(linkage.attr("abs:href"));
+
+                        //break out of the loop given a keyword has been found for this link
+                        break;
+                    }
                 }
             }
-
-
-
-
         }catch(Exception e){
 
         }
-
-
-
-
-
-
-
     }
-
-
 }
