@@ -51,6 +51,7 @@ public final class Utility {
     public static final String SENTIMENT_DISTRIBUTION_PATH = "./CrabParentSentimentDistribution.csv";
 
     public static final String RESULTS_JSON_PATH = "./CrabResults.json";
+    public static final String JSON_KEYWORD_JSON_PATH = "./CrabKeyWordCrawlResults.json";
     public static final String OPTIMAL_RESULTS_JSON_PATH = "./CrabOptimalCrawlResults.json";
 
     public static ConcurrentHashMap map = new ConcurrentHashMap<>();
@@ -98,6 +99,34 @@ public final class Utility {
                 gen.writeStringField("Title",doc.title());
                 gen.writeEndObject();
                 gen.writeRaw('\n');
+        }
+        gen.close();
+    }
+
+    public static void write_keyWordResults_ToJSON(final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb, final String file_addr) throws IOException {
+
+        final JsonFactory factory = new JsonFactory();
+
+        final JsonGenerator gen = factory.createGenerator(
+                new File(file_addr), JsonEncoding.UTF8
+        );
+
+        gen.setPrettyPrinter(new MinimalPrettyPrinter(""));
+
+        //Messy
+        for(final String keyword : keywordDb.keySet()){
+            for(final ConcurrentHashMap<String,SentimentType> map : keywordDb.values()){
+                for(final String url : map.keySet()){
+                    final Document doc = Jsoup.connect(url).get();
+
+                    gen.writeStartObject();
+                    gen.writeStringField("Keyword",keyword);
+                    gen.writeStringField("Link",url);
+                    gen.writeStringField("Sentiment", String.valueOf(map.get(url)));
+                    gen.writeEndObject();
+                    gen.writeRaw("\n");
+                }
+            }
         }
         gen.close();
     }
