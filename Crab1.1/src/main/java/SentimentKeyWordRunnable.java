@@ -57,26 +57,32 @@ public class SentimentKeyWordRunnable implements Runnable {
 
             for(Element linkage : links){
 
-                docTwo = Jsoup.connect(linkage.attr("abs:href")).get();
+                if(!Crab.visitedList.contains(linkage.attr("abs:href"))){
+                    System.out.println("Now visiting: " + linkage.attr("abs:href")+ "\n");
 
-                for(String keyword : Crab.keyWords){
-                    if(docTwo.title().contains(keyword)){
-                        sentiment = SentimentAnalyser.analyse(doc.title()); //run sentiment analysis on the title
+                    docTwo = Jsoup.connect(linkage.attr("abs:href")).get();
 
-                        if(SentimentType.fromInt(sentiment) != SentimentType.NEGATIVE || SentimentType.fromInt(sentiment) != SentimentType.VERY_NEGATIVE){
-                            //Messy way but works
-                            ConcurrentHashMap<String,SentimentType> inner_map = new ConcurrentHashMap<>();
-                            inner_map.put(link,SentimentType.fromInt(sentiment));
-                            Crab.keywordDb.put(keyword,inner_map);
+                    for(String keyword : Crab.keyWords){
+                        if(docTwo.title().contains(keyword)){
+                            sentiment = SentimentAnalyser.analyse(doc.title()); //run sentiment analysis on the title
+
+
+                            if(SentimentType.fromInt(sentiment) != SentimentType.NEGATIVE || SentimentType.fromInt(sentiment) != SentimentType.VERY_NEGATIVE){
+                                //Messy way but works
+                                ConcurrentHashMap<String,SentimentType> inner_map = new ConcurrentHashMap<>();
+                                inner_map.put(link,SentimentType.fromInt(sentiment));
+                                Crab.keywordDb.put(keyword,inner_map);
+                            }
+
+                            //add the link to the crawler stack to see if any further relevant links can be found
+                            Crab.urlStack.safePush(linkage.attr("abs:href"));
+
+                            //break out of the loop given a keyword has been found for this link
+                            break;
                         }
-
-                        //add the link to the crawler stack to see if any further relevant links can be found
-                        Crab.urlStack.safePush(linkage.attr("abs:href"));
-
-                        //break out of the loop given a keyword has been found for this link
-                        break;
                     }
                 }
+                Crab.visitedList.add(linkage.attr("abs:href"));
             }
         }catch(Exception e){
 
