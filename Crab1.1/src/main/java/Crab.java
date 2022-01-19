@@ -44,8 +44,8 @@ public final class Crab {
     /* For Keyword article gathering */
     public static final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb = new ConcurrentHashMap<>();
     public static final HashSet<String> keyWords = new HashSet<>();
-    public static boolean keyWordCrawl = false;
-
+    public static boolean keyWordCrawl = true;
+    
     public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
             10L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(CAPACITY),
@@ -70,15 +70,27 @@ public final class Crab {
 
         con_map = Utility.DeserializeConMap();
 
-        while(urlStack.size() != 0){
-            exec.submit(new SentimentBasisRunnable(urlStack.safePop())); //need to add in full crawl to
+        if(keyWordCrawl){
+            System.out.println("Doing Keyword Crawl. \n");
+            while(urlStack.size() != 0){
+                exec.submit(new SentimentKeyWordRunnable(urlStack.safePop()));
+            }
+        }else{
+            while(urlStack.size() != 0){
+                exec.submit(new SentimentBasisRunnable(urlStack.safePop())); //need to add in full crawl to
+            }
         }
 
         exec.shutdown();
 
-        if(Crab.writeJson){
-            Utility.writeResultsToJSON(con_map,Utility.RESULTS_JSON_PATH);
-            //Utility.writeResultsToJSON(full_sentiment_map,Utility.OPTIMAL_RESULTS_JSON_PATH);
+        if(keyWordCrawl){
+            if(Crab.writeJson){
+                Utility.write_keyWordResults_ToJSON(keywordDb,Utility.JSON_KEYWORD_JSON_PATH);
+            }
+        }else{
+            if(Crab.writeJson){
+                Utility.writeResultsToJSON(con_map,Utility.RESULTS_JSON_PATH);
+            }
         }
 
   //      Utility.SerializeConMap(con_map);
