@@ -58,21 +58,25 @@ public class SentimentKeyWordRunnable implements Runnable {
             for(Element linkage : links){
 
                 if(!Crab.visitedList.contains(linkage.attr("abs:href"))){
-                    System.out.println("Now visiting: " + linkage.attr("abs:href")+ "\n");
 
                     docTwo = Jsoup.connect(linkage.attr("abs:href")).get();
 
                     for(String keyword : Crab.keyWords){
                         if(docTwo.title().contains(keyword)){
+
+                            System.out.println("Now visiting: " + linkage.attr("abs:href")+ "\n");
+
                             sentiment = SentimentAnalyser.analyse(doc.title()); //run sentiment analysis on the title
 
-
-                            if(SentimentType.fromInt(sentiment) != SentimentType.NEGATIVE || SentimentType.fromInt(sentiment) != SentimentType.VERY_NEGATIVE){
+                            if(SentimentType.fromInt(sentiment) == SentimentType.POSITIVE || SentimentType.fromInt(sentiment) == SentimentType.VERY_POSITIVE){
                                 //Messy way but works
                                 ConcurrentHashMap<String,SentimentType> inner_map = new ConcurrentHashMap<>();
                                 inner_map.put(link,SentimentType.fromInt(sentiment));
                                 Crab.keywordDb.put(keyword,inner_map);
+                                System.out.println("Positive Sentiment detected on Link: " + linkage.attr("abs:href") + "\n");
                             }
+
+                            Utility.writeKeywordSentimentResult(keyword,linkage.attr("abs:href"),SentimentType.fromInt(sentiment));
 
                             //add the link to the crawler stack to see if any further relevant links can be found
                             Crab.urlStack.safePush(linkage.attr("abs:href"));

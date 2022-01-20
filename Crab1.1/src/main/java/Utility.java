@@ -52,7 +52,7 @@ public final class Utility {
 
     public static final String RESULTS_JSON_PATH = "./CrabResults.json";
     public static final String JSON_KEYWORD_JSON_PATH = "./CrabKeyWordCrawlResults.json";
-    public static final String OPTIMAL_RESULTS_JSON_PATH = "./CrabOptimalCrawlResults.json";
+    public static final String CSV_KEYWORD_PATH = "./CrabKeyWordCrawlResults.csv";
 
     public static ConcurrentHashMap map = new ConcurrentHashMap<>();
 
@@ -277,11 +277,9 @@ public final class Utility {
     public synchronized static void writeKeywordSentimentResult(final String keyword, final String URL, final SentimentType sentiment){
         w.lock();
 
-        final String KEYWORD_FILE_PATH = "./" + keyword + ".csv";
-
         try{
             try{
-                FileWriter fileWriter = new FileWriter(KEYWORD_FILE_PATH,true);
+                FileWriter fileWriter = new FileWriter(CSV_KEYWORD_PATH,true);
 
                 CSVWriter writer = new CSVWriter(fileWriter);
 
