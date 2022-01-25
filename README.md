@@ -25,7 +25,7 @@ Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j f
 ## Roadmap
 - [ ] Crawl based on Keywords
 - [ ] Concurrent logging
-- [ ] Spring Framework Implementation for Web App
+- [ ] Spring Framework Implementation for web app deployment
 - [ ] More export options (PDF etc.)
 
 See the [open issues](https://github.com/l33pf/Crab/issues) for a full list of proposed features (and known issues).
@@ -34,7 +34,7 @@ See the [open issues](https://github.com/l33pf/Crab/issues) for a full list of p
 ## Usage
 
 Examples of URL 'sets' are within the .CSV files found in the repo these consist of links we class as the URL seed set and then crawl through each page. one example
-is for Crawling Crypto newsites, another is for Sport and another for general news. Examples of use can be found in the wiki.
+is for Crawling Crypto newsites, another is for Sport and another for general news. 
 
 <!-- JVM -->
 ## JVM
