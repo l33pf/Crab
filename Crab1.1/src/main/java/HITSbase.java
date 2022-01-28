@@ -35,6 +35,8 @@ import java.util.HashSet;
 import com.opencsv.exceptions.CsvException;
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
+import org.jsoup.nodes.Element;
 
 class HITSbase {
 
@@ -47,11 +49,19 @@ class HITSbase {
 
         if(stack_read_in){
             while(stack.size() != 0){
-                final Document doc = Jsoup.connect(stack.pop()).get();
+                Document doc = Jsoup.connect(stack.pop()).get();
+
+                final Elements links = doc.select("a[href]");
+
+                for(Element link : links){
+                    doc = Jsoup.connect(link.attr("abs:href")).get();
+
+                    if(doc.title().contains(keyword)){
+                        // add the relevant link to the base set for later
+                        baseSet.add(link.attr("abs:href"));
+                    }
+                }
             }
         }
-
-
     }
-
 }
