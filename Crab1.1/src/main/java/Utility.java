@@ -202,6 +202,26 @@ public final class Utility {
         }
     }
 
+    public static void writeVisitList(final String url){
+        w.lock();
+        try{
+            FileWriter fileWriter = new FileWriter(VISIT_LIST_PATH,true);
+
+            CSVWriter writer = new CSVWriter(fileWriter);
+
+            String [] record = {url};
+
+            writer.writeNext(record);
+
+            writer.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally{
+            w.unlock();
+        }
+    }
+
     public static void writeSentimentDistribution(final String url, final double neg, final double ntrl, final double pos){
         w.lock();
         try{

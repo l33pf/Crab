@@ -100,6 +100,7 @@ public final class SentimentBasisRunnable implements Runnable {
                         System.out.println("Visited: " + link.attr("abs:href") + "\n");
 
                         Crab.visitedList.add(link.attr("abs:href"));
+                        Utility.writeVisitList(link.attr("abs:href"));
 
                         sentiment = SentimentAnalyser.analyse(linkTitle);
 
