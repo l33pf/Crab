@@ -45,7 +45,7 @@ public final class Crab {
     public static final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb = new ConcurrentHashMap<>();
     public static final HashSet<String> keyWords = new HashSet<>();
     public static boolean keyWordCrawl = true;
-    
+
     public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
             10L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(CAPACITY),
@@ -85,7 +85,7 @@ public final class Crab {
 
         if(keyWordCrawl){
             if(Crab.writeJson){
-                Utility.write_keyWordResults_ToJSON(keywordDb,Utility.JSON_KEYWORD_JSON_PATH);
+                    Utility.writekeyWordResults_ToJSON(keywordDb);
             }
         }else{
             if(Crab.writeJson){

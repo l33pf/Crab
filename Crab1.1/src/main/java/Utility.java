@@ -24,6 +24,7 @@
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvException;
@@ -36,6 +37,7 @@ import org.jsoup.nodes.Document;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -103,32 +105,34 @@ public final class Utility {
         gen.close();
     }
 
-    public static void write_keyWordResults_ToJSON(final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb, final String file_addr) throws IOException {
+    public static void writekeyWordResults_ToJSON(final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb) throws IOException {
 
         final JsonFactory factory = new JsonFactory();
 
-        final JsonGenerator gen = factory.createGenerator(
-                new File(file_addr), JsonEncoding.UTF8
-        );
+        ConcurrentHashMap<String, SentimentType> dataMap = new ConcurrentHashMap<>();
 
-        gen.setPrettyPrinter(new MinimalPrettyPrinter(""));
+        for(String keyword : keywordDb.keySet()){
+            String fname = "./" + keyword + ".json";
 
-        //Messy
-        for(final String keyword : keywordDb.keySet()){
-            for(final ConcurrentHashMap<String,SentimentType> map : keywordDb.values()){
-                for(final String url : map.keySet()){
-                    final Document doc = Jsoup.connect(url).get();
+            JsonGenerator gen = factory.createGenerator(
+                    new File(fname), JsonEncoding.UTF8
+            );
 
-                    gen.writeStartObject();
-                    gen.writeStringField("Keyword",keyword);
-                    gen.writeStringField("Link",url);
-                    gen.writeStringField("Sentiment", String.valueOf(map.get(url)));
-                    gen.writeEndObject();
-                    gen.writeRaw("\n");
-                }
+            dataMap = keywordDb.get(keyword);
+
+            gen.setPrettyPrinter(new MinimalPrettyPrinter(""));
+
+            gen.writeStartObject();
+
+            for(String key : dataMap.keySet()){
+                gen.writeStringField("URL",key);
+                gen.writeStringField("Sentiment",String.valueOf(dataMap.get(key)));
+                gen.writeEndObject();
+                gen.writeRaw('\n');
             }
+
+            gen.close();
         }
-        gen.close();
     }
 
     /**
