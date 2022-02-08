@@ -121,6 +121,9 @@ public final class SentimentBasisRunnable implements Runnable {
                                // Crab.full_sentiment_map.putIfAbsent(bestLink,SentimentType.fromInt(bestSentiment));
                             }
 
+                            //Submit a full sentiment task to the thread pool
+                            Crab.exec.submit(new SentimentFullRunnable(bestLink));
+
                             System.out.println("Best Sentiment Link for: " + URL + " currently: " + bestLink + "\n" );
                         }
 

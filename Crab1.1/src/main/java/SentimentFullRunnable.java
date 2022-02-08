@@ -66,13 +66,17 @@ public class SentimentFullRunnable implements Runnable{
 
             if(headerSentiment > sentiment){
                 Crab.con_map.put(url,SentimentType.fromInt(Math.max(headerSentiment,hSentiment)));
+                Utility.writeSentimentResult(url,SentimentType.fromInt(headerSentiment));
             }else if(headerSentiment < sentiment){
                 if(headerSentiment < hSentiment){
                     Crab.con_map.putIfAbsent(url,SentimentType.fromInt(hSentiment));
+                    Utility.writeSentimentResult(url,SentimentType.fromInt(hSentiment));
                 }
                 Crab.con_map.putIfAbsent(url,SentimentType.fromInt(sentiment));
+                Utility.writeSentimentResult(url,SentimentType.fromInt(sentiment));
             }else{
                 Crab.con_map.putIfAbsent(url,SentimentType.fromInt(sentiment));
+                Utility.writeSentimentResult(url,SentimentType.fromInt(sentiment));
             }
 
         }catch(Exception e){

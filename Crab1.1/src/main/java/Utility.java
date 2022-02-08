@@ -49,6 +49,7 @@ public final class Utility {
     public static final String RESULTS_JSON_PATH = "./CrabResults.json";
     public static final String JSON_KEYWORD_JSON_PATH = "./CrabKeyWordCrawlResults.json";
     public static final String CSV_KEYWORD_PATH = "./CrabKeyWordCrawlResults.csv";
+    public static final String VISIT_LIST_PATH = "./CrabVisitList.csv";
 
     public static ConcurrentHashMap map = new ConcurrentHashMap<>();
 
