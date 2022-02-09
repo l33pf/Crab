@@ -11,6 +11,16 @@ https://dl.acm.org/doi/10.1145/2396761.2398564
 
 The Crawler is still in early stages of development.
 
+<!-- FEATURES  -->
+## Features
+<b>Optimal Crawl</b>: Crab will crawl through the seed set, each seed page has an associated thread which will run sentiment analysis on links of the seed page find the optimally "best" link based on the sentiment analysis on its title then run a full sentiment analysis on the contents of the page whilst the page links are pushed into the seed set and the process is repeated until the crawl is exhausted. 
+
+The output of the crawl is a series of files displaying the best sentiment pages, and the optimally best sentiment pages on each round of the crawl. In this mode Crab can also keep track of results and generate a sentiment distribution of links from the pages it has crawled. An example plot from a small sentiment distribution of Crypto news sites can be seen in the below figure.
+
+![Figure 2022-02-09 221141](https://user-images.githubusercontent.com/15945205/153299177-f38ead78-e482-41cb-89e3-4ebe3320a577.png)
+
+<b>NOTE</b>: Using Crab in this mode please be aware that currently the default settings of CoreNLP are used we don't use a classifer with a specific training set/lexicon in mind though this would be something welcomed given the accuracy on finding 'positively' labelled pages needs improving.
+
 ### Built With
 
 Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j for logging purposes, OpenCSV for storage and Jackson for JSON exporting.(<b>NOTE</b>: This list may change as development advances)
