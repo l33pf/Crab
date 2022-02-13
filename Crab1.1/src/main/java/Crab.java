@@ -40,6 +40,8 @@ public final class Crab {
     public static final HashSet<String> keyWords = new HashSet<>();
     public static boolean keyWordCrawl = true;
 
+    public static HashSet<String> blockList = new HashSet<>();
+
     public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
             10L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(CAPACITY),

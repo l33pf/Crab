@@ -167,6 +167,30 @@ public final class Utility {
     }
 
     /**
+     Serialize visit list
+     */
+    public static void SerializeQueue(final Queue<String> vList, String fname) throws IOException{
+        FileOutputStream fs =
+                new FileOutputStream(fname);
+        ObjectOutputStream os = new ObjectOutputStream(fs);
+        os.writeObject(vList);
+        os.close();
+        fs.close();
+    }
+
+    /**
+     Deserialize visit list
+     */
+    public static Queue<String> DeserializeQueue() throws IOException, ClassNotFoundException{
+        FileInputStream fs = new FileInputStream("visit_list.ser");
+        ObjectInputStream os = new ObjectInputStream(fs);
+        Queue<String> vList = (Queue<String>) os.readObject();
+        os.close();
+        fs.close();
+        return vList;
+    }
+
+    /**
      Deserialize the Sentiment map
      */
     public static ConcurrentHashMap DeserializeConMap(String fname) throws IOException, ClassNotFoundException {
