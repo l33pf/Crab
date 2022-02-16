@@ -1,18 +1,24 @@
 /*
  ***LICENSE***
-Copyright 2022 l33pf (https://github.com/l33pf)
+ Copyright (c) 2021 l33pf (https://github.com/l33pf) & jelph (https://github.com/jelph)
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
 
-    http://www.apache.org/licenses/LICENSE-2.0
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
  **/
 
 import java.io.*;
@@ -20,6 +26,9 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.opencsv.exceptions.CsvException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class Crab {
 
@@ -30,7 +39,7 @@ public final class Crab {
 
     public static boolean writeJson = true;
 
-    public static final Queue<String> visitedList = new ConcurrentLinkedQueue<>();
+    public static Queue<String> visitedList = new ConcurrentLinkedQueue<>();
 
     public static ConcurrentHashMap<String,SentimentType> con_map = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap<String,SentimentType> full_sentiment_map = new ConcurrentHashMap<>();
@@ -38,8 +47,9 @@ public final class Crab {
     /* For Keyword article gathering */
     public static final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb = new ConcurrentHashMap<>();
     public static final HashSet<String> keyWords = new HashSet<>();
-    public static boolean keyWordCrawl = true;
+    public static boolean keyWordCrawl = false;
 
+    /* Used to store URL's that do not want/needed to be crawled */
     public static HashSet<String> blockList = new HashSet<>();
 
     public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
@@ -64,7 +74,9 @@ public final class Crab {
             throw new IllegalArgumentException("no URL Seed set supplied. \n");
         }
 
-        con_map = Utility.DeserializeConMap();
+        //Deserialize data structures
+        visitedList = Utility.DeserializeQueue();
+      //  con_map = Utility.DeserializeConMap();
 
         if(keyWordCrawl){
             System.out.println("Doing Keyword Crawl. \n");
@@ -89,7 +101,6 @@ public final class Crab {
             }
         }
 
-  //      Utility.SerializeConMap(con_map);
-  //      Utility.SerializeConMap(full_sentiment_map,"f_map_ser");
+          Utility.SerializeQueue(visitedList);
     }
 }

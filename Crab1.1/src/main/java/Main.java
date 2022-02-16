@@ -17,6 +17,18 @@ public class Main {
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException, CsvException {
         Crab c = new Crab();
 
+        c.keyWords.add("Bitcoin");
+        c.keyWords.add("bitcoin");
+        c.keyWords.add("Cardano");
+        c.keyWords.add("cardano");
+
+        Crab.blockList.add("https://facebook.com/");
+        Crab.blockList.add("https://twitter.com/");
+
+        Crab.visitedList.add("blank"); //add blank value
+        Utility.SerializeQueue(Crab.visitedList);
+
+
         Crab.CrabCrawl();
     }
 }

@@ -1,24 +1,29 @@
 /*
  ***LICENSE***
-Copyright 2022 l33pf (https://github.com/l33pf)  & jelph (https://github.com/jelph)
+ Copyright (c) 2021 l33pf (https://github.com/l33pf) & jelph (https://github.com/jelph)
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
 
-    http://www.apache.org/licenses/LICENSE-2.0
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
  **/
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvException;
@@ -31,7 +36,7 @@ import org.jsoup.nodes.Document;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -45,11 +50,11 @@ public final class Utility {
     public static final String OPTIMAL_RESULTS_FILE_PATH = "./CrabOptimalCrawl.csv";
     public static String SAMPLE_CSV_FILE_PATH = "./test.csv";
     public static final String SENTIMENT_DISTRIBUTION_PATH = "./CrabParentSentimentDistribution.csv";
+    public static final String VISIT_LIST_PATH = "./CrabVisitList.csv";
 
     public static final String RESULTS_JSON_PATH = "./CrabResults.json";
     public static final String JSON_KEYWORD_JSON_PATH = "./CrabKeyWordCrawlResults.json";
     public static final String CSV_KEYWORD_PATH = "./CrabKeyWordCrawlResults.csv";
-    public static final String VISIT_LIST_PATH = "./CrabVisitList.csv";
 
     public static ConcurrentHashMap map = new ConcurrentHashMap<>();
 
@@ -155,23 +160,11 @@ public final class Utility {
     }
 
     /**
-        Deserialize the Sentiment map
-     */
-    public static ConcurrentHashMap<String,SentimentType> DeserializeConMap() throws IOException, ClassNotFoundException {
-        FileInputStream fs = new FileInputStream("con_map.ser");
-        ObjectInputStream os = new ObjectInputStream(fs);
-        map = (ConcurrentHashMap)os.readObject();
-        os.close();
-        fs.close();
-        return map;
-    }
-
-    /**
      Serialize visit list
      */
-    public static void SerializeQueue(final Queue<String> vList, String fname) throws IOException{
+    public static void SerializeQueue(final Queue<String> vList) throws IOException{
         FileOutputStream fs =
-                new FileOutputStream(fname);
+                new FileOutputStream("visit_list.ser");
         ObjectOutputStream os = new ObjectOutputStream(fs);
         os.writeObject(vList);
         os.close();
@@ -188,6 +181,18 @@ public final class Utility {
         os.close();
         fs.close();
         return vList;
+    }
+
+    /**
+        Deserialize the Sentiment map
+     */
+    public static ConcurrentHashMap<String,SentimentType> DeserializeConMap() throws IOException, ClassNotFoundException {
+        FileInputStream fs = new FileInputStream("con_map.ser");
+        ObjectInputStream os = new ObjectInputStream(fs);
+        map = (ConcurrentHashMap)os.readObject();
+        os.close();
+        fs.close();
+        return map;
     }
 
     /**
