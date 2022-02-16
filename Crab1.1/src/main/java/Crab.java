@@ -27,8 +27,9 @@ import java.util.concurrent.*;
 
 import com.opencsv.exceptions.CsvException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 public final class Crab {
 
@@ -52,6 +53,8 @@ public final class Crab {
     /* Used to store URL's that do not want/needed to be crawled */
     public static HashSet<String> blockList = new HashSet<>();
 
+    private static Logger logger = LogManager.getLogger();
+
     public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
             10L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(CAPACITY),
@@ -71,6 +74,7 @@ public final class Crab {
         exec.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 
         if(urlStack.size()==0){
+            logger.error("No URL seed set supplied to crawler");
             throw new IllegalArgumentException("no URL Seed set supplied. \n");
         }
 
