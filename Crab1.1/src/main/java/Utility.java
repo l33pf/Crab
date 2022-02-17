@@ -88,14 +88,15 @@ public final class Utility {
     /**
      Writes crawl data to a JSON file
      */
-    public static void writeResultsToJSON(final ConcurrentHashMap<String,SentimentType> con_map, final String file_addr) throws IOException {
+    public static void writeResultsToJSON(final ConcurrentHashMap<String,SentimentType> con_map, final String file_addr) {
 
-        final JsonFactory factory = new JsonFactory();
+        try{
+            final JsonFactory factory = new JsonFactory();
 
-        final JsonGenerator gen = factory.createGenerator(
-                new File(file_addr), JsonEncoding.UTF8);
+            final JsonGenerator gen = factory.createGenerator(
+                    new File(file_addr), JsonEncoding.UTF8);
 
-        gen.setPrettyPrinter(new MinimalPrettyPrinter(""));
+            gen.setPrettyPrinter(new MinimalPrettyPrinter(""));
 
         for(final String url : con_map.keySet()){
             //We'll use Jsoup in here just for testing at the moment to extract the title
@@ -109,9 +110,15 @@ public final class Utility {
                 gen.writeRaw('\n');
         }
         gen.close();
+        }
+        catch(IOException ex){
+
+        }
     }
 
-    public static void writekeyWordResults_ToJSON(final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb) throws IOException {
+    public static void writekeyWordResults_ToJSON(final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb) {
+
+        try{
 
         final JsonFactory factory = new JsonFactory();
 
@@ -138,6 +145,10 @@ public final class Utility {
             }
 
             gen.close();
+        }
+
+        }catch(IOException ex){
+
         }
     }
 
