@@ -10,6 +10,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+*
  **/
 
 /*
@@ -45,8 +46,6 @@ public final class SentimentBasisRunnable implements Runnable {
 
             for(String key : map.keySet()){
 
-                SentimentType a = map.get(key);
-
                 switch(map.get(key)){
 
 
@@ -64,9 +63,6 @@ public final class SentimentBasisRunnable implements Runnable {
                 }
             }
 
-            double test = ((double)ntrl/N)*100;
-            double test_two = Math.floor(test);
-
             double negPercent = ((double)neg/N)*100;
             double ntrlPercent = ((double)ntrl/N)*100;
             double posPercent = Math.floor((double)(pos/N)*100);
@@ -81,6 +77,11 @@ public final class SentimentBasisRunnable implements Runnable {
     public void run(){
 
         try{
+
+            if(Crab.visitedList.contains(URL)){
+                return;
+            }
+
             final Document doc = Jsoup.connect(URL).get();
             System.out.println("Doing analysis on: " + URL + "\n");
             Document docTwo;
@@ -102,7 +103,6 @@ public final class SentimentBasisRunnable implements Runnable {
                                 break;
                             }
                         }
-
                             System.out.println("Visited: " + link.attr("abs:href") + "\n");
 
                             Crab.visitedList.add(link.attr("abs:href"));

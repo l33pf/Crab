@@ -3,6 +3,8 @@ import com.opencsv.exceptions.CsvException;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.jsoup.*;
+
 public class Main {
 
     private final static int WARMUP_SIZE = 10000;
@@ -27,7 +29,6 @@ public class Main {
 
         Crab.visitedList.add("blank"); //add blank value
         Utility.SerializeQueue(Crab.visitedList);
-
 
         Crab.CrabCrawl();
     }
