@@ -21,6 +21,9 @@ The output of the crawl is a series of files displaying the best sentiment pages
 
 <b>NOTE</b>: Using Crab in this mode please be aware that currently the default settings of CoreNLP are used we don't use a classifer with a specific training set/lexicon in mind though this would be something welcomed given the accuracy on finding 'positively' labelled pages needs improving.
 
+<b>Results</b> after several crawling runs can be found at:
+https://github.com/l33pf/Crab/blob/main/Crab1.1/CrabOptimalCrawl.csv
+
 ### Built With
 
 Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j for logging purposes, OpenCSV for storage and Jackson for JSON exporting.(<b>NOTE</b>: This list may change as development advances)
