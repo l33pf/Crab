@@ -46,20 +46,10 @@ public final class SentimentBasisRunnable implements Runnable {
 
             for(String key : map.keySet()){
 
-                switch(map.get(key)){
-
-
-                    case POSITIVE:
-                        pos++;
-                        break;
-
-                    case NEUTRAL:
-                        ntrl++;
-                        break;
-
-                    case NEGATIVE:
-                        neg++;
-                        break;
+                switch (map.get(key)) {
+                    case POSITIVE -> pos++;
+                    case NEUTRAL -> ntrl++;
+                    case NEGATIVE -> neg++;
                 }
             }
 
@@ -124,7 +114,7 @@ public final class SentimentBasisRunnable implements Runnable {
                                 Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,Jsoup.connect(bestLink).get().title()); //test
 
                                 if(Crab.writeJson){
-                                    // Crab.full_sentiment_map.putIfAbsent(bestLink,SentimentType.fromInt(bestSentiment));
+                                     Crab.full_sentiment_map.putIfAbsent(bestLink,SentimentType.fromInt(bestSentiment));
                                 }
 
                                 //Submit a full sentiment task to the thread pool

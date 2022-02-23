@@ -60,7 +60,7 @@ public final class Crab {
         Utility.SerializeConMap(full_sentiment_map,"f_map_ser");
     }
 
-    public static void CrabCrawl() throws IOException, CsvException, ClassNotFoundException, InterruptedException {
+    public static void CrabCrawl() throws IOException, CsvException, ClassNotFoundException {
 
         /* Read in the URL Seed set supplied into a stack */
         Utility.readIn(urlStack);
@@ -75,7 +75,9 @@ public final class Crab {
 
         //Deserialize data structures
         visitedList = Utility.DeserializeQueue();
-      //  con_map = Utility.DeserializeConMap();
+        con_map = Utility.DeserializeConMap();
+
+      //  con_map = Utility.DeserializeConMap_json("./con_map_ser.json");
 
         if(keyWordCrawl){
             System.out.println("Doing Keyword Crawl. \n");
@@ -90,6 +92,9 @@ public final class Crab {
 
         exec.shutdown();
 
+       // Utility.SerializeConMap_json(con_map,"con_map_ser.json");
+        Utility.SerializeConMap(con_map);
+
         if(keyWordCrawl){
             if(Crab.writeJson){
                     Utility.writekeyWordResults_ToJSON(keywordDb);
@@ -101,5 +106,6 @@ public final class Crab {
         }
 
           Utility.SerializeQueue(visitedList);
+
     }
 }

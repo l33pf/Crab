@@ -41,10 +41,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.google.gson.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
+import com.google.gson.*;
+import java.nio.file.*;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 
 
 //This class is the Utility class for Crab, Provides I/O etc.
@@ -67,10 +71,10 @@ public final class Utility {
     private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private static final Lock w = rwl.writeLock();
 
-    private static final Logger logger = LogManager.getLogger(Utility.class);
+    public static final Gson gson = new Gson();
 
     //Read in Database
-    public static boolean readIn(CrabStack crabStack) throws IOException, CsvException {
+    public static boolean readIn(CrabStack crabStack) {
         try (
                 Reader reader = Files.newBufferedReader(Paths.get(SAMPLE_CSV_FILE_PATH));
                 CSVReader csvReader = new CSVReader(reader)
@@ -100,8 +104,8 @@ public final class Utility {
 
             gen.setPrettyPrinter(new MinimalPrettyPrinter(""));
 
-        for(final String url : con_map.keySet()){
-            //We'll use Jsoup in here just for testing at the moment to extract the title
+            for(final String url : con_map.keySet()){
+                //We'll use Jsoup in here just for testing at the moment to extract the title
                 final Document doc = Jsoup.connect(url).get();
 
                 gen.writeStartObject();
@@ -110,45 +114,41 @@ public final class Utility {
                 gen.writeStringField("Title",doc.title());
                 gen.writeEndObject();
                 gen.writeRaw('\n');
-        }
-        gen.close();
-        }
-        catch(IOException ex){
+            }
+            gen.close();
+        }catch(IOException ex){
 
         }
     }
 
-    public static void writekeyWordResults_ToJSON(final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb) {
-
+    public static void writekeyWordResults_ToJSON(final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb){
         try{
+            final JsonFactory factory = new JsonFactory();
 
-        final JsonFactory factory = new JsonFactory();
+            ConcurrentHashMap<String, SentimentType> dataMap;
 
-        ConcurrentHashMap<String, SentimentType> dataMap = new ConcurrentHashMap<>();
+            for(String keyword : keywordDb.keySet()){
+                String fname = "./" + keyword + ".json";
 
-        for(String keyword : keywordDb.keySet()){
-            String fname = "./" + keyword + ".json";
+                JsonGenerator gen = factory.createGenerator(
+                        new File(fname), JsonEncoding.UTF8
+                );
 
-            JsonGenerator gen = factory.createGenerator(
-                    new File(fname), JsonEncoding.UTF8
-            );
+                dataMap = keywordDb.get(keyword);
 
-            dataMap = keywordDb.get(keyword);
+                gen.setPrettyPrinter(new MinimalPrettyPrinter(""));
 
-            gen.setPrettyPrinter(new MinimalPrettyPrinter(""));
+                gen.writeStartObject();
 
-            gen.writeStartObject();
+                for(String key : dataMap.keySet()){
+                    gen.writeStringField("URL",key);
+                    gen.writeStringField("Sentiment",String.valueOf(dataMap.get(key)));
+                    gen.writeEndObject();
+                    gen.writeRaw('\n');
+                }
 
-            for(String key : dataMap.keySet()){
-                gen.writeStringField("URL",key);
-                gen.writeStringField("Sentiment",String.valueOf(dataMap.get(key)));
-                gen.writeEndObject();
-                gen.writeRaw('\n');
+                gen.close();
             }
-
-            gen.close();
-        }
-
         }catch(IOException ex){
 
         }
@@ -157,39 +157,39 @@ public final class Utility {
     /**
         Serialize the Sentiment map
      */
-    public static void SerializeConMap(final ConcurrentHashMap<String,SentimentType> con_map) {
-        try{
+    public static void SerializeConMap(final ConcurrentHashMap<String,SentimentType> con_map) throws IOException {
+   //     try{
             FileOutputStream fs =
                     new FileOutputStream("con_map.ser");
             ObjectOutputStream os = new ObjectOutputStream(fs);
             os.writeObject(con_map);
             os.close();
             fs.close();
-        }catch(IOException ex){
-                logger.error(ex);
-        }
+  //      }catch(IOException ex){
+  //              logger.error(ex);
+  //      }
     }
 
     /**
      Serialize the Sentiment map
      */
-    public static void SerializeConMap(final ConcurrentHashMap<String,SentimentType> con_map, String fname){
-        try{
+    public static void SerializeConMap(final ConcurrentHashMap<String,SentimentType> con_map, String fname) throws IOException {
+   //     try{
             FileOutputStream fs =
                     new FileOutputStream(fname);
             ObjectOutputStream os = new ObjectOutputStream(fs);
             os.writeObject(con_map);
             os.close();
             fs.close();
-        }catch(IOException ex){
+/*        }catch(IOException ex){
                 logger.error(ex);
-        }
+        }*/
     }
 
     /*
         Serialize Concurrent HashMap with gson
      */
-    public static void SerializeConMap_json(final ConcurrentHashMap<String,SentimentType> con_map, String fname) throws IOException {
+    public static void SerializeConMap_json(final ConcurrentHashMap<String,SentimentType> con_map, String fname) {
         try{
             Writer writer = new FileWriter(fname);
             new Gson().toJson(con_map,writer);
@@ -216,71 +216,71 @@ public final class Utility {
     /**
      Serialize visit list
      */
-    public static void SerializeQueue(final Queue<String> vList){
-        try{
+    public static void SerializeQueue(final Queue<String> vList) throws IOException {
+   //     try{
             FileOutputStream fs =
                     new FileOutputStream("visit_list.ser");
             ObjectOutputStream os = new ObjectOutputStream(fs);
             os.writeObject(vList);
             os.close();
             fs.close();
-        }catch(IOException ex){
-            logger.error(ex);
-        }
+   //     }catch(IOException ex){
+   //         logger.error(ex);
+ //       }
     }
 
     /**
      Deserialize visit list
      */
-    public static Queue<String> DeserializeQueue() {
-        Queue<String> vList = null;
-        try{
+    public static Queue<String> DeserializeQueue() throws IOException, ClassNotFoundException {
+        Queue<String> vList;
+    //    try{
             FileInputStream fs = new FileInputStream("visit_list.ser");
             ObjectInputStream os = new ObjectInputStream(fs);
             vList = (Queue<String>) os.readObject();
             os.close();
             fs.close();
-        }catch(IOException ex){
+/*        }catch(IOException ex){
             logger.error(ex);
         }catch(ClassNotFoundException ex){
             logger.error(ex);
-        }
+        }*/
         return vList;
     }
 
     /**
         Deserialize the Sentiment map
      */
-    public static ConcurrentHashMap<String,SentimentType> DeserializeConMap() {
-       try{
+    public static ConcurrentHashMap<String,SentimentType> DeserializeConMap() throws IOException, ClassNotFoundException {
+    //   try{
            FileInputStream fs = new FileInputStream("con_map.ser");
            ObjectInputStream os = new ObjectInputStream(fs);
            map = (ConcurrentHashMap)os.readObject();
            os.close();
            fs.close();
-       }catch(IOException ex){
-           logger.error(ex);
-       }catch(ClassNotFoundException ex){
-           logger.error(ex);
-       }
+    //   }catch(IOException ex){
+   //        logger.error(ex);
+   //    }catch(ClassNotFoundException ex){
+   //        logger.error(ex);
+   //    }
         return map;
     }
 
     /**
      Deserialize the Sentiment map
      */
-    public static ConcurrentHashMap DeserializeConMap(String fname) {
-        try{
+    public static ConcurrentHashMap DeserializeConMap(final String fname) throws IOException, ClassNotFoundException {
+      //  try{
             FileInputStream fs = new FileInputStream(fname);
             ObjectInputStream os = new ObjectInputStream(fs);
             map = (ConcurrentHashMap)os.readObject();
             os.close();
             fs.close();
-        }catch(IOException ex){
+/*        }catch(IOException ex){
             logger.error(ex);
         }catch(ClassNotFoundException ex){
             logger.error(ex);
-        }
+        }*/
         return map;
     }
 
@@ -348,7 +348,6 @@ public final class Utility {
             w.unlock();
         }
     }
-
 
     public synchronized static void writeURLSentimentResult(final String url, final int sentiment, final String title){
         w.lock();
