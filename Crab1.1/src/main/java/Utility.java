@@ -192,7 +192,8 @@ public final class Utility {
     public static void SerializeConMap_json(final ConcurrentHashMap<String,SentimentType> con_map, String fname) {
         try{
             Writer writer = new FileWriter(fname);
-            new Gson().toJson(con_map,writer);
+            GsonBuilder gson = new GsonBuilder();
+            gson.setPrettyPrinting().setLenient().disableHtmlEscaping().create().toJson(map,writer);
         }catch(Exception ex){
             System.out.println("Failed to Serialize in SerializeConMap_json(...)"); //replace with Log4j
         }
