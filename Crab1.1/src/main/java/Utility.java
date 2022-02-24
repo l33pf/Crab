@@ -47,10 +47,6 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.*;
 import java.nio.file.*;
 
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-
-
 //This class is the Utility class for Crab, Provides I/O etc.
 
 public final class Utility {
@@ -86,9 +82,23 @@ public final class Utility {
             }
             return true;
         } catch (IOException | CsvValidationException e) {
-
-            return false;
         }
+        return false;
+    }
+
+    public static boolean readIn_LF(CrabStack_LF crabStack){
+        try(
+                Reader reader = Files.newBufferedReader(Paths.get(SAMPLE_CSV_FILE_PATH));
+                CSVReader csvReader = new CSVReader(reader)
+                ){
+                String[] nextUrl;
+                while((nextUrl = csvReader.readNext()) != null){
+                        crabStack.Push(nextUrl[0]);
+                }
+                return true;
+        }catch(IOException | CsvValidationException e){
+        }
+        return false;
     }
 
     /**
@@ -264,24 +274,6 @@ public final class Utility {
    //    }catch(ClassNotFoundException ex){
    //        logger.error(ex);
    //    }
-        return map;
-    }
-
-    /**
-     Deserialize the Sentiment map
-     */
-    public static ConcurrentHashMap DeserializeConMap(final String fname) throws IOException, ClassNotFoundException {
-      //  try{
-            FileInputStream fs = new FileInputStream(fname);
-            ObjectInputStream os = new ObjectInputStream(fs);
-            map = (ConcurrentHashMap)os.readObject();
-            os.close();
-            fs.close();
-/*        }catch(IOException ex){
-            logger.error(ex);
-        }catch(ClassNotFoundException ex){
-            logger.error(ex);
-        }*/
         return map;
     }
 
