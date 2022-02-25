@@ -22,28 +22,36 @@ limitations under the License.
 
 public class CrabStack_LF {
 
-    AtomicReference<LinkedList.Node> top = new AtomicReference<>();
+    private static class Node <String> {
+        public final String item;
+        public Node<String> next;
 
-    public void Push(String url){
-        LinkedList.Node _head = new LinkedList.Node(url);
-        LinkedList.Node _oldHead;
-        do{
-            _oldHead = top.get(); //otherwise get what's replaced
-        }while(!top.compareAndSet(_oldHead,_head)); // if we still have the oldHead then we exchange - CAS
+        public Node(String item) {
+            this.item = item;
+        }
     }
 
-    public String pop(){
-        LinkedList.Node _oldHead;
-        LinkedList.Node head;
-        do{
-            _oldHead = top.get();
-            if(_oldHead == null){
-                return null;
-            }
-            head = _oldHead.next;
-        }while(!top.compareAndSet(_oldHead,head));
+    AtomicReference<Node<String>> top = new AtomicReference<Node<String>>();
 
-        return _oldHead.URL;
+    public void push(String item) {
+        Node<String> newHead = new Node<String>(item);
+        Node<String> oldHead;
+        do {
+            oldHead = top.get();
+            newHead.next = oldHead;
+        } while (!top.compareAndSet(oldHead, newHead));
+    }
+
+    public String pop() {
+        Node<String> oldHead;
+        Node<String> newHead;
+        do {
+            oldHead = top.get();
+            if (oldHead == null)
+                return null;
+            newHead = oldHead.next;
+        } while (!top.compareAndSet(oldHead, newHead));
+        return oldHead.item;
     }
 
     public boolean isEmpty(){
@@ -52,8 +60,9 @@ public class CrabStack_LF {
 
     public String peek(){
         if(!isEmpty()){
-            return top.get().URL;
+            return top.get().toString();
         }
         return null;
     }
+
 }

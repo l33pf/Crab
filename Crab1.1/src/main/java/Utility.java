@@ -93,7 +93,7 @@ public final class Utility {
                 ){
                 String[] nextUrl;
                 while((nextUrl = csvReader.readNext()) != null){
-                        crabStack.Push(nextUrl[0]);
+                        crabStack.push(nextUrl[0]);
                 }
                 return true;
         }catch(IOException | CsvValidationException e){
