@@ -32,37 +32,46 @@ public class CrabStack_LF {
     }
 
     AtomicReference<Node<String>> top = new AtomicReference<Node<String>>();
+    AtomicInteger stackSize = new AtomicInteger(0);
 
-    public void push(String item) {
-        Node<String> newHead = new Node<String>(item);
+    public final void push(final String item) {
+        Node<String> newHead = new Node<>(item);
         Node<String> oldHead;
+        int size;
         do {
             oldHead = top.get();
+            size = stackSize.get();
             newHead.next = oldHead;
-        } while (!top.compareAndSet(oldHead, newHead));
+        } while (!top.compareAndSet(oldHead, newHead) && (!stackSize.compareAndSet(size,size+1)));
     }
 
-    public String pop() {
+    public final String pop() {
         Node<String> oldHead;
         Node<String> newHead;
+        int size;
         do {
             oldHead = top.get();
+            size = stackSize.get();
             if (oldHead == null)
                 return null;
             newHead = oldHead.next;
-        } while (!top.compareAndSet(oldHead, newHead));
+        } while (!top.compareAndSet(oldHead, newHead) && (!stackSize.compareAndSet(size,size-1)));
         return oldHead.item;
     }
 
-    public boolean isEmpty(){
+    public final boolean isEmpty(){
         return top.get() == null;
     }
 
-    public String peek(){
+    public final String peek(){
         if(!isEmpty()){
             return top.get().toString();
         }
         return null;
+    }
+
+    public final int size(){
+        return stackSize.get();
     }
 
 }
