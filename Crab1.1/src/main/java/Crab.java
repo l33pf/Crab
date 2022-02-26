@@ -29,7 +29,7 @@ import com.opencsv.exceptions.CsvException;
 
 public final class Crab {
 
-    public static final CrabStack urlStack = new CrabStack();
+    public static final CrabStack_LF urlStack_LF = new CrabStack_LF();
 
     private static final int numOfThreads = (Runtime.getRuntime().availableProcessors())+1;
     private static final int CAPACITY = 10;
@@ -63,11 +63,11 @@ public final class Crab {
     public static void CrabCrawl() throws IOException, CsvException, ClassNotFoundException {
 
         /* Read in the URL Seed set supplied into a stack */
-        Utility.readIn(urlStack);
+        Utility.readIn(urlStack_LF);
 
         exec.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 
-        if(urlStack.size()==0){
+        if(urlStack_LF.isEmpty()){
             //logger.error("No URL seed set supplied to crawler");
 
             throw new IllegalArgumentException("no URL Seed set supplied. \n");
@@ -81,12 +81,12 @@ public final class Crab {
 
         if(keyWordCrawl){
             System.out.println("Doing Keyword Crawl. \n");
-            while(urlStack.size() != 0){
-                exec.submit(new SentimentKeyWordRunnable(urlStack.safePop()));
+            while(!urlStack_LF.isEmpty()){
+                exec.submit(new SentimentKeyWordRunnable(urlStack_LF.pop()));
             }
         }else{
-            while(urlStack.size() != 0){
-                exec.submit(new SentimentBasisRunnable(urlStack.safePop())); //need to add in full crawl to
+            while(!urlStack_LF.isEmpty()){
+                exec.submit(new SentimentBasisRunnable(urlStack_LF.pop()));
             }
         }
 
