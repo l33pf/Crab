@@ -199,11 +199,14 @@ public final class Utility {
     /*
         Serialize Concurrent HashMap with gson
      */
-    public static void SerializeConMap_json(final ConcurrentHashMap<String,SentimentType> con_map, String fname) {
+    public static void SerializeConMap_json(final ConcurrentHashMap<Integer,String> con_map, final String fname) {
         try{
-            Writer writer = new FileWriter(fname);
-            GsonBuilder gson = new GsonBuilder();
-            gson.setPrettyPrinting().setLenient().disableHtmlEscaping().create().toJson(map,writer);
+            Path path = Paths.get(fname);
+            GsonBuilder g = new GsonBuilder();
+            g.setPrettyPrinting();
+            String jsonString = g.create().toJson(con_map);
+            byte[] bytes = jsonString.getBytes();
+            Files.write(path, bytes);
         }catch(Exception ex){
             System.out.println("Failed to Serialize in SerializeConMap_json(...)"); //replace with Log4j
         }
@@ -212,14 +215,14 @@ public final class Utility {
     /*
         Deserialize Concurrent HashMap with gson
     */
-    public static ConcurrentHashMap<String,SentimentType> DeserializeConMap_json(String fname){
-        ConcurrentHashMap<String,SentimentType> cmap;
+    public static ConcurrentHashMap DeserializeConMap_json(final String fname){
+        ConcurrentHashMap<Integer,String> cmap = new ConcurrentHashMap<>();
         try{
-            Reader reader = Files.newBufferedReader(Paths.get(fname));
             Gson gson = new Gson();
+            Reader reader = Files.newBufferedReader(Paths.get(fname));
             cmap = gson.fromJson(reader,ConcurrentHashMap.class);
         }catch(Exception ex){
-            return null; //empty
+            System.out.println("Failed to Deserialize in SerializeConMap_json(...)");
         }
         return cmap;
     }
@@ -241,6 +244,22 @@ public final class Utility {
     }
 
     /**
+     Serialize visit list to JSON file
+     */
+    public static void SerializeQueue_json(final Queue<String> q, final String fname){
+        try{
+            Path path = Paths.get(fname);
+            GsonBuilder g = new GsonBuilder();
+            g.setPrettyPrinting();
+            String jsonString = g.create().toJson(q);
+            byte[] bytes = jsonString.getBytes();
+            Files.write(path,bytes);
+        }catch(Exception ex){
+            System.out.println("Failed to Serialize in SerializeConMap_json(...)"); //replace with Log4j
+        }
+    }
+
+    /**
      Deserialize visit list
      */
     public static Queue<String> DeserializeQueue() throws IOException, ClassNotFoundException {
@@ -257,6 +276,21 @@ public final class Utility {
             logger.error(ex);
         }*/
         return vList;
+    }
+
+    /**
+     Deserialize visit list from JSON file
+    */
+    public static Queue DeserializeQueue_json(final String fname){
+        Queue<String> q = new ConcurrentLinkedQueue<>();
+        try{
+            Gson gson = new Gson();
+            Reader reader = Files.newBufferedReader(Paths.get(fname));
+            q = gson.fromJson(reader,ConcurrentLinkedQueue.class);
+        }catch(Exception ex){
+            System.out.println("Failed to Deserialize in SerializeConMap_json(...)");
+        }
+        return q;
     }
 
     /**
