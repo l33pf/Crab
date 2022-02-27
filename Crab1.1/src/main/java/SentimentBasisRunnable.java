@@ -127,7 +127,7 @@ public final class SentimentBasisRunnable implements Runnable {
             final String title = (Jsoup.connect(bestLink).get()).title();
             Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,title);
 
-            Crab.urlStack.safePush(bestLink);
+            Crab.urlStack_LF.push(bestLink);
 
             calculatePercentages(); // calculate the sentiment distribution of the parent URL
 

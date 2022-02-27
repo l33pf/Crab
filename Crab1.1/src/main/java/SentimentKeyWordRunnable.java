@@ -1,13 +1,10 @@
 /*
  ***LICENSE***
 Copyright 2022 l33pf (https://github.com/l33pf)
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,11 +14,15 @@ limitations under the License.
 
 /*
  * SentimentKeyWordRunnable
- * This runnable class takes a URL and then looks if the titles of its links contains a keyword then runs sentiment analysis and
- * based on the result will then add the link to the URL onto the crawler's stack. Note that the Crawl only goes for neutral-positive
- * links it doesn't look at any displaying negative sentiment (this can be changed).
+ * Runnable class takes a URL and then searches for input-defined keywords looking for the individual links of the URL for
+ * a keyword match. If a match is found sentiment analysis is applied and then the result is added to the keyword's
+ * associated KeywordClass building up an overall sentiment profile for matched keyword links.
+ *
+ * Take note that whatever the sentiment result from a keyword matched page (i.e. positive/negative) will mean it is added
+ * to the URL stack for crawling where as for SentimentBasisRunnable only positive/neutral pages are crawled.
  *
  * Created: 16/1/2022
+ * Edited: 27/02/2022 - by l33pf
 
  */
 
@@ -30,60 +31,77 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.LocalDate;
+import java.util.Objects;
 
 public class SentimentKeyWordRunnable implements Runnable {
 
     String link;
-    int sentiment;
+    int sentiment, m_sentiment;
 
     SentimentKeyWordRunnable(String URL){
-        this.link = URL;
+        Objects.requireNonNull(this.link = URL);
     }
 
     public void run(){
 
         try{
             final Document doc = Jsoup.connect(link).get();
+
             Document docTwo;
 
             final Elements links = doc.select("a[href]");
 
-            for(Element linkage : links){
+            for(Element e : links){
 
-                if(!Crab.visitedList.contains(linkage.attr("abs:href"))){
+                //if no other thread has crawled this page
+                if(!Crab.visitedList.contains(e.attr("abs:href"))){
 
-                    docTwo = Jsoup.connect(linkage.attr("abs:href")).get();
+                    //connect to get the metadata
+                    docTwo = Jsoup.connect(e.attr("abs:href")).get();
 
-                    for(String keyword : Crab.keyWords){
-                        if(docTwo.title().contains(keyword)){
+                    for(KeywordClass c : Crab.keyWordQueue){
 
-                            System.out.println("Now visiting: " + linkage.attr("abs:href")+ "\n");
+                        //If the link title contains one of the keywords
+                        if(docTwo.title().contains(c.keyword)){
 
                             sentiment = SentimentAnalyser.analyse(doc.title()); //run sentiment analysis on the title
 
-                            if(SentimentType.fromInt(sentiment) == SentimentType.POSITIVE || SentimentType.fromInt(sentiment) == SentimentType.VERY_POSITIVE){
-                                //Messy way but works
-                                ConcurrentHashMap<String,SentimentType> inner_map = new ConcurrentHashMap<>();
-                                inner_map.put(link,SentimentType.fromInt(sentiment));
-                                Crab.keywordDb.put(keyword,inner_map);
-                                System.out.println("Positive Sentiment detected on Link: " + linkage.attr("abs:href") + "\n");
+                            //get further content from the metadata and run sentiment analysis
+                            m_sentiment = SentimentAnalyser.analyse(docTwo.select("meta[name=description]").get(0)
+                                    .attr("content"));
+
+                            if(sentiment >= m_sentiment){ //compare the two sentiments
+
+                                switch (SentimentType.fromInt(sentiment)) {
+                                    case VERY_POSITIVE, POSITIVE -> c.positiveSentiment.put(e.attr("abs:href"), LocalDate.now());
+                                    case NEUTRAL -> c.neutralSentiment.put(e.attr("abs:href"), LocalDate.now());
+                                    case VERY_NEGATIVE, NEGATIVE -> c.negativeSentiment.put(e.attr("abs:href"), LocalDate.now());
+                                }
+                            }else {
+
+                                switch (SentimentType.fromInt(m_sentiment)) {
+                                    case VERY_POSITIVE, POSITIVE -> c.positiveSentiment.put(e.attr("abs:href"), LocalDate.now());
+                                    case NEUTRAL -> c.neutralSentiment.put(e.attr("abs:href"), LocalDate.now());
+                                    case VERY_NEGATIVE, NEGATIVE -> c.negativeSentiment.put(e.attr("abs:href"), LocalDate.now());
+                                }
                             }
+                            //Further interested given the keyword match,
+                            // so add to the stack to look at it's links to assess further
+                            Crab.urlStack_LF.push(e.attr("abs:href"));
 
-                            Utility.writeKeywordSentimentResult(keyword,linkage.attr("abs:href"),SentimentType.fromInt(sentiment));
-
-                            //add the link to the crawler stack to see if any further relevant links can be found
-                            Crab.urlStack.safePush(linkage.attr("abs:href"));
-
-                            //break out of the loop given a keyword has been found for this link
+                            //debating whether to add break here
+                            //given if we have articles where we may have multiple keywords its more likely to be a feature
+                            //i.e. a recap of a bunch of assets or games over some period of time.
                             break;
                         }
                     }
                 }
-                Crab.visitedList.add(linkage.attr("abs:href"));
+                //add to the visit list so we avoid re-visiting it regardless of matching state of the link
+                Crab.visitedList.add(e.attr("abs:href"));
             }
-        }catch(Exception e){
-
+        }catch(Exception ex){
+                //log4j
         }
     }
 }

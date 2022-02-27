@@ -23,6 +23,7 @@ limitations under the License.
 
  */
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,9 +32,9 @@ public class KeywordClass {
     final String keyword;
 
     /* Storage for articles based on their sentiment, with the date they were accessed */
-    ConcurrentHashMap<String, Date> negativeSentiment;
-    ConcurrentHashMap<String, Date> neutralSentiment;
-    ConcurrentHashMap<String, Date> positiveSentiment;
+    ConcurrentHashMap<String, LocalDate> negativeSentiment;
+    ConcurrentHashMap<String, LocalDate> neutralSentiment;
+    ConcurrentHashMap<String, LocalDate> positiveSentiment;
 
     /* Overall sentiment average of articles for the keyword in question */
     double average;
