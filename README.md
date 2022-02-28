@@ -37,7 +37,7 @@ Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j f
 
 <!-- ROADMAP -->
 ## Roadmap
-- [ ] Crawl based on Keywords
+- [x] Crawl based on Keywords
 - [ ] Concurrent logging
 - [ ] Spring Framework Implementation for web app deployment
 - [ ] More export options (PDF etc.)
