@@ -20,6 +20,7 @@ limitations under the License.
  * sentimentally link onto the URL stack.
  *
  * Created: 7/12/2021
+ * Edited: 28/02/2022
 
  */
 
@@ -34,7 +35,7 @@ import java.util.Objects;
 public final class SentimentBasisRunnable implements Runnable {
 
     String URL, bestLink;
-    int bestSentiment, sentiment, blockedOccurences;
+    int bestSentiment, sentiment;
     HashMap<String,SentimentType> map = new HashMap<>();
 
     /**
@@ -66,55 +67,57 @@ public final class SentimentBasisRunnable implements Runnable {
 
     public void run(){
 
+        boolean blocked_link = false;
+
         try{
+            if(!Crab.v_list.contains(URL)){
 
-            if(Crab.visitedList.contains(URL)){
-                return;
-            }
+                final Document doc = Jsoup.connect(URL).get();
+                System.out.println("Doing analysis on: " + URL + "\n");
+                Document docTwo;
 
-            final Document doc = Jsoup.connect(URL).get();
-            System.out.println("Doing analysis on: " + URL + "\n");
-            Document docTwo;
-            final Elements links = doc.select("a[href]");
+                final Elements links = doc.select("a[href]");
 
-            for(Element link : links){
-                docTwo = Jsoup.connect(link.attr("abs:href")).get();
+                for(Element link : links){
 
-                    final String linkTitle = docTwo.title();
+                    docTwo = Jsoup.connect(link.attr("abs:href")).get();
 
-                    if(Crab.visitedList.contains(link.attr("abs:href"))){
-                        //do nothing - want to avoid this as we are wasting cycles
-                    }else{
-                        //check the URL isn't contained in the block list
-                        for(String b_url : Crab.blockList){
+                    if(!Crab.v_list.contains(link.attr("abs:href"))){
+
+                        for(String b_url : Crab.b_list){
+
                             if(link.attr("abs:href").contains(b_url)){
-                                blockedOccurences++; //test
-                                links.removeAttr(link.attr("abs:href"));
+                                blocked_link = true;
                                 break;
                             }
                         }
+
+                        if(!blocked_link){
+
                             System.out.println("Visited: " + link.attr("abs:href") + "\n");
 
-                            Crab.visitedList.add(link.attr("abs:href"));
+                            Crab.v_list.add(link.attr("abs:href"));
+
                             Utility.writeVisitList(link.attr("abs:href"));
 
-                            sentiment = SentimentAnalyser.analyse(linkTitle);
+                            sentiment = SentimentAnalyser.analyse(docTwo.title());
 
-                            Utility.writeURLSentimentResult(link.attr("abs:href"),sentiment,linkTitle);
-
-                            map.put(link.attr("abs:href"),SentimentType.fromInt(sentiment)); //used to calculate sentiment distribution
+                            map.put(link.attr("abs:href"),SentimentType.fromInt(sentiment));
 
                             if(Crab.writeJson){
                                 Crab.con_map.putIfAbsent(link.attr("abs:href"),SentimentType.fromInt(sentiment));
                             }
 
                             if(sentiment > bestSentiment){
+
                                 bestSentiment = sentiment; //change the optimal
+
                                 bestLink = link.attr("abs:href");
-                                Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,Jsoup.connect(bestLink).get().title()); //test
+
+                                Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,Jsoup.connect(bestLink).get().title());
 
                                 if(Crab.writeJson){
-                                     Crab.full_sentiment_map.putIfAbsent(bestLink,SentimentType.fromInt(bestSentiment));
+                                    Crab.full_sentiment_map.putIfAbsent(bestLink,SentimentType.fromInt(bestSentiment));
                                 }
 
                                 //Submit a full sentiment task to the thread pool
@@ -123,14 +126,13 @@ public final class SentimentBasisRunnable implements Runnable {
                                 System.out.println("Best Sentiment Link for: " + URL + " currently: " + bestLink + "\n" );
                             }
                         }
+                        final String title = (Jsoup.connect(bestLink).get()).title();
+                        Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,title);
+
+                        Crab.urlStack_LF.push(bestLink);
                     }
-            final String title = (Jsoup.connect(bestLink).get()).title();
-            Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,title);
-
-            Crab.urlStack_LF.push(bestLink);
-
-            calculatePercentages(); // calculate the sentiment distribution of the parent URL
-
+                }
+            }
         }catch(Exception e){
 
         }

@@ -22,12 +22,15 @@
  **/
 
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 
 import com.opencsv.exceptions.CsvException;
 
 public final class Crab {
+
+    public static final CrabStack urlStack = new CrabStack();
 
     public static final CrabStack_LF urlStack_LF = new CrabStack_LF();
 
@@ -36,7 +39,7 @@ public final class Crab {
 
     public static boolean writeJson = true;
 
-    public static Queue<String> visitedList = new ConcurrentLinkedQueue<>();
+    public static ConcurrentLinkedQueue<String> v_list = new ConcurrentLinkedQueue<>();
 
     public static ConcurrentHashMap<String,SentimentType> con_map = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap<String,SentimentType> full_sentiment_map = new ConcurrentHashMap<>();
@@ -46,8 +49,10 @@ public final class Crab {
     public static final HashSet<String> keyWords = new HashSet<>();
     public static boolean keyWordCrawl = false;
 
-    /* Used to store URL's that do not want/needed to be crawled */
-    public static HashSet<String> blockList = new HashSet<>();
+    public static ConcurrentLinkedQueue<String> b_list = new ConcurrentLinkedQueue<>();
+
+    /* For Keyword Crawl */
+    public static ConcurrentLinkedQueue<KeywordClass> keyWordQueue = new ConcurrentLinkedQueue<>();
 
     public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
             10L, TimeUnit.SECONDS,
@@ -63,37 +68,36 @@ public final class Crab {
     public static void CrabCrawl() throws IOException, CsvException, ClassNotFoundException {
 
         /* Read in the URL Seed set supplied into a stack */
-        Utility.readIn(urlStack_LF);
+        Utility.readIn(urlStack);
+        Utility.readIn_LF(urlStack_LF);
 
         exec.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 
-        if(urlStack_LF.isEmpty()){
+        if(urlStack.size()==0){
             //logger.error("No URL seed set supplied to crawler");
 
             throw new IllegalArgumentException("no URL Seed set supplied. \n");
         }
 
         //Deserialize data structures
-        visitedList = Utility.DeserializeQueue();
+        v_list = Utility.DeserializeQueue("vlist.ser");
         con_map = Utility.DeserializeConMap();
 
-      //  con_map = Utility.DeserializeConMap_json("./con_map_ser.json");
-
-        if(keyWordCrawl){
+/*        if(keyWordCrawl){
             System.out.println("Doing Keyword Crawl. \n");
             while(!urlStack_LF.isEmpty()){
                 exec.submit(new SentimentKeyWordRunnable(urlStack_LF.pop()));
-            }
-        }else{
+            }*/
+   //     }else{
             while(!urlStack_LF.isEmpty()){
                 exec.submit(new SentimentBasisRunnable(urlStack_LF.pop()));
             }
-        }
+   //     }
 
         exec.shutdown();
 
-       // Utility.SerializeConMap_json(con_map,"con_map_ser.json");
-        Utility.SerializeConMap(con_map);
+       Utility.SerializeConMap(con_map);
+       Utility.SerializeQueue(v_list,"vlist.ser");
 
         if(keyWordCrawl){
             if(Crab.writeJson){
@@ -104,8 +108,5 @@ public final class Crab {
                 Utility.writeResultsToJSON(con_map,Utility.RESULTS_JSON_PATH);
             }
         }
-
-          Utility.SerializeQueue(visitedList);
-
     }
 }

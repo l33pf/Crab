@@ -38,6 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -199,7 +200,7 @@ public final class Utility {
     /*
         Serialize Concurrent HashMap with gson
      */
-    public static void SerializeConMap_json(final ConcurrentHashMap<Integer,String> con_map, final String fname) {
+    public static void SerializeConMap_json(final ConcurrentHashMap<String, SentimentType> con_map, final String fname) {
         try{
             Path path = Paths.get(fname);
             GsonBuilder g = new GsonBuilder();
@@ -212,11 +213,12 @@ public final class Utility {
         }
     }
 
+
     /*
         Deserialize Concurrent HashMap with gson
     */
     public static ConcurrentHashMap DeserializeConMap_json(final String fname){
-        ConcurrentHashMap<Integer,String> cmap = new ConcurrentHashMap<>();
+        ConcurrentHashMap<Integer,SentimentType> cmap = new ConcurrentHashMap<>();
         try{
             Gson gson = new Gson();
             Reader reader = Files.newBufferedReader(Paths.get(fname));
@@ -227,20 +229,17 @@ public final class Utility {
         return cmap;
     }
 
-    /**
-     Serialize visit list
-     */
-    public static void SerializeQueue(final Queue<String> vList) throws IOException {
-   //     try{
-            FileOutputStream fs =
-                    new FileOutputStream("visit_list.ser");
-            ObjectOutputStream os = new ObjectOutputStream(fs);
-            os.writeObject(vList);
-            os.close();
-            fs.close();
-   //     }catch(IOException ex){
-   //         logger.error(ex);
- //       }
+    public static void SerializeQueue(final ConcurrentLinkedQueue<String> q, final String fname){
+            try{
+                FileOutputStream fs =
+                        new FileOutputStream(fname);
+                ObjectOutputStream os = new ObjectOutputStream(fs);
+                os.writeObject(q);
+                os.close();
+                fs.close();
+            }catch(IOException ex){
+
+            }
     }
 
     /**
@@ -278,9 +277,25 @@ public final class Utility {
         return vList;
     }
 
+    public static ConcurrentLinkedQueue<String> DeserializeQueue(final String fname){
+        ConcurrentLinkedQueue<String> vList = null;
+
+        try{
+            FileInputStream fs = new FileInputStream(fname);
+            ObjectInputStream os = new ObjectInputStream(fs);
+            vList = (ConcurrentLinkedQueue<String>) os.readObject();
+            os.close();
+            fs.close();
+        }catch(Exception ex){
+
+        }
+        return vList;
+    }
+
+
     /**
      Deserialize visit list from JSON file
-    */
+     */
     public static Queue DeserializeQueue_json(final String fname){
         Queue<String> q = new ConcurrentLinkedQueue<>();
         try{

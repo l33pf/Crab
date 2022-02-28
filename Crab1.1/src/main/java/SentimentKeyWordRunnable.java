@@ -39,7 +39,7 @@ public class SentimentKeyWordRunnable implements Runnable {
     String link;
     int sentiment, m_sentiment;
 
-    SentimentKeyWordRunnable(String URL){
+    SentimentKeyWordRunnable(final String URL){
         Objects.requireNonNull(this.link = URL);
     }
 
@@ -55,7 +55,7 @@ public class SentimentKeyWordRunnable implements Runnable {
             for(Element e : links){
 
                 //if no other thread has crawled this page
-                if(!Crab.visitedList.contains(e.attr("abs:href"))){
+                if(!Crab.v_list.contains(e.attr("abs:href"))){
 
                     //connect to get the metadata
                     docTwo = Jsoup.connect(e.attr("abs:href")).get();
@@ -64,6 +64,8 @@ public class SentimentKeyWordRunnable implements Runnable {
 
                         //If the link title contains one of the keywords
                         if(docTwo.title().contains(c.keyword)){
+
+                            System.out.println("Match found in: " + e.attr("abs:href"));
 
                             sentiment = SentimentAnalyser.analyse(doc.title()); //run sentiment analysis on the title
 
@@ -98,7 +100,7 @@ public class SentimentKeyWordRunnable implements Runnable {
                     }
                 }
                 //add to the visit list so we avoid re-visiting it regardless of matching state of the link
-                Crab.visitedList.add(e.attr("abs:href"));
+                Crab.v_list.add(e.attr("abs:href"));
             }
         }catch(Exception ex){
                 //log4j
