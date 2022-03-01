@@ -44,6 +44,8 @@ public final class Crab {
     public static ConcurrentHashMap<String,SentimentType> con_map = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap<String,SentimentType> full_sentiment_map = new ConcurrentHashMap<>();
 
+    public static ConcurrentHashMap<String,Boolean> record_map = new ConcurrentHashMap<>();
+
     /* For Keyword article gathering */
     public static final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb = new ConcurrentHashMap<>();
     public static final HashSet<String> keyWords = new HashSet<>();
@@ -80,7 +82,7 @@ public final class Crab {
         }
 
         //Deserialize data structures
-        v_list = Utility.DeserializeQueue("vlist.ser");
+       // v_list = Utility.DeserializeQueue("vlist.ser");
         con_map = Utility.DeserializeConMap();
 
 /*        if(keyWordCrawl){
@@ -88,20 +90,20 @@ public final class Crab {
             while(!urlStack_LF.isEmpty()){
                 exec.submit(new SentimentKeyWordRunnable(urlStack_LF.pop()));
             }*/
-   //     }else{
-            while(!urlStack_LF.isEmpty()){
-                exec.submit(new SentimentBasisRunnable(urlStack_LF.pop()));
-            }
-   //     }
+        //     }else{
+        while(!urlStack_LF.isEmpty()){
+            exec.submit(new SentimentBasisRunnable(urlStack_LF.pop()));
+        }
+        //     }
 
         exec.shutdown();
 
-       Utility.SerializeConMap(con_map);
-       Utility.SerializeQueue(v_list,"vlist.ser");
+        Utility.SerializeConMap(con_map);
+        Utility.SerializeQueue(v_list,"vlist.ser");
 
         if(keyWordCrawl){
             if(Crab.writeJson){
-                    Utility.writekeyWordResults_ToJSON(keywordDb);
+                Utility.writekeyWordResults_ToJSON(keywordDb);
             }
         }else{
             if(Crab.writeJson){

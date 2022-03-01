@@ -42,27 +42,33 @@ public final class SentimentBasisRunnable implements Runnable {
      Used to calculate the sentiment distribution of all links associated to the parent URL
      */
     public void calculatePercentages(){
-            int neg =0,pos =0,ntrl = 0;
-            int N = map.size();
+        int neg =0,pos =0,ntrl = 0;
+        int N = map.size();
 
-            for(String key : map.keySet()){
+        for(String key : map.keySet()){
 
-                switch (map.get(key)) {
-                    case POSITIVE -> pos++;
-                    case NEUTRAL -> ntrl++;
-                    case NEGATIVE -> neg++;
-                }
+            switch (map.get(key)) {
+                case POSITIVE -> pos++;
+                case NEUTRAL -> ntrl++;
+                case NEGATIVE -> neg++;
             }
+        }
 
-            double negPercent = ((double)neg/N)*100;
-            double ntrlPercent = ((double)ntrl/N)*100;
-            double posPercent = Math.floor((double)(pos/N)*100);
+        double negPercent = ((double)neg/N)*100;
+        double ntrlPercent = ((double)ntrl/N)*100;
+        double posPercent = Math.floor((double)(pos/N)*100);
 
-            Utility.writeSentimentDistribution(URL,Math.floor(negPercent),Math.floor(ntrlPercent),Math.floor(posPercent));
+        Utility.writeSentimentDistribution(URL,Math.floor(negPercent),Math.floor(ntrlPercent),Math.floor(posPercent));
     }
 
     public SentimentBasisRunnable(String link){
-        Objects.requireNonNull(this.URL = link);
+        if(Crab.record_map.contains(link)){
+            if(Crab.record_map.get(link)){ //if its a parent set URL
+                Objects.requireNonNull(this.URL = link);
+            }
+        }else{
+            Objects.requireNonNull(this.URL = link);
+        }
     }
 
     public void run(){
@@ -96,9 +102,11 @@ public final class SentimentBasisRunnable implements Runnable {
 
                             System.out.println("Visited: " + link.attr("abs:href") + "\n");
 
-                            Crab.v_list.add(link.attr("abs:href"));
-
-                            Utility.writeVisitList(link.attr("abs:href"));
+                            //if(!Crab.record_map.contains(link.attr("abs:href"))){
+                                Crab.v_list.add(link.attr("abs:href"));
+                                Utility.writeVisitList(link.attr("abs:href"));
+                                Crab.record_map.put(link.attr("abs:href"),false);
+                          //  }
 
                             sentiment = SentimentAnalyser.analyse(docTwo.title());
 
@@ -134,7 +142,6 @@ public final class SentimentBasisRunnable implements Runnable {
                 }
             }
         }catch(Exception e){
-
         }
     }
 }
