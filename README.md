@@ -39,8 +39,10 @@ Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j f
 ## Roadmap
 - [x] Crawl based on Keywords
 - [ ] Concurrent logging
-- [ ] Spring Framework Implementation for web app deployment
+- [ ] REST framework integration 
 - [ ] More export options (PDF etc.)
+- [ ] Database Integration (PostgreSQL)
+- [ ] News Flow analysis (linked to Keyword Crawl)
 
 See the [open issues](https://github.com/l33pf/Crab/issues) for a full list of proposed features (and known issues).
 
