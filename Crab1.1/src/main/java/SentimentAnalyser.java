@@ -12,7 +12,7 @@ import java.util.Properties;
 
 /* Class is used for Sentiment analysis using Stanford's CoreNLP package */
 
-public final class SentimentAnalyser {
+public synchronized final class SentimentAnalyser {
 
     /**
      * We use this method to analyse a title from a webpage and give it a sentiment score.
