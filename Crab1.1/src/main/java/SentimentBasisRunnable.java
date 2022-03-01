@@ -32,6 +32,9 @@ import org.jsoup.select.Elements;
 import java.util.HashMap;
 import java.util.Objects;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 public final class SentimentBasisRunnable implements Runnable {
 
     String URL, bestLink;
@@ -63,7 +66,7 @@ public final class SentimentBasisRunnable implements Runnable {
 
     public SentimentBasisRunnable(String link){
         if(Crab.record_map.contains(link)){
-            if(Crab.record_map.get(link)){ //if its a parent set URL
+            if(Crab.record_map.get(link)){ //if it's a parent set URL
                 Objects.requireNonNull(this.URL = link);
             }
         }else{
@@ -75,8 +78,10 @@ public final class SentimentBasisRunnable implements Runnable {
 
         boolean blocked_link = false;
 
+        String sanitised_url = URL.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+
         try{
-            if(!Crab.v_list.contains(URL)){
+            if(!Crab.v_list.contains(sanitised_url)){
 
                 final Document doc = Jsoup.connect(URL).get();
                 System.out.println("Doing analysis on: " + URL + "\n");
@@ -86,15 +91,17 @@ public final class SentimentBasisRunnable implements Runnable {
 
                 for(Element link : links){
 
+                    URI uri = new URI(link.attr("abs:href"));
+
                     docTwo = Jsoup.connect(link.attr("abs:href")).get();
 
                     if(!Crab.v_list.contains(link.attr("abs:href"))){
 
                         for(String b_url : Crab.b_list){
 
-                            if(link.attr("abs:href").contains(b_url)){
+                            if(uri.getHost().contains(b_url)){
                                 blocked_link = true;
-                                break;
+                                Thread.currentThread().interrupt();
                             }
                         }
 
@@ -103,7 +110,10 @@ public final class SentimentBasisRunnable implements Runnable {
                             System.out.println("Visited: " + link.attr("abs:href") + "\n");
 
                             //if(!Crab.record_map.contains(link.attr("abs:href"))){
-                                Crab.v_list.add(link.attr("abs:href"));
+                                Crab.v_list.add(link.attr("abs:href").replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)",""));
+
+                                //Crab.v_list.add(link.attr("abs:href"));
+
                                 Utility.writeVisitList(link.attr("abs:href"));
                                 Crab.record_map.put(link.attr("abs:href"),false);
                           //  }
@@ -118,18 +128,24 @@ public final class SentimentBasisRunnable implements Runnable {
 
                             if(sentiment > bestSentiment){
 
-                                bestSentiment = sentiment; //change the optimal
+                                bestSentiment = sentiment;
 
-                                bestLink = link.attr("abs:href");
+                                String link_sanitised = link.attr("abs:href").replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
 
-                                Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,Jsoup.connect(bestLink).get().title());
+                                if(!link.attr("abs:href").equals(bestLink)){
+                                    bestLink = link.attr("abs:href");
 
-                                if(Crab.writeJson){
-                                    Crab.full_sentiment_map.putIfAbsent(bestLink,SentimentType.fromInt(bestSentiment));
+                                    Crab.exec.submit(new SentimentFullRunnable(bestLink));
                                 }
 
-                                //Submit a full sentiment task to the thread pool
-                                Crab.exec.submit(new SentimentFullRunnable(bestLink));
+                                if(!Crab.optimalURLrecord.contains(link_sanitised)){ //Check another Thread hasn't already found this optimal link
+                                    Crab.optimalURLrecord.add(link_sanitised);
+
+                                    //Catches early parts of the crawl from writing out base URLs with very low sentiment scores as optimals
+                                    if(SentimentType.fromInt(bestSentiment) != SentimentType.NEGATIVE || SentimentType.fromInt(bestSentiment) != SentimentType.VERY_NEGATIVE){
+                                        Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,Jsoup.connect(bestLink).get().title());
+                                    }
+                                }
 
                                 System.out.println("Best Sentiment Link for: " + URL + " currently: " + bestLink + "\n" );
                             }
