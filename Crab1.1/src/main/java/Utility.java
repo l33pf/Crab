@@ -262,7 +262,7 @@ public final class Utility {
     /**
      Deserialize visit list
      */
-    public static Queue<String> DeserializeQueue() throws IOException, ClassNotFoundException {
+/*    public static Queue<String> DeserializeQueue() throws IOException, ClassNotFoundException {
         Queue<String> vList;
         //    try{
         FileInputStream fs = new FileInputStream("visit_list.ser");
@@ -270,16 +270,16 @@ public final class Utility {
         vList = (Queue<String>) os.readObject();
         os.close();
         fs.close();
-/*        }catch(IOException ex){
+*//*        }catch(IOException ex){
             logger.error(ex);
         }catch(ClassNotFoundException ex){
             logger.error(ex);
-        }*/
+        }*//*
         return vList;
-    }
+    }*/
 
     public static ConcurrentLinkedQueue<String> DeserializeQueue(final String fname){
-        ConcurrentLinkedQueue<String> vList = null;
+        ConcurrentLinkedQueue<String> vList = new ConcurrentLinkedQueue<>();
 
         try{
             FileInputStream fs = new FileInputStream(fname);
