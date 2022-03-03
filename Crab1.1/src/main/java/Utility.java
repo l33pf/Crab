@@ -36,6 +36,9 @@ import org.jsoup.nodes.Document;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -169,33 +172,43 @@ public final class Utility {
     /**
      Serialize the Sentiment map
      */
-    public static void SerializeConMap(final ConcurrentHashMap<String,SentimentType> con_map) throws IOException {
-        //     try{
-        FileOutputStream fs =
-                new FileOutputStream("con_map.ser");
-        ObjectOutputStream os = new ObjectOutputStream(fs);
-        os.writeObject(con_map);
-        os.close();
-        fs.close();
-        //      }catch(IOException ex){
-        //              logger.error(ex);
-        //      }
+    public static void SerializeConMap(final ConcurrentHashMap<String,SentimentType> con_map, String fname) throws IOException {
+        try{
+            FileOutputStream fs =
+                    new FileOutputStream(fname);
+            ObjectOutputStream os = new ObjectOutputStream(fs);
+            os.writeObject(con_map);
+            os.close();
+            fs.close();
+
+        }catch(Exception ex){
+
+        }
     }
 
-    /**
-     Serialize the Sentiment map
-     */
-    public static void SerializeConMap(final ConcurrentHashMap<String,SentimentType> con_map, String fname) throws IOException {
-        //     try{
-        FileOutputStream fs =
-                new FileOutputStream(fname);
-        ObjectOutputStream os = new ObjectOutputStream(fs);
-        os.writeObject(con_map);
-        os.close();
-        fs.close();
-/*        }catch(IOException ex){
-                logger.error(ex);
-        }*/
+    public static void SerializeRecordMap(final ConcurrentHashMap<String,Boolean>r_map, final String fname){
+        try{
+            FileOutputStream fs = new FileOutputStream(fname);
+            ObjectOutputStream os = new ObjectOutputStream(fs);
+            os.writeObject(r_map);
+            os.close();
+            fs.close();
+        }catch(Exception ex){
+        }
+    }
+
+    public static ConcurrentHashMap<String,Boolean> DeserializeRecordMap(final String fname){
+            ConcurrentHashMap<String,Boolean> map = new ConcurrentHashMap<>();
+            try{
+                FileInputStream fs = new FileInputStream(fname);
+                ObjectInputStream os = new ObjectInputStream(fs);
+                map = (ConcurrentHashMap<String, Boolean>) os.readObject();
+                os.close();
+                fs.close();
+            }catch(Exception ex){
+
+            }
+            return map;
     }
 
     /*
@@ -259,25 +272,6 @@ public final class Utility {
         }
     }
 
-    /**
-     Deserialize visit list
-     */
-/*    public static Queue<String> DeserializeQueue() throws IOException, ClassNotFoundException {
-        Queue<String> vList;
-        //    try{
-        FileInputStream fs = new FileInputStream("visit_list.ser");
-        ObjectInputStream os = new ObjectInputStream(fs);
-        vList = (Queue<String>) os.readObject();
-        os.close();
-        fs.close();
-*//*        }catch(IOException ex){
-            logger.error(ex);
-        }catch(ClassNotFoundException ex){
-            logger.error(ex);
-        }*//*
-        return vList;
-    }*/
-
     public static ConcurrentLinkedQueue<String> DeserializeQueue(final String fname){
         ConcurrentLinkedQueue<String> vList = new ConcurrentLinkedQueue<>();
 
@@ -292,7 +286,6 @@ public final class Utility {
         }
         return vList;
     }
-
 
     /**
      Deserialize visit list from JSON file
@@ -312,19 +305,18 @@ public final class Utility {
     /**
      Deserialize the Sentiment map
      */
-    public static ConcurrentHashMap<String,SentimentType> DeserializeConMap() throws IOException, ClassNotFoundException {
-        //   try{
-        FileInputStream fs = new FileInputStream("con_map.ser");
-        ObjectInputStream os = new ObjectInputStream(fs);
-        map = (ConcurrentHashMap)os.readObject();
-        os.close();
-        fs.close();
-        //   }catch(IOException ex){
-        //        logger.error(ex);
-        //    }catch(ClassNotFoundException ex){
-        //        logger.error(ex);
-        //    }
-        return map;
+    public static ConcurrentHashMap<String,SentimentType> DeserializeConMap(String fname) throws IOException, ClassNotFoundException {
+        ConcurrentHashMap<String,SentimentType> c_map = new ConcurrentHashMap<>();
+        try{
+            FileInputStream fs = new FileInputStream(fname);
+            ObjectInputStream os = new ObjectInputStream(fs);
+            c_map = (ConcurrentHashMap) os.readObject();
+            os.close();
+            fs.close();
+        }catch(Exception ex){
+
+        }
+        return c_map;
     }
 
     public static void writeSentimentResult(final String url, final SentimentType sentiment){
@@ -392,30 +384,6 @@ public final class Utility {
         }
     }
 
-    public synchronized static void writeURLSentimentResult(final String url, final int sentiment, final String title){
-        w.lock();
-
-        try{
-            try{
-                FileWriter fileWriter = new FileWriter(RESULTS_FILE_PATH,true);
-
-                CSVWriter writer = new CSVWriter(fileWriter);
-
-                String [] record = {url,String.valueOf(SentimentType.fromInt(sentiment)),title};
-
-                writer.writeNext(record);
-
-                writer.close();
-
-            }
-            catch(Exception e){
-
-            }
-        }finally {
-            w.unlock();
-        }
-    }
-
     public synchronized static void writeURLOptimalSentimentResult(final String url, final int sentiment, final String title){
         w.lock();
 
@@ -436,29 +404,6 @@ public final class Utility {
 
             }
         }finally {
-            w.unlock();
-        }
-    }
-
-    public synchronized static void writeKeywordSentimentResult(final String keyword, final String URL, final SentimentType sentiment){
-        w.lock();
-
-        try{
-            try{
-                FileWriter fileWriter = new FileWriter(CSV_KEYWORD_PATH,true);
-
-                CSVWriter writer = new CSVWriter(fileWriter);
-
-                String [] record = {keyword,URL, String.valueOf(sentiment)};
-
-                writer.writeNext(record);
-
-                writer.close();
-
-            }catch(Exception e){
-
-            }
-        }finally{
             w.unlock();
         }
     }

@@ -33,13 +33,14 @@ import java.util.HashMap;
 import java.util.Objects;
 
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.concurrent.Future;
 
 public final class SentimentBasisRunnable implements Runnable {
 
     String URL, bestLink;
     int bestSentiment, sentiment;
     HashMap<String,SentimentType> map = new HashMap<>();
+    Future fut;
 
     /**
      Used to calculate the sentiment distribution of all links associated to the parent URL
@@ -107,24 +108,17 @@ public final class SentimentBasisRunnable implements Runnable {
 
                         if(!blocked_link){
 
-                            System.out.println("Visited: " + link.attr("abs:href") + "\n");
-
                             //if(!Crab.record_map.contains(link.attr("abs:href"))){
                                 Crab.v_list.add(link.attr("abs:href").replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)",""));
 
-                                //Crab.v_list.add(link.attr("abs:href"));
+                                System.out.println("Visited: " + link.attr("abs:href") + "\n");
 
                                 Utility.writeVisitList(link.attr("abs:href"));
                                 Crab.record_map.put(link.attr("abs:href"),false);
                           //  }
 
-                            sentiment = SentimentAnalyser.analyse(docTwo.title());
-
-                            map.put(link.attr("abs:href"),SentimentType.fromInt(sentiment));
-
-                            if(Crab.writeJson){
-                                Crab.con_map.putIfAbsent(link.attr("abs:href"),SentimentType.fromInt(sentiment));
-                            }
+                            sentiment = SentimentAnalyser.analyse_th(docTwo.title());
+                                    //SentimentAnalyser.analyse(docTwo.title());
 
                             if(sentiment > bestSentiment){
 
@@ -143,17 +137,21 @@ public final class SentimentBasisRunnable implements Runnable {
 
                                     //Catches early parts of the crawl from writing out base URLs with very low sentiment scores as optimals
                                     if(SentimentType.fromInt(bestSentiment) != SentimentType.NEGATIVE || SentimentType.fromInt(bestSentiment) != SentimentType.VERY_NEGATIVE){
-                                        Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,Jsoup.connect(bestLink).get().title());
+
+                                        if(!Crab.con_map.contains(bestLink)){
+                                            Crab.con_map.put(bestLink,SentimentType.fromInt(bestSentiment));
+                                            Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,Jsoup.connect(bestLink).get().title());
+                                        }
                                     }
                                 }
-
                                 System.out.println("Best Sentiment Link for: " + URL + " currently: " + bestLink + "\n" );
                             }
+                            Crab.urlStack_LF.push(bestLink);
                         }
                         final String title = (Jsoup.connect(bestLink).get()).title();
-                        Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,title);
+                        //Utility.writeURLOptimalSentimentResult(bestLink,bestSentiment,title);
 
-                        Crab.urlStack_LF.push(bestLink);
+                        //Crab.urlStack_LF.push(bestLink);
                     }
                 }
             }

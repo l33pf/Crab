@@ -45,6 +45,7 @@ public final class Crab {
     public static final ConcurrentHashMap<String,SentimentType> full_sentiment_map = new ConcurrentHashMap<>();
 
     public static ConcurrentHashMap<String,Boolean> record_map = new ConcurrentHashMap<>();
+    public static ConcurrentLinkedQueue<String> optimalURLrecord = new ConcurrentLinkedQueue<>();
 
     /* For Keyword article gathering */
     public static final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb = new ConcurrentHashMap<>();
@@ -57,14 +58,16 @@ public final class Crab {
     public static ConcurrentLinkedQueue<KeywordClass> keyWordQueue = new ConcurrentLinkedQueue<>();
 
     public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
-            10L, TimeUnit.SECONDS,
+            1L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(CAPACITY),
             Executors.defaultThreadFactory(),
-            new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
+            new ThreadPoolExecutor.DiscardOldestPolicy());
 
     Crab() throws IOException {
-        Utility.SerializeConMap(con_map);
+        Utility.SerializeConMap(con_map,"con_map.ser");
         Utility.SerializeConMap(full_sentiment_map,"f_map_ser");
+        Utility.SerializeQueue(v_list,"vlist.ser");
+        Utility.SerializeRecordMap(record_map,"r_map.ser");
     }
 
     public static void CrabCrawl() throws IOException, CsvException, ClassNotFoundException {
@@ -82,13 +85,14 @@ public final class Crab {
         }
 
         //Deserialize data structures
-       // v_list = Utility.DeserializeQueue("vlist.ser");
-        con_map = Utility.DeserializeConMap();
+        v_list = Utility.DeserializeQueue("vlist.ser");
+        con_map = Utility.DeserializeConMap("con_map.ser"); //bug in con map, not loading correctly
+        record_map = Utility.DeserializeRecordMap("r_map.ser");
 
 /*        if(keyWordCrawl){
             System.out.println("Doing Keyword Crawl. \n");
             while(!urlStack_LF.isEmpty()){
-                exec.submit(new SentimentKeyWordRunnable(urlStack_LF.pop()));
+                exec.submit(new SentimentKeyWordRunnable(urlStack_LF.p op()));
             }*/
         //     }else{
         while(!urlStack_LF.isEmpty()){
@@ -98,8 +102,9 @@ public final class Crab {
 
         exec.shutdown();
 
-        Utility.SerializeConMap(con_map);
+        Utility.SerializeConMap(con_map,"con_map.ser");
         Utility.SerializeQueue(v_list,"vlist.ser");
+        Utility.SerializeRecordMap(record_map,"r_map.ser");
 
         if(keyWordCrawl){
             if(Crab.writeJson){
