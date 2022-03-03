@@ -22,36 +22,55 @@
  **/
 
 /**
- * Simple Runnable class that handles Utility tasks
+ *  a Callable which is used to handle Crab's utility tasks
  */
 
 import java.util.Objects;
+import java.util.concurrent.Callable;
 
-public class UtilityRunnable implements  Runnable {
+public class UtilityCallable implements Callable<Boolean> {
 
     UtilityTasks tsk;
     String ctnt, lnk, ttle;
     int sent;
 
-    UtilityRunnable( final int code,  final String content){
+    UtilityCallable( final int code,  final String content){
         Objects.requireNonNull(this.tsk = UtilityTasks.UtilityTaskDecode(code));
         this.ctnt = content;
     }
 
-    UtilityRunnable(final int code, String link, int sentiment, String title){
+    UtilityCallable(final int code, String link, int sentiment, String title){
         Objects.requireNonNull(this.tsk = UtilityTasks.UtilityTaskDecode(code));
         this.sent = sentiment;
         this.lnk = link;
         this.ttle = title;
     }
 
-    public void run (){
+    UtilityCallable(final int code, final String content, final int sentiment){
+        Objects.requireNonNull(this.tsk = UtilityTasks.UtilityTaskDecode(code));
+        this.sent = sentiment;
+        this.ctnt = content;
+    }
 
-        switch(tsk){
+    @Override
+    public Boolean call(){
 
-            case WRITE_VISIT_LIST -> Utility.writeVisitList(ctnt);
+        switch (tsk) {
+            case WRITE_VISIT_LIST -> {
+                Utility.writeVisitList(ctnt);
+                return true;
+            }
 
-            case WRITE_OPTIMAL_RESULT_LIST -> Utility.writeURLOptimalSentimentResult(lnk,sent,ttle);
+            case WRITE_OPTIMAL_RESULT_LIST -> {
+                Utility.writeURLOptimalSentimentResult(lnk, sent, ttle);
+                return true;
+            }
+
+            case WRITE_SENTIMENT_RESULT -> {
+                Utility.writeSentimentResult(ctnt,SentimentType.fromInt(sent));
+                return true;
+            }
         }
+        return false;
     }
 }

@@ -31,6 +31,7 @@ import java.util.NoSuchElementException;
 public enum UtilityTasks {
     WRITE_VISIT_LIST,
     WRITE_OPTIMAL_RESULT_LIST,
+    WRITE_SENTIMENT_RESULT,
     READ_VISIT_LIST,
     READ_OPTIMAL_RESULT_LIST
     ;
@@ -40,8 +41,9 @@ public enum UtilityTasks {
         return switch(code){
             case 1 -> WRITE_VISIT_LIST;
             case 2 -> WRITE_OPTIMAL_RESULT_LIST;
-            case 3 -> READ_VISIT_LIST;
-            case 4 -> READ_OPTIMAL_RESULT_LIST;
+            case 3 -> WRITE_SENTIMENT_RESULT;
+            case 4 -> READ_VISIT_LIST;
+            case 5 -> READ_OPTIMAL_RESULT_LIST;
             default -> throw new NoSuchElementException("No utility code for integer: " + code);
         };
     }
