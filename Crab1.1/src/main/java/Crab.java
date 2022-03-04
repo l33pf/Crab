@@ -22,8 +22,8 @@
  **/
 
 import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.*;
 
 import com.opencsv.exceptions.CsvException;
@@ -38,8 +38,10 @@ public final class Crab {
     private static final int CAPACITY = 10;
 
     public static boolean writeJson = true;
+    public static boolean optimalDepth = false;
 
     public static ConcurrentLinkedQueue<String> v_list = new ConcurrentLinkedQueue<>();
+    public static ConcurrentLinkedQueue<String> parent_set = new ConcurrentLinkedQueue<>();
 
     public static ConcurrentHashMap<String,SentimentType> con_map = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap<String,SentimentType> full_sentiment_map = new ConcurrentHashMap<>();
@@ -49,19 +51,17 @@ public final class Crab {
 
     /* For Keyword article gathering */
     public static final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb = new ConcurrentHashMap<>();
-    public static final HashSet<String> keyWords = new HashSet<>();
     public static boolean keyWordCrawl = false;
-
     public static ConcurrentLinkedQueue<String> b_list = new ConcurrentLinkedQueue<>();
 
     /* For Keyword Crawl */
     public static ConcurrentLinkedQueue<KeywordClass> keyWordQueue = new ConcurrentLinkedQueue<>();
 
     public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
-            1L, TimeUnit.SECONDS,
+            10L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(CAPACITY),
             Executors.defaultThreadFactory(),
-            new ThreadPoolExecutor.DiscardOldestPolicy());
+            new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
 
     Crab() throws IOException {
         Utility.SerializeConMap(con_map,"con_map.ser");
@@ -70,17 +70,15 @@ public final class Crab {
         Utility.SerializeRecordMap(record_map,"r_map.ser");
     }
 
-    public static void CrabCrawl() throws IOException, CsvException, ClassNotFoundException {
+    public static void CrabCrawl() throws IOException, CsvException, ClassNotFoundException, URISyntaxException {
 
         /* Read in the URL Seed set supplied into a stack */
-        Utility.readIn(urlStack);
         Utility.readIn_LF(urlStack_LF);
 
         exec.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 
-        if(urlStack.size()==0){
+        if(urlStack_LF.isEmpty()){
             //logger.error("No URL seed set supplied to crawler");
-
             throw new IllegalArgumentException("no URL Seed set supplied. \n");
         }
 
@@ -88,6 +86,7 @@ public final class Crab {
         v_list = Utility.DeserializeQueue("vlist.ser");
         con_map = Utility.DeserializeConMap("con_map.ser"); //bug in con map, not loading correctly
         record_map = Utility.DeserializeRecordMap("r_map.ser");
+        optimalURLrecord = Utility.DeserializeQueue("opt_url_list.ser");
 
 /*        if(keyWordCrawl){
             System.out.println("Doing Keyword Crawl. \n");
@@ -96,7 +95,11 @@ public final class Crab {
             }*/
         //     }else{
         while(!urlStack_LF.isEmpty()){
-            exec.submit(new SentimentBasisRunnable(urlStack_LF.pop()));
+            String url = urlStack_LF.pop();
+            URI uri = new URI(url);
+            if(!b_list.contains(uri.getHost())){
+                exec.submit(new SentimentBasisRunnable(url));
+            }
         }
         //     }
 
@@ -105,6 +108,7 @@ public final class Crab {
         Utility.SerializeConMap(con_map,"con_map.ser");
         Utility.SerializeQueue(v_list,"vlist.ser");
         Utility.SerializeRecordMap(record_map,"r_map.ser");
+        Utility.SerializeQueue(optimalURLrecord,"opt_url_list.ser");
 
         if(keyWordCrawl){
             if(Crab.writeJson){
