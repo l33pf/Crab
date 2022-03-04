@@ -31,45 +31,9 @@ public final class SentimentAnalyser {
      * @return - sentiment score from CoreNLP
      */
     public synchronized static int analyse(final String title){
-
-        Properties pp = new Properties();
-        RedwoodConfiguration.current().clear().apply();
-        pp.setProperty("annotators", "tokenize, ssplit, pos, parse, sentiment");
-        StanfordCoreNLP pipeline = new StanfordCoreNLP(pp);
-        Annotation annotation = pipeline.process(title);
-
-        for(CoreMap sentence : annotation.get(CoreAnnotations.SentencesAnnotation.class)){
-            Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
-            return RNNCoreAnnotations.getPredictedClass(tree);
-        }
-        return 0; /* no sentiment */
-    }
-
-    public static void findKeywords(final String title, final String keyword){
-        // set up pipeline properties
-        Properties props = new Properties();
-
-        StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-
-        CoreDocument doc = new CoreDocument(title);
-
-        pipeline.annotate(doc);
-
-        System.out.println("entities found");
-
-        for(CoreEntityMention em : doc.entityMentions()){
-            if(em.text().contains(keyword)){
-                System.out.println("keyword detected\n");
-            }
-        }
-
-
-    }
-
-    public static int analyse_th(final String title){
         r.lock();
         int sentiment = 0;
-        try{
+        try {
             Properties pp = new Properties();
             RedwoodConfiguration.current().clear().apply();
             pp.setProperty("annotators", "tokenize, ssplit, pos, parse, sentiment");
@@ -78,8 +42,9 @@ public final class SentimentAnalyser {
 
             for(CoreMap sentence : annotation.get(CoreAnnotations.SentencesAnnotation.class)){
                 Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
-                sentiment = RNNCoreAnnotations.getPredictedClass(tree);
+                return RNNCoreAnnotations.getPredictedClass(tree);
             }
+
         }catch(Exception ex){
 
         }finally{
@@ -87,5 +52,4 @@ public final class SentimentAnalyser {
         }
         return sentiment;
     }
-
 }

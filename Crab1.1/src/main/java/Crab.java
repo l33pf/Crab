@@ -29,9 +29,7 @@ import java.util.concurrent.*;
 import com.opencsv.exceptions.CsvException;
 
 public final class Crab {
-
-    public static final CrabStack urlStack = new CrabStack();
-
+    
     public static final CrabStack_LF urlStack_LF = new CrabStack_LF();
 
     private static final int numOfThreads = (Runtime.getRuntime().availableProcessors())+1;
@@ -57,10 +55,11 @@ public final class Crab {
     /* For Keyword Crawl */
     public static ConcurrentLinkedQueue<KeywordClass> keyWordQueue = new ConcurrentLinkedQueue<>();
 
-    public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads, numOfThreads,
-            10L, TimeUnit.SECONDS,
+    public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads/2, numOfThreads,
+            1L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(CAPACITY),
-            Executors.defaultThreadFactory(),
+            //Executors.defaultThreadFactory(),
+            Executors.privilegedThreadFactory(),
             new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
 
     Crab() throws IOException {
@@ -75,7 +74,7 @@ public final class Crab {
         /* Read in the URL Seed set supplied into a stack */
         Utility.readIn_LF(urlStack_LF);
 
-        exec.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+       // exec.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 
         if(urlStack_LF.isEmpty()){
             //logger.error("No URL seed set supplied to crawler");
