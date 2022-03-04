@@ -33,7 +33,6 @@ Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j f
 * [Log4j](https://logging.apache.org/log4j/)
 * [OpenCSV](http://opencsv.sourceforge.net/)
 * [Jackson](https://github.com/FasterXML/jackson)
-* [gson](https://github.com/google/gson)
 
 <!-- ROADMAP -->
 ## Roadmap
