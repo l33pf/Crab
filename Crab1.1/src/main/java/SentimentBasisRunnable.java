@@ -46,18 +46,18 @@ import java.util.concurrent.Future;
 
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
-public class SentimentBasisRunnable implements Runnable{
+public final class SentimentBasisRunnable implements Runnable{
 
     String URL, bestLink;
     int bestSentiment, sentiment;
     HashMap<String,Integer> map = new HashMap<>();
-    Queue<String> test = Crab.b_list;
+    final Queue<String> test = Crab.b_list;
 
-    public SentimentBasisRunnable(String link){
+    public SentimentBasisRunnable(final String link){
         Objects.requireNonNull(this.URL = link);
     }
 
-    public boolean checkBlocked(String link){
+    public boolean checkBlocked(final String link){
 
         try{
             URI uri = new URI(link);
@@ -75,9 +75,11 @@ public class SentimentBasisRunnable implements Runnable{
 
     public void run(){
 
-        boolean blocked_link = false;
+       //Thread thread = Thread.currentThread();
 
-        String sanitised_url = URL.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+        boolean blocked_link;
+
+        final String sanitised_url = URL.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
 
         try{
             if(!Crab.v_list.contains(sanitised_url) || (Crab.parent_set.contains(URL))){
@@ -98,7 +100,7 @@ public class SentimentBasisRunnable implements Runnable{
 
                     if(!blocked_link){
                         Future<Integer> sentimentFut = Crab.exec.submit(new SentimentAnalyserCallable(docTwo.title()));
-
+                        
                         while(!sentimentFut.isDone()){ //Busy-Waiting
                             //Thread.onSpinWait();
                             Thread.sleep(1000);
@@ -106,9 +108,8 @@ public class SentimentBasisRunnable implements Runnable{
 
                         sentiment = sentimentFut.get();
 
-                        System.out.println("Visited: " + link.attr("abs:href") + "\n");
-
                         if(!Crab.v_list.contains(link.attr("abs:href").replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)",""))){
+                            System.out.println("Visited: " + link.attr("abs:href") + "\n");
                             Crab.v_list.add(link.attr("abs:href").replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)",""));
                         }
 
@@ -116,20 +117,19 @@ public class SentimentBasisRunnable implements Runnable{
                             map.put(link.attr("abs:href"),sentiment);
                         }
 
-                        Future<Boolean> fut = Crab.exec.submit(new UtilityCallable(1,link.attr("abs:href")));
-                        Future<Boolean> futTwo;
+                        final Future<Boolean> fut = Crab.exec.submit(new UtilityCallable(1,link.attr("abs:href")));
 
                         while(!fut.isDone()){
                             //Thread.onSpinWait();
-                            Thread.sleep(100);
+                            Thread.sleep(10);
                         }
 
                         if(fut.get()){
-                            futTwo = Crab.exec.submit(new UtilityCallable(3,link.attr("abs:href"),sentiment));
+                            final Future<Boolean> futTwo = Crab.exec.submit(new UtilityCallable(3,link.attr("abs:href"),sentiment));
 
                             while(!futTwo.isDone()){
                                 //Thread.onSpinWait();
-                                Thread.sleep(100);
+                                Thread.sleep(10);
                             }
                         }
 
@@ -139,32 +139,30 @@ public class SentimentBasisRunnable implements Runnable{
 
                     }
                 }
-            }
+                //Calculate the optimal link from the set of links
+                for(final String link : map.keySet()){
+                    if(map.get(link) > bestSentiment){
+                        bestLink = link;
+                        bestSentiment = map.get(link);
+                    }
+                }
 
-            //Calculate the optimal link from the set of links
-            for(String link : map.keySet()){
-                if(map.get(link) > bestSentiment){
-                    bestLink = link;
-                    bestSentiment = map.get(link);
+                //if another thread hasn't already found this link
+                if(!Crab.optimalURLrecord.contains(bestLink)){
+                    System.out.println("Best Sentiment link for parent URL : " + URL + " " + bestLink);
+                    Crab.optimalURLrecord.add(bestLink);
+                }
+
+                Future<Boolean> fut = Crab.exec.submit(new UtilityCallable(2,bestLink,bestSentiment,Jsoup.connect(bestLink).get().title()));
+
+                while(!fut.isDone()){
+                    //Thread.onSpinWait();
+                    Thread.sleep(10);
                 }
             }
-
-            System.out.println("Best Sentiment link for parent URL : " + URL + " " + bestLink);
-
-            //if another thread hasn't already found this link
-            if(!Crab.optimalURLrecord.contains(bestLink)){
-                Crab.optimalURLrecord.add(bestLink);
-            }
-
-            Future<Boolean> fut = Crab.exec.submit(new UtilityCallable(2,bestLink,bestSentiment,Jsoup.connect(bestLink).get().title()));
-
-            while(!fut.isDone()){
-                Thread.sleep(100);
-                //Thread.onSpinWait()
-            }
-
         }catch(Exception ex){
 
         }
+        Thread.currentThread().interrupt();
     }
 }
