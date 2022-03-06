@@ -70,6 +70,7 @@ public final class Utility {
 
     private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private static final Lock w = rwl.writeLock();
+    private static final Lock r = rwl.readLock();
 
     public static final Gson gson = new Gson();
 
@@ -346,4 +347,18 @@ public final class Utility {
             w.unlock();
         }
     }
+
+    public static boolean checkValInQueue(final ConcurrentLinkedQueue<String> q, final String query){
+        boolean valToReturn = false;
+        r.lock();
+        try{
+                if(q.contains(query)){
+                    valToReturn = true;
+                }
+        }finally {
+            r.unlock();
+        }
+        return valToReturn;
+    }
+
 }

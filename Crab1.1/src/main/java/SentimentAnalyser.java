@@ -30,26 +30,21 @@ public final class SentimentAnalyser {
      * @param title - Title from Webpage
      * @return - sentiment score from CoreNLP
      */
-    public synchronized static int analyse(final String title){
-        r.lock();
-        int sentiment = 0;
-        try {
-            Properties pp = new Properties();
-            RedwoodConfiguration.current().clear().apply();
-            pp.setProperty("annotators", "tokenize, ssplit, pos, parse, sentiment");
-            StanfordCoreNLP pipeline = new StanfordCoreNLP(pp);
-            Annotation annotation = pipeline.process(title);
+    public synchronized static int analyse(String title){
 
-            for(CoreMap sentence : annotation.get(CoreAnnotations.SentencesAnnotation.class)){
-                Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
-                return RNNCoreAnnotations.getPredictedClass(tree);
-            }
+        Properties pp = new Properties();
+        RedwoodConfiguration.current().clear().apply();
+        pp.setProperty("annotators", "tokenize, ssplit, pos, parse, sentiment");
+        StanfordCoreNLP pipeline = new StanfordCoreNLP(pp);
+        Annotation annotation = pipeline.process(title);
 
-        }catch(Exception ex){
-
-        }finally{
-            r.unlock();
+        for(CoreMap sentence : annotation.get(CoreAnnotations.SentencesAnnotation.class)){
+            Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
+            return RNNCoreAnnotations.getPredictedClass(tree);
         }
-        return sentiment;
+        return 0; /* no sentiment */
     }
+
+
+
 }
