@@ -33,7 +33,8 @@ public final class Crab {
     public static final CrabStack_LF urlStack_LF = new CrabStack_LF();
 
     private static final int numOfThreads = (Runtime.getRuntime().availableProcessors())+1;
-    private static final int CAPACITY = 10;
+    private static final int coreSize = (numOfThreads % 2 == 0) ? numOfThreads/2 : (int)Math.floor(numOfThreads/2);
+    private static final int CAPACITY = 100;
 
     public static boolean writeJson = true;
     public static boolean optimalDepth = false;
@@ -55,11 +56,10 @@ public final class Crab {
     /* For Keyword Crawl */
     public static ConcurrentLinkedQueue<KeywordClass> keyWordQueue = new ConcurrentLinkedQueue<>();
 
-    public static ThreadPoolExecutor exec = new ThreadPoolExecutor(numOfThreads/2, numOfThreads,
-            1L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(CAPACITY),
-            //Executors.defaultThreadFactory(),
-            Executors.privilegedThreadFactory(),
+    public static ThreadPoolExecutor exec = new ThreadPoolExecutor(coreSize, numOfThreads,
+            1L, TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(CAPACITY), // Bounded
+            Executors.defaultThreadFactory(),
             new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
 
     Crab() throws IOException {
@@ -73,8 +73,6 @@ public final class Crab {
 
         /* Read in the URL Seed set supplied into a stack */
         Utility.readIn_LF(urlStack_LF);
-
-       // exec.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 
         if(urlStack_LF.isEmpty()){
             //logger.error("No URL seed set supplied to crawler");
@@ -93,11 +91,18 @@ public final class Crab {
                 exec.submit(new SentimentKeyWordRunnable(urlStack_LF.p op()));
             }*/
         //     }else{
+        URI uri;
         while(!urlStack_LF.isEmpty()){
             String url = urlStack_LF.pop();
-            URI uri = new URI(url);
-            if(!b_list.contains(uri.getHost())){
-                exec.submit(new SentimentBasisRunnable(url));
+
+            try{
+                uri = new URI(url);
+
+                if(!b_list.contains(uri.getHost())){
+                    exec.submit(new SentimentBasisRunnable(url));
+                }
+            }catch(Exception e){
+
             }
         }
         //     }
