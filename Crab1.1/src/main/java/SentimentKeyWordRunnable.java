@@ -125,11 +125,11 @@ public class SentimentKeyWordRunnable implements  Runnable{
                         blocked_link = true;
                     }
 
-                    if(!blocked_link){
+                    String sanitisedLink = link.attr("abs:href").replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+
+                    if(!blocked_link && !Utility.checkValInQueue(Crab.keywordVisitList,sanitisedLink)){
 
                         boolean matchesFound;
-
-                        System.out.println("Matches found for: " + link.attr("abs:href") + "\n");
 
                         String title = docTwo.title();
 
@@ -140,12 +140,10 @@ public class SentimentKeyWordRunnable implements  Runnable{
 
                         Queue<String> matches = checkForKeyword(tagMap,keywords);
 
-                        String sanitisedLink = link.attr("abs:href").replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
-
                         //if we have matches found, add it to the download queue to store the content
                         if(!matches.isEmpty()){
 
-                            Utility.writeURLKeywordMatches(matches,link.attr("abs:href"),"CrabURLKeywordMatches.csv");
+                            System.out.println("Matches found for: " + link.attr("abs:href") + "\n");
 
                             //send out for download
                             Crab.downloadQueue.add(link.attr("abs:href"));
@@ -153,6 +151,7 @@ public class SentimentKeyWordRunnable implements  Runnable{
                             if(!Utility.checkValInQueue(Crab.keywordVisitList,sanitisedLink)){
                                 Crab.keywordVisitList.add(sanitisedLink);
                                 Utility.writeVisitList_kw(link.attr("abs:href"),"CrabKWVisitList.csv");
+                                Utility.writeURLKeywordMatches(matches,link.attr("abs:href"),"CrabURLKeywordMatches.csv");
                             }
 
                             matchesFound = true;
