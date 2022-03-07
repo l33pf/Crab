@@ -129,6 +129,8 @@ public class SentimentKeyWordRunnable implements  Runnable{
 
                         boolean matchesFound;
 
+                        System.out.println("Matches found for: " + link.attr("abs:href") + "\n");
+
                         String title = docTwo.title();
 
                         HashMap<String,PriorityQueue<String>> tagMap;

@@ -76,10 +76,7 @@ public final class SentimentAnalyser {
 
             });
         }
-        if(!tagMap.isEmpty()){
-            System.out.println("-------------");
-            System.out.println("Tags derived.\n");
-        }
+
         return tagMap;
     }
 
