@@ -10,12 +10,10 @@ import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.util.CoreMap;
 import edu.stanford.nlp.util.logging.RedwoodConfiguration;
 
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-
-import java.util.Properties;
-import java.util.stream.Collectors;
 
 /* Class is used for Sentiment analysis using Stanford's CoreNLP package */
 
@@ -43,6 +41,46 @@ public final class SentimentAnalyser {
             return RNNCoreAnnotations.getPredictedClass(tree);
         }
         return 0; /* no sentiment */
+    }
+
+    public synchronized static HashMap<String,PriorityQueue<String>> pos_keywordTagger(final String title, final ArrayList<String> arr){
+        // set up pipeline properties
+        Properties props = new Properties();
+        // set the list of annotators to run
+        RedwoodConfiguration.current().clear().apply();
+        props.setProperty("annotators", "tokenize,ssplit,pos");
+        // build pipeline
+        StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+        // create a document object
+        CoreDocument document = pipeline.processToCoreDocument(title);
+
+        HashMap<String, PriorityQueue<String>> tagMap = new HashMap<>();
+
+        for (CoreLabel tok : document.tokens()) {
+
+            arr.forEach((String tg)->{ // filter out to find the tags we are interested in
+
+                    if(tagMap.containsKey(tok.tag())){
+                        PriorityQueue q = tagMap.get(tok.tag());
+
+                        if(!q.contains(tok.word())){
+                            q.add(tok.word());
+                            tagMap.put(tok.tag(),q);
+                        }
+
+                    }else{
+                        PriorityQueue<String> q = new PriorityQueue<>();
+                        q.add(tok.word());
+                        tagMap.put(tok.tag(),q);
+                    }
+
+            });
+        }
+        if(!tagMap.isEmpty()){
+            System.out.println("-------------");
+            System.out.println("Tags derived.\n");
+        }
+        return tagMap;
     }
 
 

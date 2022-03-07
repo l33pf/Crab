@@ -1,109 +1,174 @@
 /*
  ***LICENSE***
-Copyright 2022 l33pf (https://github.com/l33pf)
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+ Copyright (c) 2021 l33pf (https://github.com/l33pf)
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+
  **/
 
-/*
- * SentimentKeyWordRunnable
- * Runnable class takes a URL and then searches for input-defined keywords looking for the individual links of the URL for
- * a keyword match. If a match is found sentiment analysis is applied and then the result is added to the keyword's
- * associated KeywordClass building up an overall sentiment profile for matched keyword links.
- *
- * Take note that whatever the sentiment result from a keyword matched page (i.e. positive/negative) will mean it is added
- * to the URL stack for crawling where as for SentimentBasisRunnable only positive/neutral pages are crawled.
- *
- * Created: 16/1/2022
- * Edited: 27/02/2022 - by l33pf
-
- */
-
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.time.LocalDate;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.ArrayDeque;
+import java.util.PriorityQueue;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class SentimentKeyWordRunnable implements Runnable {
+import org.jsoup.nodes.Element;
 
-    String link;
-    int sentiment, m_sentiment;
+public class SentimentKeyWordRunnable implements  Runnable{
 
-    SentimentKeyWordRunnable(final String URL){
-        Objects.requireNonNull(this.link = URL);
+    //Used as local storage for POS tags
+    ArrayList<String> tags;
+
+    //Used to store keyword objects for search locally
+    Queue<KeywordClass> keywords;
+
+    String URL;
+    final Queue<String> test = Crab.b_list;
+    ConcurrentLinkedQueue<String> testTwo = Crab.parent_set;
+    HashMap<String,Boolean> map = new HashMap<>();
+
+    SentimentKeyWordRunnable(final ArrayList<String> POS_Tags, final Queue<KeywordClass> kw_obj){
+        Objects.requireNonNull(this.tags = POS_Tags);
+        Objects.requireNonNull(this.keywords = kw_obj);
     }
 
-    public void run(){
+    SentimentKeyWordRunnable(final ArrayList<String> POS_Tags, final Queue<KeywordClass> kw_obj, String link){
+        Objects.requireNonNull(this.tags = POS_Tags);
+        Objects.requireNonNull(this.keywords = kw_obj);
+        Objects.requireNonNull(this.URL = link);
+    }
+
+    public boolean checkBlocked(final String link){
 
         try{
-            final Document doc = Jsoup.connect(link).get();
-
-            Document docTwo;
-
-            final Elements links = doc.select("a[href]");
-
-            for(Element e : links){
-
-                //if no other thread has crawled this page
-                if(!Crab.v_list.contains(e.attr("abs:href"))){
-
-                    //connect to get the metadata
-                    docTwo = Jsoup.connect(e.attr("abs:href")).get();
-
-                    for(KeywordClass c : Crab.keyWordQueue){
-
-                        //If the link title contains one of the keywords
-                        if(docTwo.title().contains(c.keyword)){
-
-                            System.out.println("Match found in: " + e.attr("abs:href"));
-
-                            sentiment = SentimentAnalyser.analyse(doc.title()); //run sentiment analysis on the title
-
-                            //get further content from the metadata and run sentiment analysis
-                            m_sentiment = SentimentAnalyser.analyse(docTwo.select("meta[name=description]").get(0)
-                                    .attr("content"));
-
-                            if(sentiment >= m_sentiment){ //compare the two sentiments
-
-                                switch (SentimentType.fromInt(sentiment)) {
-                                    case VERY_POSITIVE, POSITIVE -> c.positiveSentiment.put(e.attr("abs:href"), LocalDate.now());
-                                    case NEUTRAL -> c.neutralSentiment.put(e.attr("abs:href"), LocalDate.now());
-                                    case VERY_NEGATIVE, NEGATIVE -> c.negativeSentiment.put(e.attr("abs:href"), LocalDate.now());
-                                }
-                            }else {
-
-                                switch (SentimentType.fromInt(m_sentiment)) {
-                                    case VERY_POSITIVE, POSITIVE -> c.positiveSentiment.put(e.attr("abs:href"), LocalDate.now());
-                                    case NEUTRAL -> c.neutralSentiment.put(e.attr("abs:href"), LocalDate.now());
-                                    case VERY_NEGATIVE, NEGATIVE -> c.negativeSentiment.put(e.attr("abs:href"), LocalDate.now());
-                                }
-                            }
-                            //Further interested given the keyword match,
-                            // so add to the stack to look at it's links to assess further
-                            Crab.urlStack_LF.push(e.attr("abs:href"));
-
-                            //debating whether to add break here
-                            //given if we have articles where we may have multiple keywords its more likely to be a feature
-                            //i.e. a recap of a bunch of assets or games over some period of time.
-                            break;
-                        }
-                    }
+            URI uri = new URI(link);
+            for(String b_url : test){
+                //have very similiar URL's
+                if(FuzzySearch.ratio(uri.getHost(),b_url) > 90){
+                    return true;
                 }
-                //add to the visit list so we avoid re-visiting it regardless of matching state of the link
-                Crab.v_list.add(e.attr("abs:href"));
             }
         }catch(Exception ex){
-                //log4j
+            return false;
+        }
+        return false;
+    }
+
+    /*
+        This method looks for keywords then returns a list of matches by searching through the extracted tag map
+        Can be replaced for boolean if needed, the queue is merely for documenting.
+     */
+    public Queue<String> checkForKeyword(final HashMap<String,PriorityQueue<String>> t_map, final Queue<KeywordClass> q_keywrds){
+            Queue<String> matches = new ArrayDeque<>();
+
+            q_keywrds.forEach((KeywordClass obj)->{
+                for(String tag : t_map.keySet()){
+                    PriorityQueue<String> p_queue = t_map.get(tag);
+
+                    p_queue.forEach((String word)->{
+                        if(word.matches(obj.keyword)){ //contains
+                            matches.add(obj.keyword);
+                        }
+                    });
+                }
+            });
+
+            return matches;
+    }
+
+    @Override
+    public void run() {
+
+        boolean blocked_link;
+
+        final String sanitised_url = URL.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+
+        try{
+
+            if(!Utility.checkValInQueue(Crab.keywordVisitList,sanitised_url) || Crab.parent_set.contains(URL)){
+
+                final Document doc = Jsoup.connect(URL).get();
+                final Elements links = doc.select("a[href]");
+                Document docTwo;
+
+                for(Element link : links){
+                    blocked_link = false;
+
+                    docTwo = Jsoup.connect(link.attr("abs:href")).get();
+
+                    //check the URL isn't contained in the block list
+                    if(checkBlocked(link.attr("abs:href"))){
+                        blocked_link = true;
+                    }
+
+                    if(!blocked_link){
+
+                        boolean matchesFound;
+
+                        String title = docTwo.title();
+
+                        HashMap<String,PriorityQueue<String>> tagMap;
+
+                        //extract the tags from the text
+                        tagMap = SentimentAnalyser.pos_keywordTagger(title,tags);
+
+                        Queue<String> matches = checkForKeyword(tagMap,keywords);
+
+                        String sanitisedLink = link.attr("abs:href").replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+
+                        //if we have matches found, add it to the download queue to store the content
+                        if(!matches.isEmpty()){
+
+                            Utility.writeURLKeywordMatches(matches,link.attr("abs:href"),"CrabURLKeywordMatches.csv");
+
+                            //send out for download
+                            Crab.downloadQueue.add(link.attr("abs:href"));
+
+                            if(!Utility.checkValInQueue(Crab.keywordVisitList,sanitisedLink)){
+                                Crab.keywordVisitList.add(sanitisedLink);
+                                Utility.writeVisitList_kw(link.attr("abs:href"),"CrabKWVisitList.csv");
+                            }
+
+                            matchesFound = true;
+                        }else{
+                            matchesFound = false;
+
+                            if(!Utility.checkValInQueue(Crab.keywordVisitList,sanitisedLink)){
+                                Crab.keywordVisitList.add(sanitisedLink);
+                                Utility.writeVisitList_kw(link.attr("abs:href"),"CrabKWVisitList.csv");
+                            }
+                        }
+
+                        map.put(URL,matchesFound);
+                    }
+                }
+            }
+        }catch(Exception ex){
+
         }
     }
 }
