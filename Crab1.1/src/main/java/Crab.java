@@ -56,7 +56,7 @@ public final class Crab {
 
     public static final ArrayList<String> tagsToSearch = new ArrayList<>();
     public static final ConcurrentLinkedQueue<String> downloadQueue = new ConcurrentLinkedQueue<>(); //Take note: will be replaced
-    public static final ConcurrentLinkedQueue<String> keywordVisitList = new ConcurrentLinkedQueue<>();
+    public static ConcurrentLinkedQueue<String> keywordVisitList = new ConcurrentLinkedQueue<>();
 
     /* For Keyword Crawl */
     public static ConcurrentLinkedQueue<KeywordClass> keyWordQueue = new ConcurrentLinkedQueue<>();
@@ -68,10 +68,15 @@ public final class Crab {
             new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
 
     Crab() throws IOException {
-        Utility.SerializeConMap(con_map,"con_map.ser");
-        Utility.SerializeConMap(full_sentiment_map,"f_map_ser");
-        Utility.SerializeQueue(v_list,"vlist.ser");
-        Utility.SerializeRecordMap(record_map,"r_map.ser");
+
+        if(!keyWordCrawl){
+            Utility.SerializeConMap(con_map,"con_map.ser");
+            Utility.SerializeConMap(full_sentiment_map,"f_map_ser");
+            Utility.SerializeQueue(v_list,"vlist.ser");
+            Utility.SerializeRecordMap(record_map,"r_map.ser");
+        }else{
+            Utility.SerializeQueue(keywordVisitList,"kw_v_list.ser");
+        }
     }
 
     public static void CrabCrawl() throws IOException, CsvException, ClassNotFoundException, URISyntaxException {
@@ -87,10 +92,14 @@ public final class Crab {
         }
 
         //Deserialize data structures
-        v_list = Utility.DeserializeQueue("vlist.ser");
-        con_map = Utility.DeserializeConMap("con_map.ser"); //bug in con map, not loading correctly
-        record_map = Utility.DeserializeRecordMap("r_map.ser");
-        optimalURLrecord = Utility.DeserializeQueue("opt_url_list.ser");
+        if(!keyWordCrawl){
+            v_list = Utility.DeserializeQueue("vlist.ser");
+            con_map = Utility.DeserializeConMap("con_map.ser");
+            record_map = Utility.DeserializeRecordMap("r_map.ser");
+            optimalURLrecord = Utility.DeserializeQueue("opt_url_list.ser");
+        }else{
+            keywordVisitList = Utility.DeserializeQueue("kw_v_list.ser");
+        }
 
         URI uri;
         if(keyWordCrawl){
@@ -126,13 +135,16 @@ public final class Crab {
             }
         }
 
-
         exec.shutdown();
 
-        Utility.SerializeConMap(con_map,"con_map.ser");
-        Utility.SerializeQueue(v_list,"vlist.ser");
-        Utility.SerializeRecordMap(record_map,"r_map.ser");
-        Utility.SerializeQueue(optimalURLrecord,"opt_url_list.ser");
+        if(!keyWordCrawl){
+            Utility.SerializeConMap(con_map,"con_map.ser");
+            Utility.SerializeQueue(v_list,"vlist.ser");
+            Utility.SerializeRecordMap(record_map,"r_map.ser");
+            Utility.SerializeQueue(optimalURLrecord,"opt_url_list.ser");
+        }else{
+            Utility.SerializeQueue(keywordVisitList,"kw_v_list.ser");
+        }
 
         if(keyWordCrawl){
             if(Crab.writeJson){
