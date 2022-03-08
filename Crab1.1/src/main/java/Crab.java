@@ -24,6 +24,7 @@
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.ArrayList;
 
@@ -36,6 +37,7 @@ public final class Crab {
     private static final int numOfThreads = (Runtime.getRuntime().availableProcessors())+1;
     private static final int coreSize = (numOfThreads % 2 == 0) ? numOfThreads/2 : (int)Math.floor(numOfThreads/2);
     private static final int CAPACITY = 100;
+    private static final int EXECUTION_THRESHOLD = 5;
 
     public static boolean writeJson = true;
     public static boolean optimalDepth = false;
@@ -55,8 +57,14 @@ public final class Crab {
     public static final ConcurrentLinkedQueue<String> b_list = new ConcurrentLinkedQueue<>();
 
     public static final ArrayList<String> tagsToSearch = new ArrayList<>();
-    public static final ConcurrentLinkedQueue<String> downloadQueue = new ConcurrentLinkedQueue<>(); //Take note: will be replaced
+    public static volatile ConcurrentLinkedQueue<String> downloadQueue = new ConcurrentLinkedQueue<>(); //Take note: will be replaced
+
     public static ConcurrentLinkedQueue<String> keywordVisitList = new ConcurrentLinkedQueue<>();
+
+    public static ConcurrentLinkedQueue<Callable<Boolean>> fullSentimentTasks = new ConcurrentLinkedQueue<>();
+
+    public static Queue<Future<Boolean>> q = new LinkedBlockingQueue<>();
+
 
     /* For Keyword Crawl */
     public static ConcurrentLinkedQueue<KeywordClass> keyWordQueue = new ConcurrentLinkedQueue<>();
@@ -77,6 +85,26 @@ public final class Crab {
         }else{
             Utility.SerializeQueue(keywordVisitList,"kw_v_list.ser");
         }
+    }
+
+    //uses a completion service to execute a queue of full sentiment tasks for keyword crawl
+    public static void runFullSentimentTasks(ThreadPoolExecutor exec, ConcurrentLinkedQueue<Callable<Boolean>> tasks) throws InterruptedException, ExecutionException{
+            CompletionService<Boolean> taskService = new ExecutorCompletionService<>(exec);
+            int sz = tasks.size();
+
+            tasks.forEach((Callable<Boolean> task)->{
+                taskService.submit(task);
+            });
+
+            //We are checking each for the status of the tasks
+            for(int i = 0; i < sz; ++i){
+                  Future<Boolean> fut = taskService.take();
+                  boolean result = fut.get();
+                  if(!result){
+                        //add to failed tasks queue
+                        q.add(fut);
+                  }
+            }
     }
 
     public static void CrabCrawl() throws IOException, CsvException, ClassNotFoundException, URISyntaxException {
@@ -112,6 +140,10 @@ public final class Crab {
 
                     if(!b_list.contains(uri.getHost())){
                         exec.submit(new SentimentKeyWordRunnable(tagsToSearch,keyWordQueue,url));
+                    }
+
+                    if(fullSentimentTasks.size() >= EXECUTION_THRESHOLD){
+                        runFullSentimentTasks(exec,fullSentimentTasks);
                     }
 
                 }catch(Exception e){

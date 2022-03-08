@@ -145,14 +145,14 @@ public class SentimentKeyWordRunnable implements  Runnable{
 
                             System.out.println("Matches found for: " + link.attr("abs:href") + "\n");
 
-                            //send out for download
-                            Crab.downloadQueue.add(link.attr("abs:href"));
-
                             if(!Utility.checkValInQueue(Crab.keywordVisitList,sanitisedLink)){
                                 Crab.keywordVisitList.add(sanitisedLink);
                                 Utility.writeVisitList_kw(link.attr("abs:href"),"CrabKWVisitList.csv");
                                 Utility.writeURLKeywordMatches(matches,link.attr("abs:href"),"CrabURLKeywordMatches.csv");
                             }
+
+                            //send out for download
+                            Crab.fullSentimentTasks.add(new DownloadCallable(link.attr("abs:href")));
 
                             matchesFound = true;
                         }else{
