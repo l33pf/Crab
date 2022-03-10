@@ -100,6 +100,23 @@ public class SentimentKeyWordRunnable implements  Runnable{
             return matches;
     }
 
+    public String getPageContent(final String link){
+        String toAnalyse = "";
+        try{
+            final Document doc = Jsoup.connect(link).get();
+            Elements contents = doc.select("p");
+
+            for(Element para : contents){
+                toAnalyse = toAnalyse.concat(para.text());
+            }
+
+        }catch(Exception ex){
+            return null;
+        }
+        return  toAnalyse;
+    }
+
+
     @Override
     public void run() {
 
@@ -151,8 +168,20 @@ public class SentimentKeyWordRunnable implements  Runnable{
                                 Utility.writeURLKeywordMatches(matches,link.attr("abs:href"),"CrabURLKeywordMatches.csv");
                             }
 
-                            //send out for download
-                            Crab.fullSentimentTasks.add(new DownloadCallable(link.attr("abs:href")));
+                            if(Crab.runFullSentiment){
+                                System.out.println("Doing full sentiment analysis");
+
+                                //Download the page's content
+                                final String text = getPageContent(URL);
+
+                                int sentiment = SentimentAnalyser.analyse(text);
+
+                                System.out.println("Full sentiment done on: " + URL + "\n");
+
+                                Utility.writeFullSentimentResult("full_sentiment_results.csv",URL,sentiment);
+                            }else{
+                                Crab.fullSentimentTasks.add(new DownloadCallable(link.attr("abs:href")));
+                            }
 
                             matchesFound = true;
                         }else{

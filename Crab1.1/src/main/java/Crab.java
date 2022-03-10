@@ -65,7 +65,8 @@ public final class Crab {
 
     public static Queue<Future<Boolean>> q = new LinkedBlockingQueue<>();
 
-
+    public static boolean runFullSentiment = true;
+    
     /* For Keyword Crawl */
     public static ConcurrentLinkedQueue<KeywordClass> keyWordQueue = new ConcurrentLinkedQueue<>();
 
