@@ -32,12 +32,12 @@ public class KeywordClass {
     final String keyword;
 
     /* Storage for articles based on their sentiment, with the date they were accessed */
-    ConcurrentHashMap<String, LocalDate> negativeSentiment;
-    ConcurrentHashMap<String, LocalDate> neutralSentiment;
-    ConcurrentHashMap<String, LocalDate> positiveSentiment;
+    ConcurrentHashMap<String,Integer> negativeSentiment;
+    ConcurrentHashMap<String,Integer> neutralSentiment;
+    ConcurrentHashMap<String,Integer> positiveSentiment;
 
     /* Overall sentiment average of articles for the keyword in question */
-    double average;
+    int average;
 
     /* Variables for Sentiment Distribution */
     double negativePercent;
@@ -47,4 +47,9 @@ public class KeywordClass {
     KeywordClass(String keyWord){
         this.keyword = keyWord;
     }
+
+    int calcAverageSentiment(){
+        return average = (positiveSentiment.size()+neutralSentiment.size()+neutralSentiment.size())/3;
+    }
+
 }

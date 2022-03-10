@@ -1,5 +1,7 @@
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.Queue;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -8,10 +10,18 @@ import org.jsoup.select.Elements;
 
 public class DownloadCallable implements Callable<Boolean> {
 
-    final String URL;
+    String URL;
+    Queue<String> keywords;
+    boolean provided = false;
 
     DownloadCallable(String linkToDownload){
         this.URL = linkToDownload;
+    }
+
+    DownloadCallable(String linkToDownload, Queue<String> keywordMatches){
+        Objects.requireNonNull(this.URL = linkToDownload);
+        Objects.requireNonNull(this.keywords = keywordMatches);
+        this.provided = true;
     }
 
     String getPageContent(final String link){
@@ -33,6 +43,8 @@ public class DownloadCallable implements Callable<Boolean> {
     @Override
     public Boolean call() throws Exception {
 
+        System.out.println("Doing full sentiment analysis");
+
         //Download the page's content
         final String text = getPageContent(URL);
 
@@ -46,7 +58,27 @@ public class DownloadCallable implements Callable<Boolean> {
 
         int sentimentResult = fut.get();
 
-        Utility.writeFullSentimentResult("CrabFullSentiment.csv",URL,sentimentResult);
+        System.out.println("Full sentiment done on: " + URL + "\n");
+
+        Utility.writeFullSentimentResult("full_sentiment_results.csv",URL,sentimentResult);
+
+        if(provided){ //if a list of matching keywords has been provided
+            //Update the structs in the keyword objects
+
+            for(KeywordClass obj : Crab.keyWordQueue){
+                keywords.forEach((String keyword)->{
+                        if(keyword.matches(obj.keyword)){
+
+                            switch (SentimentType.fromInt(sentimentResult)) {
+                                case VERY_POSITIVE, POSITIVE -> obj.positiveSentiment.putIfAbsent(URL, sentimentResult);
+                                case NEUTRAL -> obj.neutralSentiment.putIfAbsent(URL, sentimentResult);
+                                case VERY_NEGATIVE, NEGATIVE -> obj.negativeSentiment.putIfAbsent(URL, sentimentResult);
+                            }
+                        }
+                });
+            }
+
+        }
 
         return sentimentResult > 0;
     }
