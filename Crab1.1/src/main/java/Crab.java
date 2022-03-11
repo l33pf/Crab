@@ -40,7 +40,6 @@ public final class Crab {
     private static final int EXECUTION_THRESHOLD = 5;
 
     public static boolean writeJson = true;
-    public static boolean optimalDepth = false;
 
     public static  ConcurrentLinkedQueue<String> v_list = new ConcurrentLinkedQueue<>();
     public static ConcurrentLinkedQueue<String> parent_set = new ConcurrentLinkedQueue<>();
@@ -53,7 +52,6 @@ public final class Crab {
 
     /* For Keyword article gathering */
     public static final ConcurrentHashMap<String,ConcurrentHashMap<String,SentimentType>> keywordDb = new ConcurrentHashMap<>();
-    public static boolean keyWordCrawl = false;
     public static final ConcurrentLinkedQueue<String> b_list = new ConcurrentLinkedQueue<>();
 
     public static final ArrayList<String> tagsToSearch = new ArrayList<>();
@@ -65,12 +63,24 @@ public final class Crab {
 
     public static Queue<Future<Boolean>> q = new LinkedBlockingQueue<>();
 
+    /* Crab Flags */
+    /* Set to run keyword crawl, default is optimal */
+    public static boolean keyWordCrawl = false;
+
+    /* Set to run on keyword crawl threads for full sentiment (will change) */
     public static boolean runFullSentiment = true;
-    
+
+    /* Set to push all links crawled on a optimal crawl onto the URL stack */
+    public static boolean optimalDepth = false;
+
+    /* Set to run the thread pool with the max number of threads */
+    public static boolean fullUtilisation = false;
+
     /* For Keyword Crawl */
     public static ConcurrentLinkedQueue<KeywordClass> keyWordQueue = new ConcurrentLinkedQueue<>();
 
-    public static ThreadPoolExecutor exec = new ThreadPoolExecutor(coreSize, numOfThreads,
+    public static ThreadPoolExecutor exec = new ThreadPoolExecutor((fullUtilisation) ? numOfThreads : coreSize
+            ,numOfThreads,
             1L, TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<>(CAPACITY), // Bounded
             Executors.defaultThreadFactory(),
@@ -143,9 +153,9 @@ public final class Crab {
                         exec.submit(new SentimentKeyWordRunnable(tagsToSearch,keyWordQueue,url));
                     }
 
-                    if(fullSentimentTasks.size() >= EXECUTION_THRESHOLD){
-                        runFullSentimentTasks(exec,fullSentimentTasks);
-                    }
+                //    if(fullSentimentTasks.size() >= EXECUTION_THRESHOLD){
+                //        runFullSentimentTasks(exec,fullSentimentTasks);
+                //    }
 
                 }catch(Exception e){
 
