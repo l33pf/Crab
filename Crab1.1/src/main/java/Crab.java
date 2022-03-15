@@ -98,27 +98,7 @@ public final class Crab {
         }
     }
 
-    //uses a completion service to execute a queue of full sentiment tasks for keyword crawl
-    public static void runFullSentimentTasks(ThreadPoolExecutor exec, ConcurrentLinkedQueue<Callable<Boolean>> tasks) throws InterruptedException, ExecutionException{
-            CompletionService<Boolean> taskService = new ExecutorCompletionService<>(exec);
-            int sz = tasks.size();
-
-            tasks.forEach((Callable<Boolean> task)->{
-                taskService.submit(task);
-            });
-
-            //We are checking each for the status of the tasks
-            for(int i = 0; i < sz; ++i){
-                  Future<Boolean> fut = taskService.take();
-                  boolean result = fut.get();
-                  if(!result){
-                        //add to failed tasks queue
-                        q.add(fut);
-                  }
-            }
-    }
-
-    public static void CrabCrawl() throws IOException, CsvException, ClassNotFoundException, URISyntaxException {
+    public static void CrabCrawl() throws IOException, CsvException, ClassNotFoundException, URISyntaxException, ExecutionException, InterruptedException {
 
         /* Read in the URL Seed set supplied into a stack */
         Utility.readIn_LF(urlStack_LF);
@@ -144,25 +124,21 @@ public final class Crab {
         if(keyWordCrawl){
 
             while(!urlStack_LF.isEmpty()){
-                String url = urlStack_LF.pop();
+                final String url = urlStack_LF.pop();
 
                 try{
                     uri = new URI(url);
 
-                    if(!b_list.contains(uri.getHost())){
-                        exec.submit(new SentimentKeyWordRunnable(tagsToSearch,keyWordQueue,url));
-                    }
+                        if(!b_list.contains(uri.getHost())){
+                            exec.submit(new SentimentKeyWordRunnable(tagsToSearch,keyWordQueue,url));
+                        }
 
-                //    if(fullSentimentTasks.size() >= EXECUTION_THRESHOLD){
-                //        runFullSentimentTasks(exec,fullSentimentTasks);
-                //    }
-
-                }catch(Exception e){
+                }catch(Exception ex){
 
                 }
             }
         }else{
-
+            //Optimal Crawl Mode
             while(!urlStack_LF.isEmpty()){
                 String url = urlStack_LF.pop();
 

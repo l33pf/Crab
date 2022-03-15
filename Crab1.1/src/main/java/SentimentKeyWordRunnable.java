@@ -49,7 +49,12 @@ public class SentimentKeyWordRunnable implements  Runnable{
     String URL;
     final Queue<String> test = Crab.b_list;
     ConcurrentLinkedQueue<String> testTwo = Crab.parent_set;
+
+    //keeps a local status of each link the thread crawls through, bool value is if a match is found
     HashMap<String,Boolean> map = new HashMap<>();
+
+    //use to tag the URL with the match keywords for full sentiment
+    HashMap<String,Queue<String>> taggedKeyword = new HashMap<>();
 
     SentimentKeyWordRunnable(final ArrayList<String> POS_Tags, final Queue<KeywordClass> kw_obj){
         Objects.requireNonNull(this.tags = POS_Tags);
@@ -116,7 +121,6 @@ public class SentimentKeyWordRunnable implements  Runnable{
         return  toAnalyse;
     }
 
-
     @Override
     public void run() {
 
@@ -169,16 +173,10 @@ public class SentimentKeyWordRunnable implements  Runnable{
                             }
 
                             if(Crab.runFullSentiment){
-                                System.out.println("Doing full sentiment analysis");
-
                                 //Download the page's content
-                                final String text = getPageContent(URL);
+                                final String text = getPageContent(link.attr("abs:href"));
 
-                                int sentiment = SentimentAnalyser.analyse(text);
-
-                                System.out.println("Full sentiment done on: " + URL + "\n");
-
-                                Utility.writeFullSentimentResult("full_sentiment_results.csv",URL,sentiment);
+                                Crab.exec.submit(new SentimentFullRunnable(link.attr("abs:href"),text));
                             }else{
                                 Crab.fullSentimentTasks.add(new DownloadCallable(link.attr("abs:href")));
                             }
@@ -192,7 +190,6 @@ public class SentimentKeyWordRunnable implements  Runnable{
                                 Utility.writeVisitList_kw(link.attr("abs:href"),"CrabKWVisitList.csv");
                             }
                         }
-
                         map.put(URL,matchesFound);
                     }
                 }

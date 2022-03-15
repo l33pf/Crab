@@ -36,10 +36,7 @@ import org.jsoup.nodes.Document;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
@@ -283,6 +280,9 @@ public final class Utility {
         }
     }
 
+
+
+
     public static void writeVisitList(final String url){
         w.lock();
         try{
@@ -303,23 +303,22 @@ public final class Utility {
         }
     }
 
-    public static void writeSentimentDistribution(final String url, final double neg, final double ntrl, final double pos){
+    public static void writeVisitList_kw(final String url, final String fname){
         w.lock();
         try{
-            FileWriter fileWriter = new FileWriter(SENTIMENT_DISTRIBUTION_PATH,true);
+            FileWriter fileWriter = new FileWriter(fname,true);
 
             CSVWriter writer = new CSVWriter(fileWriter);
 
-            String [] record = {url,String.valueOf(neg),String.valueOf(ntrl),String.valueOf(pos)};
+            String [] record = {url};
 
             writer.writeNext(record);
 
             writer.close();
 
-        }catch(Exception e){
+        }catch(Exception ex){
 
-        }
-        finally{
+        }finally{
             w.unlock();
         }
     }
@@ -361,4 +360,56 @@ public final class Utility {
         return valToReturn;
     }
 
+    public static void writeURLKeywordMatches(final Queue<String> kwords, final String url, final String fname){
+        w.lock();
+        try{
+            FileWriter fileWriter = new FileWriter(fname,true);
+            CSVWriter writer = new CSVWriter(fileWriter);
+
+            for(String word : kwords){
+                String [] record = {url,word};
+                writer.writeNext(record);
+            }
+
+            writer.close();
+        }catch(Exception ex){
+
+        }finally{
+            w.unlock();
+        }
+
+    }
+
+    public static void writeFullSentimentResult(final String fname, final String URL, int Sentiment){
+        w.lock();
+        try{
+            FileWriter fileWriter = new FileWriter(fname,true);
+            CSVWriter writer = new CSVWriter(fileWriter);
+
+            String [] record = {URL,String.valueOf(SentimentType.fromInt(Sentiment))};
+
+            writer.writeNext(record);
+
+            writer.close();
+
+        }catch(Exception ex){
+
+        }finally{
+            w.unlock();
+        }
+    }
+
+    public static void writeFullSentimentResult(final String fname, final String URL, final int Sentiment, final String keyword){
+        w.lock();
+        try{
+            FileWriter fileWriter = new FileWriter(fname,true);
+            CSVWriter writer = new CSVWriter(fileWriter);
+            writer.writeNext(new String[]{URL,String.valueOf(SentimentType.fromInt(Sentiment)),keyword});
+            writer.close();
+        }catch(Exception ex){
+
+        }finally{
+            w.unlock();
+        }
+    }
 }
