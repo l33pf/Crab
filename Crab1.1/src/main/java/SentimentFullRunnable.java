@@ -23,20 +23,40 @@
 import java.util.Objects;
 
 public final class SentimentFullRunnable implements  Runnable{
-    String URL, pageContent, keyWord; int sentimentScore, provided;
+    private static String URL, pageContent, keyWord; int sentimentScore, provided; private static KeywordClass kObj;
 
     SentimentFullRunnable(final String link, final String content){
-        Objects.requireNonNull(this.URL = link);
-        Objects.requireNonNull(this.pageContent = content);
+        Objects.requireNonNull(URL = link);
+        Objects.requireNonNull(pageContent = content);
         provided = 0;
     }
 
     /* If more than one keyword is matched to a page*/
     SentimentFullRunnable(final String link, final String content, final String keyWord){
-        Objects.requireNonNull(this.URL = link);
-        Objects.requireNonNull(this.pageContent = content);
-        Objects.requireNonNull(this.keyWord = keyWord);
+        Objects.requireNonNull(URL = link);
+        Objects.requireNonNull(pageContent = content);
+        Objects.requireNonNull(keyWord = keyWord);
         provided = 1;
+    }
+
+    SentimentFullRunnable(final String link, final String content, final KeywordClass obj){
+        Objects.requireNonNull(URL = link);
+        Objects.requireNonNull(pageContent = content);
+        Objects.requireNonNull(kObj = obj);
+        provided = 2;
+    }
+
+    public static void updateObjWrite(int sentiment){
+                Utility.writeFullSentimentResult("full_sentiment_results.csv",URL,sentiment,kObj.keyword);
+                Crab.keyWordQueue.forEach((KeywordClass obj)->{
+                    if(obj.keyword.matches(kObj.keyword)){
+                        switch (SentimentType.fromInt(sentiment)) {
+                            case VERY_POSITIVE, POSITIVE -> obj.positiveSentiment.putIfAbsent(URL, sentiment);
+                            case NEUTRAL -> obj.neutralSentiment.putIfAbsent(URL, sentiment);
+                            case VERY_NEGATIVE, NEGATIVE -> obj.negativeSentiment.putIfAbsent(URL, sentiment);
+                        }
+                    }
+                });
     }
 
     @Override
@@ -46,6 +66,6 @@ public final class SentimentFullRunnable implements  Runnable{
         switch(provided){
             case 0 -> Utility.writeFullSentimentResult("full_sentiment_results.csv",URL,sentimentScore);
             case 1 -> Utility.writeFullSentimentResult("full_sentiment_results.csv",URL,sentimentScore,keyWord);
+            case 2 -> updateObjWrite(sentimentScore);
         }
     }
-}
