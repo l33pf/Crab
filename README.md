@@ -1,5 +1,12 @@
 # Crab
 
+## Update
+<b>Crab 1.2</b> is the latest version of Crab please see the commit: (https://github.com/l33pf/Crab/commit/418d5c4f1fa339b9f63ac27df0a922fba2dc713f) for details. 
+
+1.2 is a scaled down version of 1.1 with more of a focus on performance and correctness of the key crawler features implemented in 1.1, Serialization is now done with binary files. Crab now only takes in and puts out CSV files allowing any user to export their crawl data for further use in another application. 
+
+<b>Note:</b> Crab 1.1 is now deprecated, the code however will stay on the repo for archive.
+
 <!-- ABOUT THE PROJECT -->
 ## About Crab
 
@@ -70,14 +77,11 @@ Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j f
 
 * [CoreNLP](https://stanfordnlp.github.io/CoreNLP/)
 * [Jsoup](https://jsoup.org/)
-* [Log4j](https://logging.apache.org/log4j/)
 * [OpenCSV](http://opencsv.sourceforge.net/)
-* [Jackson](https://github.com/FasterXML/jackson)
 
 <!-- ROADMAP -->
 ## Roadmap
 - [x] Crawl based on Keywords
-- [ ] Concurrent logging
 - [ ] Database Integration (PostgreSQL)
 
 See the [open issues](https://github.com/l33pf/Crab/issues) for a full list of proposed features (and known issues).
