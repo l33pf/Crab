@@ -13,16 +13,56 @@ The Crawler is still in early stages of development.
 
 <!-- FEATURES  -->
 ## Features
-<b>Optimal Crawl</b>: Crab will crawl through the seed set, each seed page has an associated thread which will run sentiment analysis on links of the seed page find the optimally "best" link based on the sentiment analysis on its title then run a full sentiment analysis on the contents of the page whilst the page links are pushed into the seed set and the process is repeated until the crawl is exhausted. 
+<b>Optimal Crawl</b>: 
 
-The output of the crawl is a series of files displaying the best sentiment pages, and the optimally best sentiment pages on each round of the crawl. In this mode Crab can also keep track of results and generate a sentiment distribution of links from the pages it has crawled. An example plot from a small sentiment distribution of Crypto news sites can be seen in the below figure.
+Crab will crawl through the seed set, each seed page has an associated thread which will run sentiment analysis on links of the seed page find the optimally "best" link based on the sentiment analysis on its title then record it to file. If the optimal depth flag is set (see <i>Crab.java</i>) Crab will add all links from a given page onto the URL stack for crawling otherwise the crawl finishes when the set of links crawled is exhausted/empty the same applies for the optimal depth option.
 
-![Figure 2022-02-09 221141](https://user-images.githubusercontent.com/15945205/153299177-f38ead78-e482-41cb-89e3-4ebe3320a577.png)
+The output of the crawl is a record of the best sentiment pages.
 
 <b>NOTE</b>: Using Crab in this mode please be aware that currently the default settings of CoreNLP are used we don't use a classifer with a specific training set/lexicon in mind though this would be something welcomed given the accuracy on finding 'positively' labelled pages needs improving.
 
 <b>Results</b> after several crawling runs can be found at:
 https://github.com/l33pf/Crab/blob/main/Crab1.1/CrabOptimalCrawl.csv
+
+<b>Keyword Crawl</b>:
+
+Crab can crawl/scrape pages based on given keywords, you can start a keyword crawl by setting the keyword crawl flag (see Crab.java) and creating
+Keyword objects and adding them to the keyword queue. Every keyword you want to retrieve pages for has an associated object which is added to the keyword queue. Crab
+use's POS tagging on a page's title and then based on the tags derived see's if it can match a keyword if so it then runs a full sentiment (the whole page's content
+has full sentiment analysis done) and then records the result. Each keyword object has three data structures which can be used to store sentiment results, these can then
+be used further for post-crawl analysis. 
+
+You can find a given record of <b>results</b> of a crawl based on keywords inputted at:
+https://github.com/l33pf/Crab/blob/main/Crab1.1/CrabURLKeywordMatches.csv
+
+
+(which had a crawl run of roughly 3 minutes before it was ended.)
+
+a flow of the keyword crawl is demonstrated in the image below:
+
+
+![keywordcrawl drawio](https://user-images.githubusercontent.com/15945205/158431131-1dd1c0dd-504d-4b1e-9cdc-7153818d95eb.png)
+
+Note that for a keyword crawl to be successful you must add tags this can be done by:
+```
+Crab.tagsToSearch.add("NNP");
+```
+for a list of POS tags [click here](https://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html)
+
+
+Creating a Keyword object is done simply by calling the constructor:
+```
+KeywordClass example = new KeywordClass("MyKeyword");
+```
+Then simply add this to the Keyword Queue and set the keyword crawl flag
+```
+Crab.keyWordQueue.add(example);
+Crab.keyWordCrawl = true;
+```
+
+Crab will need a inputted CSV file of a URL seed set to run correctly, an example is shown in <i>Test.csv</i>
+
+<b>Note on Keyword Crawl:</b> Although complete as a feature the full sentiment part is still being worked on.
 
 ### Built With
 
@@ -38,10 +78,7 @@ Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j f
 ## Roadmap
 - [x] Crawl based on Keywords
 - [ ] Concurrent logging
-- [ ] REST framework integration 
-- [ ] More export options (PDF etc.)
 - [ ] Database Integration (PostgreSQL)
-- [ ] News Flow analysis (linked to Keyword Crawl)
 
 See the [open issues](https://github.com/l33pf/Crab/issues) for a full list of proposed features (and known issues).
 
