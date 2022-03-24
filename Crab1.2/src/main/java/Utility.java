@@ -141,7 +141,6 @@ public class Utility{
                     Crab.urlQueue.add(nextURL[0]);
                     Crab.parentSetMap.put(nextURL[0],true);
                 }
-
             } catch (IOException | CsvValidationException e){e.printStackTrace();} {
             }
 

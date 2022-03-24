@@ -28,12 +28,12 @@ public final class Crab {
 
     public static ConcurrentLinkedQueue<String> blockedList = new ConcurrentLinkedQueue<>();
     public static ConcurrentLinkedQueue<String> visitList = new ConcurrentLinkedQueue<>();
-    public static ConcurrentHashMap<String,Boolean> parentSetMap = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<String,Boolean> parentSetMap = new ConcurrentHashMap<>(1000);
     public static ConcurrentLinkedQueue<String> optimalURLrecord = new ConcurrentLinkedQueue<>();
     public static ConcurrentLinkedQueue<String> keywordVisitList = new ConcurrentLinkedQueue<>();
-    public static ArrayList<String> cTags = new ArrayList<>();
-
-    public static ConcurrentHashMap<String,KeywordClass> keywordMap = new ConcurrentHashMap<>();
+    public static ArrayList<String> cTags = new ArrayList<>(1000);
+    
+    public static ConcurrentHashMap<String,KeywordClass> keywordMap = new ConcurrentHashMap<>(1000);
 
     public static ConcurrentLinkedQueue<String> urlQueue = new ConcurrentLinkedQueue<>();
 
@@ -77,9 +77,9 @@ public final class Crab {
         final String keyword;
 
         /* Storage for articles based on their sentiment, with the date they were accessed */
-        ConcurrentHashMap<String,Integer> negativeSentiment;
-        ConcurrentHashMap<String,Integer> neutralSentiment;
-        ConcurrentHashMap<String,Integer> positiveSentiment;
+        ConcurrentHashMap<String,Integer> negativeSentiment = new ConcurrentHashMap<>(1000);
+        ConcurrentHashMap<String,Integer> neutralSentiment = new ConcurrentHashMap<>(1000);
+        ConcurrentHashMap<String,Integer> positiveSentiment = new ConcurrentHashMap<>(1000);
 
         /* Overall sentiment average of articles for the keyword in question */
         int average;
@@ -101,6 +101,7 @@ public final class Crab {
         int bestSentiment, sentiment;
         HashMap<String,Integer> map = new HashMap<>();
         Queue<String> blockedList = Crab.blockedList;
+
 
         public void run(){
 
@@ -166,6 +167,7 @@ public final class Crab {
         KeyWordRunnable(String link, final ArrayList<String> POS_Tags){
                 this.URL = link;
                 this.tags = POS_Tags;
+                tags.ensureCapacity(POS_Tags.size());
         }
 
         public Queue<String> checkKword(final HashMap<String,PriorityQueue<String>> t_map, final ConcurrentHashMap<String,KeywordClass> keyWordMap, final String link){
