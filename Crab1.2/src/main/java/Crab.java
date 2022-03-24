@@ -16,6 +16,7 @@ limitations under the License.
  **/
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.*;
@@ -25,15 +26,16 @@ import org.jsoup.select.Elements;
 import org.jsoup.nodes.Element;
 
 public final class Crab {
+    public static final int DEFAULT_SIZE = 1000;
 
     public static ConcurrentLinkedQueue<String> blockedList = new ConcurrentLinkedQueue<>();
     public static ConcurrentLinkedQueue<String> visitList = new ConcurrentLinkedQueue<>();
-    public static ConcurrentHashMap<String,Boolean> parentSetMap = new ConcurrentHashMap<>(1000);
+    public static ConcurrentHashMap<String,Boolean> parentSetMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
     public static ConcurrentLinkedQueue<String> optimalURLrecord = new ConcurrentLinkedQueue<>();
     public static ConcurrentLinkedQueue<String> keywordVisitList = new ConcurrentLinkedQueue<>();
-    public static ArrayList<String> cTags = new ArrayList<>(1000);
-    
-    public static ConcurrentHashMap<String,KeywordClass> keywordMap = new ConcurrentHashMap<>(1000);
+    public static ArrayList<String> cTags = new ArrayList<>(DEFAULT_SIZE);
+
+    public static ConcurrentHashMap<String,KeywordClass> keywordMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
 
     public static ConcurrentLinkedQueue<String> urlQueue = new ConcurrentLinkedQueue<>();
 
@@ -77,9 +79,9 @@ public final class Crab {
         final String keyword;
 
         /* Storage for articles based on their sentiment, with the date they were accessed */
-        ConcurrentHashMap<String,Integer> negativeSentiment = new ConcurrentHashMap<>(1000);
-        ConcurrentHashMap<String,Integer> neutralSentiment = new ConcurrentHashMap<>(1000);
-        ConcurrentHashMap<String,Integer> positiveSentiment = new ConcurrentHashMap<>(1000);
+        ConcurrentHashMap<String,Integer> negativeSentiment = new ConcurrentHashMap<>(DEFAULT_SIZE);
+        ConcurrentHashMap<String,Integer> neutralSentiment = new ConcurrentHashMap<>(DEFAULT_SIZE);
+        ConcurrentHashMap<String,Integer> positiveSentiment = new ConcurrentHashMap<>(DEFAULT_SIZE);
 
         /* Overall sentiment average of articles for the keyword in question */
         int average;
@@ -161,7 +163,7 @@ public final class Crab {
 
         private static final Queue<String> bList = blockedList;
         String URL; ArrayList<String> tags;
-        HashMap<String,Boolean> map = new HashMap<>();
+        HashMap<String,Boolean> map = new HashMap<>(DEFAULT_SIZE);
         ConcurrentHashMap<String,KeywordClass> kword_map = keywordMap;
 
         KeyWordRunnable(String link, final ArrayList<String> POS_Tags){
@@ -287,13 +289,13 @@ public final class Crab {
         }
     }
 
-    public static void serializeAllObj(){
+    public static void serializeAllObj() throws IOException {
         sr.serializeQueue(visitList,"v_list.bin");
         sr.serializeQueue(keywordVisitList,"kw_v_list.bin");
         sr.serializeQueue(optimalURLrecord,"optimal_link_record.bin");
     }
 
-    public static void deserializeAllObj(){
+    public static void deserializeAllObj() throws IOException {
         File f = new File("v_list.bin");
         if(f.exists()){
             visitList = (ConcurrentLinkedQueue<String>) sr.deserializeQueue("v_list.bin");
@@ -308,13 +310,13 @@ public final class Crab {
         }else { sr.serializeQueue(optimalURLrecord,"optimal_link_record.bin"); }
     }
 
-    Crab(){
+    Crab() throws IOException {
                 sr.serializeQueue(visitList,"v_list.bin");
                 sr.serializeQueue(optimalURLrecord,"optimal_link_record.bin");
                 sr.serializeQueue(keywordVisitList,"kw_v_list.bin");
     }
 
-    public static void crabCrawl(){
+    public static void crabCrawl() throws IOException {
         Utility.DataIO.readInURLSeed("./test.csv");
 
         deserializeAllObj();

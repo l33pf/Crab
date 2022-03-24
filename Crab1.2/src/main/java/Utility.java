@@ -90,20 +90,18 @@ public class Utility{
      */
     public final static class Serialization {
 
-        public void serializeQueue(final Collection<String> q, final String fileName){
-                try{
-                    Output out = new Output(new FileOutputStream(fileName)); Kryo kry = new Kryo();
-                    kry.register(ConcurrentLinkedQueue.class);
-                    kry.writeClassAndObject(out,q); out.close();
-                }catch(Exception ex){ex.printStackTrace();}
+        public void serializeQueue(final Collection<String> q, final String fileName) throws IOException{
+            try(Output out = new Output(new FileOutputStream(fileName))){
+                Kryo kry = new Kryo(); kry.register(ConcurrentLinkedQueue.class);
+                kry.writeClassAndObject(out,q);
+            }
         }
 
-        public void serializeMap(final Map map, final String fileName){
-                try{
-                    Output out = new Output(new FileOutputStream(fileName)); Kryo kry = new Kryo();
-                    kry.register(ConcurrentHashMap.class);
-                    kry.writeClassAndObject(out,map); out.close();
-                }catch(Exception ex){ex.printStackTrace();}
+        public void serializeMap(final Map map, final String fileName) throws IOException{
+            try(Output out = new Output(new FileOutputStream(fileName))){
+                Kryo kry = new Kryo(); kry.register(ConcurrentHashMap.class);
+                kry.writeClassAndObject(out,map);
+            }
         }
 
         public Collection<String> deserializeQueue(final String fileName){
@@ -114,6 +112,7 @@ public class Utility{
                     q = (Collection<String>) kry.readClassAndObject(in); in.close();
                 }catch(Exception ex){ex.printStackTrace();} return  q;
         }
+
 
         public Map deserializeMap(final String fileName){
                 Map<String,Integer> map = new ConcurrentHashMap<>(); //check
