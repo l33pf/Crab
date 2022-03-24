@@ -73,7 +73,6 @@ Crab will need a inputted CSV file of a URL seed set to run correctly, an exampl
 
 ### Built With
 
-Crab use's Stanford's CoreNLP as its ML library, Jsoup for HTML parsing, Log4j for logging purposes, OpenCSV for storage and Jackson for JSON exporting.(<b>NOTE</b>: This list may change as development advances)
 
 * [CoreNLP](https://stanfordnlp.github.io/CoreNLP/)
 * [Jsoup](https://jsoup.org/)
