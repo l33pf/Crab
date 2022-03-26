@@ -89,10 +89,6 @@ public final class Crab {
         KeywordClass(String keyWord){
             this.keyword = keyWord;
         }
-
-        int calcAverageSentiment(){
-            return average = (positiveSentiment.size()+neutralSentiment.size()+neutralSentiment.size())/3;
-        }
     }
 
     private static class OptimalRunnable implements Runnable{
@@ -272,7 +268,7 @@ public final class Crab {
             sentiment = Utility.SentimentAnalyser.analyse(content);
 
             if(obj_recv){
-                if(keywordMap.contains(keyword)){
+                if(keywordMap.contains(keyword)){ //Check this
                     KeywordClass o = keywordMap.get(keyword);
 
                     switch (Utility.SentimentType.fromInt(sentiment)) {
@@ -293,21 +289,26 @@ public final class Crab {
         sr.serializeQueue(visitList,"v_list.bin");
         sr.serializeQueue(keywordVisitList,"kw_v_list.bin");
         sr.serializeQueue(optimalURLrecord,"optimal_link_record.bin");
+        sr.serializeMap(parentSetMap,"parent_set_map.bin");
     }
 
     public static void deserializeAllObj() throws IOException {
         File f = new File("v_list.bin");
         if(f.exists()){
-            visitList = (ConcurrentLinkedQueue<String>) sr.deserializeQueue("v_list.bin");
-        } else { sr.serializeQueue(visitList,"v_list.bin"); }
+            visitList = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
+        } else { sr.serializeQueue(visitList,f.getName()); }
         f = new File("kw_v_list.bin");
         if(f.exists()){
-            keywordVisitList = (ConcurrentLinkedQueue<String>) sr.deserializeQueue("kw_v_list.bin");
-        } else { sr.serializeQueue(keywordVisitList,"kw_v_list.bin"); }
+            keywordVisitList = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
+        } else { sr.serializeQueue(keywordVisitList,f.getName()); }
         f = new File("optimal_link_record.bin");
         if(f.exists()){
-            optimalURLrecord  = (ConcurrentLinkedQueue<String>) sr.deserializeQueue("optimal_link_record.bin");
-        }else { sr.serializeQueue(optimalURLrecord,"optimal_link_record.bin"); }
+            optimalURLrecord  = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
+        }else { sr.serializeQueue(optimalURLrecord,f.getName()); }
+        f = new File("parent_set_map.bin");
+        if(f.exists()){
+            parentSetMap = (ConcurrentHashMap<String, Boolean>) sr.deserializeMap(f.getName());
+        }else { sr.serializeMap(parentSetMap,f.getName());}
     }
 
     Crab() throws IOException {
