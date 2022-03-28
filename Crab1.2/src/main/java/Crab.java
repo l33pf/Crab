@@ -65,6 +65,12 @@ public final class Crab {
     /********************************************************************\
     */
 
+    /**
+     * @About setting this flag will record all previous 'optimal' links
+     *  with the overall optimal link from a page in optimal crawl.
+     */
+    public static boolean RECORD_ALL = false;
+
     public static ThreadPoolExecutor exec = new ThreadPoolExecutor((FULL_UTILISATION) ? numOfThreads : coreSize
             ,numOfThreads,
             1L, TimeUnit.MILLISECONDS,
@@ -99,7 +105,7 @@ public final class Crab {
         int bestSentiment, sentiment;
         HashMap<String,Integer> map = new HashMap<>();
         Queue<String> blockedList = Crab.blockedList;
-
+        HashMap<String,Integer> optMap = new HashMap<>();
 
         public void run(){
 
@@ -142,13 +148,18 @@ public final class Crab {
                         if(x>bestSentiment){
                             bestLink = key;
                             bestSentiment = x;
+                            if(Crab.RECORD_ALL){ optMap.putIfAbsent(bestLink,bestSentiment); }
                         }
                     });
 
                     if(optimalURLrecord.stream().noneMatch(str->str.matches(bestLink))){
-                        optimalURLrecord.add(bestLink);
-                        System.out.println("Best Link for: " + URL + "is" + bestLink + "\n");
-                        Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_OPT_SENTIMENT, new writerObj(bestLink,bestSentiment));
+                        if(Crab.RECORD_ALL){
+                            optMap.keySet().forEach((String str)-> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_OPT_SENTIMENT, new writerObj(str,optMap.get(str))));
+                        }else{
+                            optimalURLrecord.add(bestLink);
+                            System.out.println("Best Link for: " + URL + "is" + bestLink + "\n");
+                            Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_OPT_SENTIMENT, new writerObj(bestLink,bestSentiment));
+                        }
                     }
                 }
             }catch(Exception ex){ex.printStackTrace();}
