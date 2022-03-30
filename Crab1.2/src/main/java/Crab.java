@@ -279,7 +279,7 @@ public final class Crab {
             sentiment = Utility.SentimentAnalyser.analyse(content);
 
             if(obj_recv){
-                if(keywordMap.contains(keyword)){ //Check this
+                if(keywordMap.containsKey(keyword)){ 
                     KeywordClass o = keywordMap.get(keyword);
 
                     switch (Utility.SentimentType.fromInt(sentiment)) {
