@@ -97,7 +97,6 @@ public final class Crab {
 
     private static class OptimalRunnable implements Runnable{
 
-        //make blockList thread local ?
         OptimalRunnable(String link){this.URL = link;}
         String URL, bestLink;
         int bestSentiment, sentiment;
@@ -126,16 +125,18 @@ public final class Crab {
 
                             //resolves some of the HTTP Status Exceptions (i.e. linkedin is within the blocklist)
                             if(blockedList.stream().noneMatch(str->str.matches(child_uri.getHost()))){
-
-                                final Document docTwo =  Jsoup.connect(childLink).get();
-
-                                sentiment = Utility.SentimentAnalyser.analyse(docTwo.title());
-
                                 final String sanitised = childLink.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
 
-                                if(visitList.stream().noneMatch(str->str.matches(child_uri.getHost()))){
-                                    System.out.println("Visited: " + link.attr("abs:href") + " " +  "Parent: " + URL + "\n");
+                                if(visitList.stream().noneMatch(str->str.matches(sanitised))){
+
                                     visitList.add(sanitised);
+
+                                    final Document docTwo =  Jsoup.connect(childLink).get();
+
+                                    sentiment = Utility.SentimentAnalyser.analyse(docTwo.title());
+
+                                    System.out.println("Visited: " + link.attr("abs:href") + " " +  "Parent: " + URL + "\n");
+
                                     Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_VL_RECORD,sanitised);
 
                                     if(!map.containsKey(childLink)){ map.put(childLink,sentiment);}
