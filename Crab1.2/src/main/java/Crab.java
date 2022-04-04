@@ -62,8 +62,6 @@ public final class Crab {
      * number of available threads.
      */
     public static boolean FULL_UTILISATION = false;
-    /********************************************************************\
-    */
 
     /**
      * @About setting this flag will record all previous 'optimal' links
@@ -124,21 +122,26 @@ public final class Crab {
                     links.forEach((Element link)->{
                         try{
                             final String childLink = link.attr("abs:href");
-                            final Document docTwo =  Jsoup.connect(childLink).get();
                             URI child_uri = new URI(childLink);
 
+                            //resolves some of the HTTP Status Exceptions (i.e. linkedin is within the blocklist)
                             if(blockedList.stream().noneMatch(str->str.matches(child_uri.getHost()))){
+
+                                final Document docTwo =  Jsoup.connect(childLink).get();
+
                                 sentiment = Utility.SentimentAnalyser.analyse(docTwo.title());
 
                                 final String sanitised = childLink.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
-                                if(visitList.stream().noneMatch(str->str.matches(sanitised))){
+
+                                if(visitList.stream().noneMatch(str->str.matches(child_uri.getHost()))){
                                     System.out.println("Visited: " + link.attr("abs:href") + " " +  "Parent: " + URL + "\n");
                                     visitList.add(sanitised);
                                     Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_VL_RECORD,sanitised);
-                                    if(!map.containsKey(childLink)){ map.put(childLink,sentiment); }
-                                }
 
-                                if(OPTIMAL_DEPTH){Crab.urlQueue.add(childLink);}
+                                    if(!map.containsKey(childLink)){ map.put(childLink,sentiment);}
+
+                                    if(OPTIMAL_DEPTH){Crab.urlQueue.add(childLink);}
+                                }
                             }
                         }catch(Exception ex){ex.printStackTrace();}
                     });
@@ -279,7 +282,7 @@ public final class Crab {
             sentiment = Utility.SentimentAnalyser.analyse(content);
 
             if(obj_recv){
-                if(keywordMap.containsKey(keyword)){ 
+                if(keywordMap.containsKey(keyword)){
                     KeywordClass o = keywordMap.get(keyword);
 
                     switch (Utility.SentimentType.fromInt(sentiment)) {
@@ -287,6 +290,7 @@ public final class Crab {
                         case NEUTRAL -> o.neutralSentiment.put(URL, sentiment);
                         case VERY_NEGATIVE, NEGATIVE -> o.negativeSentiment.put(URL, sentiment);
                     }
+                    System.out.println("Done full sentiment on " + URL + "\n");
                     keywordMap.put(keyword,o);
                     Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_RESULT,new writerObj(URL,sentiment,keyword));
                 }
@@ -344,6 +348,8 @@ public final class Crab {
                             exec.submit(new OptimalRunnable(urlToCrawl));
                     }
         }else{
+                    System.out.println("Keyword Crawl enabled");
+                    if(FULL_UTILISATION){System.out.println("Full Utilisation of Threads configured.");}else {System.out.println("Full Utilisation off.\n");}
                     while(!urlQueue.isEmpty()){
                         String urlToCrawl = urlQueue.poll();
                         exec.submit(new KeyWordRunnable(urlToCrawl,cTags));
