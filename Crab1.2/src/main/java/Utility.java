@@ -22,6 +22,7 @@ import java.io.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -240,8 +241,9 @@ public class Utility{
     /**
      * @About Class for interacting with CoreNLP methods
      */
-    public final class SentimentAnalyser{
-        public synchronized static int analyse(final String title){
+    public static final class SentimentAnalyser{
+        /* Needs looking at might need locks */
+/*        public synchronized static int analyse(final String title){
             Properties pp = new Properties();
             RedwoodConfiguration.current().clear().apply();
             pp.setProperty("annotators", "tokenize, ssplit, pos, parse, sentiment");
@@ -252,8 +254,31 @@ public class Utility{
                 Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
                 return RNNCoreAnnotations.getPredictedClass(tree);
             }
-            return 0; /* no sentiment */
+            return 0; *//* no sentiment *//*
+        }*/
+
+        private static final ReentrantReadWriteLock rwl_sentiment = new ReentrantReadWriteLock();
+        private static final Lock w_sentiment = rwl_sentiment.writeLock();
+
+        public static int analyse(final String title){
+                    try{
+                        w_sentiment.lock();
+                        final Properties pp = new Properties();
+                        RedwoodConfiguration.current().clear().apply();
+                        pp.setProperty("annotators", "tokenize, ssplit, pos, parse, sentiment");
+                        final StanfordCoreNLP pipeline = new StanfordCoreNLP(pp);
+                        final Annotation annotation = pipeline.process(title);
+
+                        for(final CoreMap sentence : annotation.get(CoreAnnotations.SentencesAnnotation.class)){
+                            Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
+                            return RNNCoreAnnotations.getPredictedClass(tree);
+                        }
+                        return 0;
+                    }finally {
+                        w_sentiment.unlock();
+                    }
         }
+        
         public synchronized static HashMap<String,PriorityQueue<String>> pos_keywordTagger(final String title, final ArrayList<String> arr){
             final Properties props = new Properties();
             RedwoodConfiguration.current().clear().apply();
