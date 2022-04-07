@@ -263,31 +263,36 @@ public class Utility{
                         w_sentiment.unlock();
                     }
         }
-        
-        public synchronized static HashMap<String,PriorityQueue<String>> pos_keywordTagger(final String title, final ArrayList<String> arr){
-            final Properties props = new Properties();
-            RedwoodConfiguration.current().clear().apply();
-            props.setProperty("annotators", "tokenize,ssplit,pos");
-            final StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-            final CoreDocument document = pipeline.processToCoreDocument(title);
 
-            final HashMap<String, PriorityQueue<String>> tagMap = new HashMap<>();
-            document.tokens().forEach((final CoreLabel tok)-> arr.forEach((final String tg)->{
-                if(tagMap.containsKey(tok.tag())){
-                    PriorityQueue q = tagMap.get(tok.tag());
+                public static HashMap<String,PriorityQueue<String>> pos_keywordTagger(final String title, final ArrayList<String> arr){
+                try{
+                    w_sentiment.lock();
 
-                    if(!q.contains(tok.word())){
-                        q.add(tok.word());
-                        tagMap.put(tok.tag(),q);
-                    }
-                }else{
-                    PriorityQueue<String> q = new PriorityQueue<>();
-                    q.add(tok.word());
-                    tagMap.put(tok.tag(),q);
+                    final Properties props = new Properties();
+                    RedwoodConfiguration.current().clear().apply();
+                    props.setProperty("annotators", "tokenize,ssplit,pos");
+                    final StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+                    final CoreDocument document = pipeline.processToCoreDocument(title);
+                    final HashMap<String, PriorityQueue<String>> tagMap = new HashMap<>();
+                    document.tokens().forEach((final CoreLabel tok)-> arr.forEach((final String tg)->{
+                        if(tagMap.containsKey(tok.tag())){
+                            PriorityQueue q = tagMap.get(tok.tag());
+
+                            if(!q.contains(tok.word())){
+                                q.add(tok.word());
+                                tagMap.put(tok.tag(),q);
+                            }
+                        }else{
+                            PriorityQueue<String> q = new PriorityQueue<>();
+                            q.add(tok.word());
+                            tagMap.put(tok.tag(),q);
+                        }
+                    }));
+
+                    return tagMap;
+                }finally{
+                    w_sentiment.unlock();
                 }
-            }));
-
-            return tagMap;
-        }
+            }
+         }
     }
-}
