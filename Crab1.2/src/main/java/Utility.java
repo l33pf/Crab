@@ -242,21 +242,6 @@ public class Utility{
      * @About Class for interacting with CoreNLP methods
      */
     public static final class SentimentAnalyser{
-        /* Needs looking at might need locks */
-/*        public synchronized static int analyse(final String title){
-            Properties pp = new Properties();
-            RedwoodConfiguration.current().clear().apply();
-            pp.setProperty("annotators", "tokenize, ssplit, pos, parse, sentiment");
-            StanfordCoreNLP pipeline = new StanfordCoreNLP(pp);
-            Annotation annotation = pipeline.process(title);
-
-            for(CoreMap sentence : annotation.get(CoreAnnotations.SentencesAnnotation.class)){
-                Tree tree = sentence.get(SentimentCoreAnnotations.SentimentAnnotatedTree.class);
-                return RNNCoreAnnotations.getPredictedClass(tree);
-            }
-            return 0; *//* no sentiment *//*
-        }*/
-
         private static final ReentrantReadWriteLock rwl_sentiment = new ReentrantReadWriteLock();
         private static final Lock w_sentiment = rwl_sentiment.writeLock();
 
