@@ -18,6 +18,7 @@ limitations under the License.
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.*;
 import org.jsoup.Jsoup;
@@ -183,15 +184,18 @@ public final class Crab {
                 tags.ensureCapacity(POS_Tags.size());
         }
 
-        public Queue<String> checkKword(final HashMap<String,PriorityQueue<String>> t_map, final ConcurrentHashMap<String,KeywordClass> keyWordMap, final String link){
+        public Queue<String> checkKword(final HashMap<String,PriorityQueue<String>> t_map, final ConcurrentHashMap<String,KeywordClass> keyWordMap, final String link) throws URISyntaxException {
                 final Queue<String> matches = new ArrayDeque<>();
+
                 for(String keyword : keyWordMap.keySet()){
                     for(final String tag : t_map.keySet()){
                         final PriorityQueue<String> p_queue = t_map.get(tag);
 
                         p_queue.forEach((final String word)->{
                             if(word.matches(keyword)){
-                                exec.submit(new fullSentimentRunnable(link,keyWordMap.get(keyword)));
+                                if(!parentSetMap.containsKey(link)){
+                                    exec.submit(new fullSentimentRunnable(link,keyWordMap.get(keyword)));
+                                }
                                 matches.add(keyword);
                             }
                         });
@@ -278,7 +282,7 @@ public final class Crab {
         }
 
         public void run(){
-            System.out.println("Test\n");
+            System.out.println("Running full sentiment analysis on: " + URL);
             String content = getPageContent(URL);
             sentiment = Utility.SentimentAnalyser.analyse(content);
 
@@ -298,6 +302,8 @@ public final class Crab {
             }else{
                 Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_RESULT,new writerObj(URL,sentiment,keyword));
             }
+
+            System.out.println("Completed full sentiment analysis on: " + URL);
         }
     }
 
@@ -321,10 +327,6 @@ public final class Crab {
         if(f.exists()){
             optimalURLrecord  = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
         }else { sr.serializeQueue(optimalURLrecord,f.getName()); }
-        f = new File("parent_set_map.bin");
-        if(f.exists()){
-            parentSetMap = (ConcurrentHashMap<String, Boolean>) sr.deserializeMap(f.getName());
-        }else { sr.serializeMap(parentSetMap,f.getName());}
     }
 
     Crab() throws IOException {

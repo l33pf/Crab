@@ -15,6 +15,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
  **/
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -264,7 +266,7 @@ public class Utility{
                     }
         }
 
-                public static HashMap<String,PriorityQueue<String>> pos_keywordTagger(final String title, final ArrayList<String> arr){
+        public static HashMap<String,PriorityQueue<String>> pos_keywordTagger(final String title, final ArrayList<String> arr){
                 try{
                     w_sentiment.lock();
 
@@ -273,6 +275,7 @@ public class Utility{
                     props.setProperty("annotators", "tokenize,ssplit,pos");
                     final StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
                     final CoreDocument document = pipeline.processToCoreDocument(title);
+
                     final HashMap<String, PriorityQueue<String>> tagMap = new HashMap<>();
                     document.tokens().forEach((final CoreLabel tok)-> arr.forEach((final String tg)->{
                         if(tagMap.containsKey(tok.tag())){
@@ -290,9 +293,11 @@ public class Utility{
                     }));
 
                     return tagMap;
+
+
                 }finally{
                     w_sentiment.unlock();
                 }
-            }
-         }
+        }
     }
+}
