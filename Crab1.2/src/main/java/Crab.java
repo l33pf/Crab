@@ -193,9 +193,6 @@ public final class Crab {
 
                         p_queue.forEach((final String word)->{
                             if(word.matches(keyword)){
-                                if(!parentSetMap.containsKey(link)){
-                                    exec.submit(new fullSentimentRunnable(link,keyWordMap.get(keyword)));
-                                }
                                 matches.add(keyword);
                             }
                         });
@@ -256,54 +253,6 @@ public final class Crab {
                     });
                 }
             }catch(Exception ex){ex.printStackTrace();}
-        }
-    }
-
-     private static class fullSentimentRunnable implements Runnable{
-        private String URL;
-        String keyword;
-        KeywordClass obj; boolean obj_recv; int sentiment;
-
-        public String getPageContent(String link){
-            StringBuilder sb = new StringBuilder();
-            try{
-                Document doc = Jsoup.connect(link).get();
-                Elements contents = doc.select("p");
-                contents.forEach((Element para)-> sb.append(para.text()));
-                return sb.toString();
-            }catch(Exception ex){ex.printStackTrace();} return null;
-        }
-
-        fullSentimentRunnable(String link, KeywordClass keywordObj){
-            this.URL = link;
-            this.obj = keywordObj;
-            this.keyword = keywordObj.keyword;
-            obj_recv = true;
-        }
-
-        public void run(){
-            System.out.println("Running full sentiment analysis on: " + URL);
-            String content = getPageContent(URL);
-            sentiment = Utility.SentimentAnalyser.analyse(content);
-
-            if(obj_recv){
-                if(keywordMap.containsKey(keyword)){
-                    KeywordClass o = keywordMap.get(keyword);
-
-                    switch (Utility.SentimentType.fromInt(sentiment)) {
-                        case VERY_POSITIVE, POSITIVE -> o.positiveSentiment.put(URL, sentiment);
-                        case NEUTRAL -> o.neutralSentiment.put(URL, sentiment);
-                        case VERY_NEGATIVE, NEGATIVE -> o.negativeSentiment.put(URL, sentiment);
-                    }
-                    System.out.println("Done full sentiment on " + URL + "\n");
-                    keywordMap.put(keyword,o);
-                    Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_RESULT,new writerObj(URL,sentiment,keyword));
-                }
-            }else{
-                Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_RESULT,new writerObj(URL,sentiment,keyword));
-            }
-
-            System.out.println("Completed full sentiment analysis on: " + URL);
         }
     }
 
