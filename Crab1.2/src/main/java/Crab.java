@@ -1,13 +1,10 @@
 /*
  ***LICENSE***
 Copyright 2022 https://github.com/l33pf
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -111,7 +108,7 @@ public final class Crab {
             try{
                 URI uri = new URI(URL);
                 if(visitList.stream().noneMatch(str->str.matches(sanitised_url)) ||
-                parentSetMap.contains(URL) || blockedList.stream().noneMatch(str->str.matches(uri.getHost()))){
+                        parentSetMap.contains(URL) || blockedList.stream().noneMatch(str->str.matches(uri.getHost()))){
 
                     visitList.add(sanitised_url);
                     final Document doc = Jsoup.connect(URL).get(); System.out.println("Visiting: " + URL + "\n");
@@ -179,33 +176,33 @@ public final class Crab {
         ConcurrentHashMap<String,KeywordClass> kword_map = keywordMap;
 
         KeyWordRunnable(String link, final ArrayList<String> POS_Tags){
-                this.URL = link;
-                this.tags = POS_Tags;
-                tags.ensureCapacity(POS_Tags.size());
+            this.URL = link;
+            this.tags = POS_Tags;
+            tags.ensureCapacity(POS_Tags.size());
         }
 
         public Queue<String> checkKword(final HashMap<String,PriorityQueue<String>> t_map, final ConcurrentHashMap<String,KeywordClass> keyWordMap, final String link) throws URISyntaxException {
-                final Queue<String> matches = new ArrayDeque<>();
+            final Queue<String> matches = new ArrayDeque<>();
 
-                for(String keyword : keyWordMap.keySet()){
-                    for(final String tag : t_map.keySet()){
-                        final PriorityQueue<String> p_queue = t_map.get(tag);
+            for(String keyword : keyWordMap.keySet()){
+                for(final String tag : t_map.keySet()){
+                    final PriorityQueue<String> p_queue = t_map.get(tag);
 
-                        p_queue.forEach((final String word)->{
-                            if(word.matches(keyword)){
-                                matches.add(keyword);
-                            }
-                        });
-                    }
+                    p_queue.forEach((final String word)->{
+                        if(word.matches(keyword)){
+                            matches.add(keyword);
+                        }
+                    });
                 }
-                return matches;
+            }
+            return matches;
         }
 
         public void run(){
             final String sanitised_url = URL.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
             try{
                 URI uri = new URI(URL);
-                    if(keywordVisitList.stream().noneMatch(str->str.matches(uri.getHost())) || parentSetMap.contains(URL) && bList.stream().noneMatch(str->str.matches(uri.getHost()))){
+                if(keywordVisitList.stream().noneMatch(str->str.matches(uri.getHost())) || parentSetMap.contains(URL) && bList.stream().noneMatch(str->str.matches(uri.getHost()))){
 
                     final Document doc = Jsoup.connect(URL).get();
                     final Elements links = doc.select("a[href]");
@@ -222,7 +219,7 @@ public final class Crab {
                             boolean matchesFound;
 
                             if(blockedList.stream().noneMatch(str->str.matches(linkURI.getHost()))
-                            && keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
+                                    && keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
                                 System.out.println("Visited: " + childLink +  " Parent: " + URL + "\n");
                                 final HashMap<String, PriorityQueue<String>> tagMap;
                                 tagMap = Utility.SentimentAnalyser.pos_keywordTagger(docTwo.title(),tags);
@@ -235,16 +232,23 @@ public final class Crab {
                                         keywordVisitList.add(sanitisedLink);
                                         Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,new writerObj(childLink));
 
-                                        matches.forEach((String match)-> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_MATCHES,new writerObj(childLink,match)));
+                                        /* Analyse the headline of the page for a keyword match
+                                        *  similiar to optimal crawl. */
+                                        Document linkDoc = Jsoup.connect(childLink).get();
+                                        String titleToAnalyse = linkDoc.title();
+                                        int sentiment = Utility.SentimentAnalyser.analyse(titleToAnalyse);
 
+                                        matches.forEach((String match)-> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_MATCHES,new writerObj(childLink,match)));
+                                        Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_MATCHES,new writerObj(childLink,matches,sentiment));
                                     }
+
                                     matchesFound = true;
                                 }else{
                                     matchesFound = false;
 
                                     if(keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
-                                            keywordVisitList.add(sanitisedLink);
-                                            Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,sanitisedLink);
+                                        keywordVisitList.add(sanitisedLink);
+                                        Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,sanitisedLink);
                                     }
                                 }
                                 map.put(URL,matchesFound);
@@ -279,9 +283,9 @@ public final class Crab {
     }
 
     Crab() throws IOException {
-                sr.serializeQueue(visitList,"v_list.bin");
-                sr.serializeQueue(optimalURLrecord,"optimal_link_record.bin");
-                sr.serializeQueue(keywordVisitList,"kw_v_list.bin");
+        sr.serializeQueue(visitList,"v_list.bin");
+        sr.serializeQueue(optimalURLrecord,"optimal_link_record.bin");
+        sr.serializeQueue(keywordVisitList,"kw_v_list.bin");
     }
 
     public static void crabCrawl() throws IOException {
@@ -290,26 +294,26 @@ public final class Crab {
         deserializeAllObj();
 
         if(!KEYWORD_CRAWL){
-                    System.out.println("Optimal Crawl enabled.");
-                    if(FULL_UTILISATION){System.out.println("Full Utilisation of Threads configured.");}else {System.out.println("Full Utilisation off.\n");}
-                    if(!OPTIMAL_DEPTH){System.out.println("Optimal depth off.\n");}
-                    System.out.println("Start time of Crawl: " + java.time.LocalTime.now());
+            System.out.println("Optimal Crawl enabled.");
+            if(FULL_UTILISATION){System.out.println("Full Utilisation of Threads configured.");}else {System.out.println("Full Utilisation off.\n");}
+            if(!OPTIMAL_DEPTH){System.out.println("Optimal depth off.\n");}
+            System.out.println("Start time of Crawl: " + java.time.LocalTime.now());
 
-                    while(!urlQueue.isEmpty()){
-                            String urlToCrawl = urlQueue.poll();
-                            exec.submit(new OptimalRunnable(urlToCrawl));
-                    }
+            while(!urlQueue.isEmpty()){
+                String urlToCrawl = urlQueue.poll();
+                exec.submit(new OptimalRunnable(urlToCrawl));
+            }
         }else{
-                    System.out.println("Keyword Crawl enabled");
-                    if(FULL_UTILISATION){System.out.println("Full Utilisation of Threads configured.");}else {System.out.println("Full Utilisation off.\n");}
-                    while(!urlQueue.isEmpty()){
-                        String urlToCrawl = urlQueue.poll();
-                        exec.submit(new KeyWordRunnable(urlToCrawl,cTags));
-                    }
+            System.out.println("Keyword Crawl enabled");
+            if(FULL_UTILISATION){System.out.println("Full Utilisation of Threads configured.");}else {System.out.println("Full Utilisation off.\n");}
+            while(!urlQueue.isEmpty()){
+                String urlToCrawl = urlQueue.poll();
+                exec.submit(new KeyWordRunnable(urlToCrawl,cTags));
+            }
         }
 
         serializeAllObj();
 
         keywordMap.values().forEach(Utility.DataIO::writeObjData);
     }
-    }
+}

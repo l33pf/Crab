@@ -55,6 +55,7 @@ public class Utility{
         WRITE_KWORD_VL_RECORD,
         WRITE_KWORD_SENTIMENT_RESULT,
         WRITE_KWORD_MATCHES,
+        WRITE_KWORD_SENTIMENT_MATCHES,
         WRITE_OPT_SENTIMENT
     }
 
@@ -74,7 +75,7 @@ public class Utility{
          *
          * @return The sentiment class associated with that integer.
          */
-        public static SentimentType fromInt(final int sentiment) {
+        public static SentimentType fromInt(final int sentiment) { 
             return switch (sentiment) {
                 case 0 -> VERY_NEGATIVE;
                 case 1 -> NEGATIVE;
@@ -187,6 +188,15 @@ public class Utility{
                             fw = new FileWriter("crab_opt_sentiment_results.csv", true);
                             cs = new CSVWriter(fw);
                             cs.writeNext(new String[]{obj.url, String.valueOf(SentimentType.fromInt(obj.sentimentLevel))});
+                            cs.close();
+                            fw.close();
+                        }
+                        case WRITE_KWORD_SENTIMENT_MATCHES -> {
+                            fw = new FileWriter("crab_kword_sentiment_results.csv", true);
+                            cs = new CSVWriter(fw);
+                            obj.keywordMatches.forEach((String match)->{
+                                cs.writeNext(new String[]{obj.url,match, String.valueOf(SentimentType.fromInt(obj.sentimentLevel))});
+                            });
                             cs.close();
                             fw.close();
                         }

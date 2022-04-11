@@ -14,13 +14,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  **/
+import java.util.Queue;
 
 /**
  * @About  class to pass data to the output/write method
  */
 public final class writerObj{
-    String url; String title; String keyword;
+    String url; String keyword;
     int sentimentLevel;
+    Queue<String> keywordMatches;
 
     writerObj(final String _url){this.url = _url;}
 
@@ -37,6 +39,12 @@ public final class writerObj{
     writerObj(final String _url, final String _keyword){
         this.url = _url;
         this.keyword = _keyword;
+    }
+
+    writerObj(final String _url, final Queue<String> _matches, final int _sentiment){
+        this.url = _url;
+        this.keywordMatches = _matches;
+        this.sentimentLevel = _sentiment;
     }
 
 }
