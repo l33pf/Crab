@@ -253,9 +253,12 @@ public class Utility{
     /**
      * @About Class for interacting with CoreNLP methods
      */
-    public static final class SentimentAnalyser{
+    public static class SentimentAnalyser{
         private static final ReentrantReadWriteLock rwl_sentiment = new ReentrantReadWriteLock();
         private static final Lock w_sentiment = rwl_sentiment.writeLock();
+
+        private static final ReentrantReadWriteLock rSentiment = new ReentrantReadWriteLock();
+        private static final Lock r_sentiment = rSentiment.readLock();
 
         public static int analyse(final String title){
                     try{
@@ -309,5 +312,31 @@ public class Utility{
                     w_sentiment.unlock();
                 }
         }
+
+        public static Queue<String> checkKword(final HashMap<String,PriorityQueue<String>> t_map, final ConcurrentHashMap<String, Crab.KeywordClass> keyWordMap) throws URISyntaxException {
+            try{
+                r_sentiment.lock();
+                Queue<String> matches = new ArrayDeque<>();
+                for(String keyword : keyWordMap.keySet()){
+                    for(String tag : t_map.keySet()){
+                        PriorityQueue<String> p_queue = t_map.get(tag);
+
+                        p_queue.forEach((String word)->{
+                            if(word.matches(keyword)){
+                                matches.add(keyword);
+                            }
+                        });
+                    }
+                }
+                return matches;
+            }finally {
+                r_sentiment.unlock();
+            }
+        }
+
+
+
+
+
     }
 }

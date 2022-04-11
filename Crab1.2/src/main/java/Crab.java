@@ -15,7 +15,6 @@ limitations under the License.
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.*;
 import org.jsoup.Jsoup;
@@ -181,23 +180,6 @@ public final class Crab {
             tags.ensureCapacity(POS_Tags.size());
         }
 
-        public Queue<String> checkKword(final HashMap<String,PriorityQueue<String>> t_map, final ConcurrentHashMap<String,KeywordClass> keyWordMap, final String link) throws URISyntaxException {
-            final Queue<String> matches = new ArrayDeque<>();
-
-            for(String keyword : keyWordMap.keySet()){
-                for(final String tag : t_map.keySet()){
-                    final PriorityQueue<String> p_queue = t_map.get(tag);
-
-                    p_queue.forEach((final String word)->{
-                        if(word.matches(keyword)){
-                            matches.add(keyword);
-                        }
-                    });
-                }
-            }
-            return matches;
-        }
-
         public void run(){
             final String sanitised_url = URL.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
             try{
@@ -224,7 +206,7 @@ public final class Crab {
                                 final HashMap<String, PriorityQueue<String>> tagMap;
                                 tagMap = Utility.SentimentAnalyser.pos_keywordTagger(docTwo.title(),tags);
 
-                                final Queue<String> matches = checkKword(tagMap,kword_map,childLink);
+                                final Queue<String> matches = Utility.SentimentAnalyser.checkKword(tagMap,kword_map);
 
                                 if(!matches.isEmpty()){
                                     System.out.println("Matches found for: " + childLink + "\n");
