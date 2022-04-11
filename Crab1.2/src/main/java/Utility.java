@@ -56,7 +56,8 @@ public class Utility{
         WRITE_KWORD_SENTIMENT_RESULT,
         WRITE_KWORD_MATCHES,
         WRITE_KWORD_SENTIMENT_MATCHES,
-        WRITE_OPT_SENTIMENT
+        WRITE_OPT_SENTIMENT,
+        WRITE_KWORD_SENTIMENT_SPEC
     }
 
     public enum SentimentType {
@@ -75,7 +76,7 @@ public class Utility{
          *
          * @return The sentiment class associated with that integer.
          */
-        public static SentimentType fromInt(final int sentiment) { 
+        public static SentimentType fromInt(final int sentiment) {
             return switch (sentiment) {
                 case 0 -> VERY_NEGATIVE;
                 case 1 -> NEGATIVE;
@@ -200,6 +201,16 @@ public class Utility{
                             cs.close();
                             fw.close();
                         }
+
+                        case WRITE_KWORD_SENTIMENT_SPEC -> {
+                            for(String match : obj.keywordMatches){
+                                FileWriter f_w = new FileWriter(match + ".csv",true);
+                                CSVWriter c = new CSVWriter(f_w);
+                                c.writeNext(new String[]{obj.url, String.valueOf(SentimentType.fromInt(obj.sentimentLevel))});
+                                c.close();
+                                f_w.close();
+                            }
+                        }
                     }
                 }catch(Exception ex){ex.printStackTrace();}
             }finally{
@@ -236,7 +247,7 @@ public class Utility{
             }
         }
 
-        public static void writeObjData(Crab.KeywordClass obj){
+/*        public static void writeObjData(Crab.KeywordClass obj){
             try{
                 String fname = obj.keyword + "_sentiment_results" + ".csv";
                 FileWriter fw = new FileWriter(fname);
@@ -247,7 +258,7 @@ public class Utility{
                     obj.negativeSentiment.keySet().forEach((String str)-> cs.writeNext(new String []{str,String.valueOf(SentimentType.fromInt(obj.negativeSentiment.get(str)))}));
                 }catch(Exception ex){ex.printStackTrace();}
             }catch(Exception ex){ex.printStackTrace();}
-        }
+        }*/
     }
 
     /**
@@ -333,10 +344,5 @@ public class Utility{
                 r_sentiment.unlock();
             }
         }
-
-
-
-
-
     }
 }

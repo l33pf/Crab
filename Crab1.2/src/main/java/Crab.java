@@ -221,7 +221,9 @@ public final class Crab {
                                         int sentiment = Utility.SentimentAnalyser.analyse(titleToAnalyse);
 
                                         matches.forEach((String match)-> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_MATCHES,new writerObj(childLink,match)));
-                                        Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_MATCHES,new writerObj(childLink,matches,sentiment));
+                                        //Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_MATCHES,new writerObj(childLink,matches,sentiment));
+
+                                        Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_SPEC, new writerObj(childLink,matches,sentiment));
                                     }
 
                                     matchesFound = true;
@@ -296,6 +298,6 @@ public final class Crab {
 
         serializeAllObj();
 
-        keywordMap.values().forEach(Utility.DataIO::writeObjData);
+        //keywordMap.values().forEach(Utility.DataIO::writeObjData);
     }
 }
