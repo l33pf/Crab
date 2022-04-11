@@ -7,7 +7,7 @@
 
 <b>Note:</b> Crab 1.1 is now deprecated, the code however will stay on the repo for archive.
 
-A set of example results from a few timed crawls can be found in the [SampleResults](https://github.com/l33pf/Crab/tree/main/Crab1.2/Sample%20Results) folder
+A set of example results from a few timed optimal and keyword crawls can be found in the [SampleResults](https://github.com/l33pf/Crab/tree/main/Crab1.2/Sample%20Results) folder
 all these results used the [test.csv](https://github.com/l33pf/Crab/blob/main/Crab1.2/Test.csv) file as the initial URL set.
 
 <!-- ABOUT THE PROJECT -->
