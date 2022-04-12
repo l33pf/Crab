@@ -224,8 +224,9 @@ public final class Crab {
                                         //Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_MATCHES,new writerObj(childLink,matches,sentiment));
 
                                         Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_SPEC, new writerObj(childLink,matches,sentiment));
-                                    }
 
+                                        if(Crab.OPTIMAL_DEPTH){ Crab.urlQueue.add(childLink);}
+                                    }
                                     matchesFound = true;
                                 }else{
                                     matchesFound = false;
