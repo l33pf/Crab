@@ -30,11 +30,6 @@ public final class writerObj{
         this.url = _url;
         this.sentimentLevel = _sentiment;
     }
-    writerObj(final String _url, final int _sentiment, final String _keyword){
-        this.url = _url;
-        this.sentimentLevel = _sentiment;
-        this.keyword = _keyword;
-    }
 
     writerObj(final String _url, final String _keyword){
         this.url = _url;
@@ -46,5 +41,4 @@ public final class writerObj{
         this.keywordMatches = _matches;
         this.sentimentLevel = _sentiment;
     }
-
 }

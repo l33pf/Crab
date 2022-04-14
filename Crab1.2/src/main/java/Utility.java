@@ -287,7 +287,7 @@ public class Utility{
                     final StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
                     final CoreDocument document = pipeline.processToCoreDocument(title);
 
-                    final HashMap<String, PriorityQueue<String>> tagMap = new HashMap<>();
+                    final HashMap<String, PriorityQueue<String>> tagMap = new HashMap<>(Crab.DEFAULT_SIZE);
                     document.tokens().forEach((final CoreLabel tok)-> arr.forEach((final String tg)->{
                         if(tagMap.containsKey(tok.tag())){
                             PriorityQueue q = tagMap.get(tok.tag());
@@ -314,7 +314,7 @@ public class Utility{
         public static Queue<String> checkKword(final HashMap<String,PriorityQueue<String>> t_map, final ConcurrentHashMap<String, Crab.KeywordClass> keyWordMap) throws URISyntaxException {
             try{
                 r_sentiment.lock();
-                Queue<String> matches = new ArrayDeque<>();
+                Queue<String> matches = new ArrayDeque<>(Crab.DEFAULT_SIZE);
                 for(String keyword : keyWordMap.keySet()){
                     for(String tag : t_map.keySet()){
                         PriorityQueue<String> p_queue = t_map.get(tag);

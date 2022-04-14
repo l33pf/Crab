@@ -127,13 +127,9 @@ public final class Crab {
                                 if(visitList.stream().noneMatch(str->str.matches(sanitised))){
 
                                     visitList.add(sanitised);
-
                                     final Document docTwo =  Jsoup.connect(childLink).get();
-
                                     sentiment = Utility.SentimentAnalyser.analyse(docTwo.title());
-
                                     System.out.println("Visited: " + link.attr("abs:href") + " " +  "Parent: " + URL + "\n");
-
                                     Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_VL_RECORD,sanitised);
 
                                     if(!map.containsKey(childLink)){ map.put(childLink,sentiment);}
@@ -298,7 +294,5 @@ public final class Crab {
         }
 
         serializeAllObj();
-
-        //keywordMap.values().forEach(Utility.DataIO::writeObjData);
     }
 }
