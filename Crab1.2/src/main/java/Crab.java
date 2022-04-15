@@ -215,12 +215,13 @@ public final class Crab {
                                         Document linkDoc = Jsoup.connect(childLink).get();
                                         String titleToAnalyse = linkDoc.title();
                                         int sentiment = Utility.SentimentAnalyser.analyse(titleToAnalyse);
-
-                                        matches.forEach((String match)-> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_MATCHES,new writerObj(childLink,match)));
-                                        //Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_MATCHES,new writerObj(childLink,matches,sentiment));
-
-                                        Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_SPEC, new writerObj(childLink,matches,sentiment));
-
+                                        
+                                        if(parentSetMap.keySet().stream().noneMatch(str->str.matches(childLink))){
+                                            matches.forEach((String match)-> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_MATCHES,new writerObj(childLink,match)));
+                                            //Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_MATCHES,new writerObj(childLink,matches,sentiment));
+                                            Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_SPEC, new writerObj(childLink,matches,sentiment));
+                                        }
+                            
                                         if(Crab.OPTIMAL_DEPTH){ Crab.urlQueue.add(childLink);}
                                     }
                                     matchesFound = true;
