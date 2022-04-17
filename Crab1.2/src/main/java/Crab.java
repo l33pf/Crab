@@ -37,7 +37,7 @@ public final class Crab {
     public static ConcurrentLinkedQueue<String> urlQueue = new ConcurrentLinkedQueue<>();
 
     private static final int numOfThreads = (Runtime.getRuntime().availableProcessors())+1;
-    private static final int coreSize = (numOfThreads % 2 == 0) ? numOfThreads/2 : (int)Math.floor(numOfThreads/2);
+    private static final int coreSize = (numOfThreads % 2 == 0) ? numOfThreads/2 : Math.floorDiv(numOfThreads,2);
     private static final int CAPACITY = 100;
 
     public static Utility.Serialization sr = new Utility.Serialization();
@@ -107,7 +107,7 @@ public final class Crab {
             try{
                 URI uri = new URI(URL);
                 if(visitList.stream().noneMatch(str->str.matches(sanitised_url)) ||
-                        parentSetMap.contains(URL) || blockedList.stream().noneMatch(str->str.matches(uri.getHost()))){
+                        parentSetMap.containsKey(URL) || blockedList.stream().noneMatch(str->str.matches(uri.getHost()))){
 
                     visitList.add(sanitised_url);
                     final Document doc = Jsoup.connect(URL).get(); System.out.println("Visiting: " + URL + "\n");
@@ -180,7 +180,7 @@ public final class Crab {
             final String sanitised_url = URL.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
             try{
                 URI uri = new URI(URL);
-                if(keywordVisitList.stream().noneMatch(str->str.matches(uri.getHost())) || parentSetMap.contains(URL) && bList.stream().noneMatch(str->str.matches(uri.getHost()))){
+                if(keywordVisitList.stream().noneMatch(str->str.matches(uri.getHost())) || parentSetMap.containsKey(URL) && bList.stream().noneMatch(str->str.matches(uri.getHost()))){
 
                     final Document doc = Jsoup.connect(URL).get();
                     final Elements links = doc.select("a[href]");
