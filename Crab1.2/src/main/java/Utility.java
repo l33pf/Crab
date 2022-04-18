@@ -15,8 +15,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
  **/
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -24,7 +22,6 @@ import java.io.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -195,13 +192,10 @@ public class Utility{
                         case WRITE_KWORD_SENTIMENT_MATCHES -> {
                             fw = new FileWriter("crab_kword_sentiment_results.csv", true);
                             cs = new CSVWriter(fw);
-                            obj.keywordMatches.forEach((String match)->{
-                                cs.writeNext(new String[]{obj.url,match, String.valueOf(SentimentType.fromInt(obj.sentimentLevel))});
-                            });
+                            obj.keywordMatches.forEach((String match)-> cs.writeNext(new String[]{obj.url,match, String.valueOf(SentimentType.fromInt(obj.sentimentLevel))}));
                             cs.close();
                             fw.close();
                         }
-
                         case WRITE_KWORD_SENTIMENT_SPEC -> {
                             for(String match : obj.keywordMatches){
                                 FileWriter f_w = new FileWriter(match + ".csv",true);
@@ -246,6 +240,19 @@ public class Utility{
                 w.unlock();
             }
         }
+
+/*        public static void writeObjData(Crab.KeywordClass obj){
+            try{
+                String fname = obj.keyword + "_sentiment_results" + ".csv";
+                FileWriter fw = new FileWriter(fname);
+                CSVWriter cs = new CSVWriter(fw);
+                try{
+                    obj.positiveSentiment.keySet().forEach((String str)-> cs.writeNext(new String []{str,String.valueOf(SentimentType.fromInt(obj.positiveSentiment.get(str)))}));
+                    obj.neutralSentiment.keySet().forEach((String str)-> cs.writeNext(new String []{str,String.valueOf(SentimentType.fromInt(obj.neutralSentiment.get(str)))}));
+                    obj.negativeSentiment.keySet().forEach((String str)-> cs.writeNext(new String []{str,String.valueOf(SentimentType.fromInt(obj.negativeSentiment.get(str)))}));
+                }catch(Exception ex){ex.printStackTrace();}
+            }catch(Exception ex){ex.printStackTrace();}
+        }*/
     }
 
     /**
@@ -305,13 +312,16 @@ public class Utility{
 
                     return tagMap;
 
-
                 }finally{
                     w_sentiment.unlock();
                 }
         }
 
-        public static Queue<String> checkKword(final HashMap<String,PriorityQueue<String>> t_map, final ConcurrentHashMap<String, Crab.KeywordClass> keyWordMap) throws URISyntaxException {
+        /**
+         * @About method that checks whether a keyword is within the matches
+         * found from pos_keywordTagger
+         */
+        public static Queue<String> checkKword(final HashMap<String,PriorityQueue<String>> t_map, final ConcurrentHashMap<String, Crab.KeywordClass> keyWordMap) {
             try{
                 r_sentiment.lock();
                 Queue<String> matches = new ArrayDeque<>(Crab.DEFAULT_SIZE);

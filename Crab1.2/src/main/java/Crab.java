@@ -36,8 +36,8 @@ public final class Crab {
 
     public static ConcurrentLinkedQueue<String> urlQueue = new ConcurrentLinkedQueue<>();
 
-    private static final int numOfThreads = (Runtime.getRuntime().availableProcessors())+1;
-    private static final int coreSize = (numOfThreads % 2 == 0) ? numOfThreads/2 : (int)Math.floor(numOfThreads/2);
+    private static final int NUM_OF_THREADS = (Runtime.getRuntime().availableProcessors())+1;
+    private static final int CORE_SIZE = (NUM_OF_THREADS % 2 == 0) ? NUM_OF_THREADS /2 : Math.floorDiv(NUM_OF_THREADS,2);
     private static final int CAPACITY = 100;
 
     public static Utility.Serialization sr = new Utility.Serialization();
@@ -58,7 +58,7 @@ public final class Crab {
      * @About setting this flag will run the thread pool at the maximum
      * number of available threads.
      */
-    public static boolean FULL_UTILISATION = false;
+    public static boolean FULL_UTILISATION;
 
     /**
      * @About setting this flag will record all previous 'optimal' links
@@ -66,32 +66,31 @@ public final class Crab {
      */
     public static boolean RECORD_ALL = false;
 
-    public static ThreadPoolExecutor exec = new ThreadPoolExecutor((FULL_UTILISATION) ? numOfThreads : coreSize
-            ,numOfThreads,
+    public static ThreadPoolExecutor exec = new ThreadPoolExecutor((FULL_UTILISATION) ? NUM_OF_THREADS : CORE_SIZE
+            , NUM_OF_THREADS,
             1L, TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<>(CAPACITY), // Bounded
             Executors.defaultThreadFactory(),
             new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
 
     /**
-     * @About Class for storing crawled info for a given keyword
+     * @About a class for storing articles and their sentiments based upon the keyword given.
      */
     public static class KeywordClass{
         final String keyword;
 
-        /* Storage for articles based on their sentiment, with the date they were accessed */
-        ConcurrentHashMap<String,Integer> negativeSentiment = new ConcurrentHashMap<>(DEFAULT_SIZE);
-        ConcurrentHashMap<String,Integer> neutralSentiment = new ConcurrentHashMap<>(DEFAULT_SIZE);
-        ConcurrentHashMap<String,Integer> positiveSentiment = new ConcurrentHashMap<>(DEFAULT_SIZE);
-
-        /* Overall sentiment average of articles for the keyword in question */
-        int average;
+        ConcurrentHashMap<String,Integer> negativeSent = new ConcurrentHashMap<>(DEFAULT_SIZE);
+        ConcurrentHashMap<String,Integer> neutralSent = new ConcurrentHashMap<>(DEFAULT_SIZE);
+        ConcurrentHashMap<String,Integer> positiveSent = new ConcurrentHashMap<>(DEFAULT_SIZE);
 
         KeywordClass(String keyWord){
             this.keyword = keyWord;
         }
     }
 
+    /**
+     * @About Optimal runnable is the class each thread uses to implement an optimal crawl.
+     */
     private static class OptimalRunnable implements Runnable{
 
         OptimalRunnable(String link){this.URL = link;}
@@ -107,7 +106,7 @@ public final class Crab {
             try{
                 URI uri = new URI(URL);
                 if(visitList.stream().noneMatch(str->str.matches(sanitised_url)) ||
-                        parentSetMap.contains(URL) || blockedList.stream().noneMatch(str->str.matches(uri.getHost()))){
+                        parentSetMap.containsKey(URL) || blockedList.stream().noneMatch(str->str.matches(uri.getHost()))){
 
                     visitList.add(sanitised_url);
                     final Document doc = Jsoup.connect(URL).get(); System.out.println("Visiting: " + URL + "\n");
@@ -130,10 +129,9 @@ public final class Crab {
                                     final Document docTwo =  Jsoup.connect(childLink).get();
                                     sentiment = Utility.SentimentAnalyser.analyse(docTwo.title());
                                     System.out.println("Visited: " + link.attr("abs:href") + " " +  "Parent: " + URL + "\n");
+
                                     Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_VL_RECORD,sanitised);
-
                                     if(!map.containsKey(childLink)){ map.put(childLink,sentiment);}
-
                                     if(OPTIMAL_DEPTH){Crab.urlQueue.add(childLink);}
                                 }
                             }
@@ -163,11 +161,13 @@ public final class Crab {
         }
     }
 
+    /**
+     * @About KeyWordRunnable is the class every thread uses to implement a keyword crawl.
+     */
     private static class KeyWordRunnable implements Runnable{
 
         private static final Queue<String> bList = blockedList;
         String URL; ArrayList<String> tags;
-        HashMap<String,Boolean> map = new HashMap<>(DEFAULT_SIZE);
         ConcurrentHashMap<String,KeywordClass> kword_map = keywordMap;
 
         KeyWordRunnable(String link, final ArrayList<String> POS_Tags){
@@ -180,7 +180,7 @@ public final class Crab {
             final String sanitised_url = URL.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
             try{
                 URI uri = new URI(URL);
-                if(keywordVisitList.stream().noneMatch(str->str.matches(uri.getHost())) || parentSetMap.contains(URL) && bList.stream().noneMatch(str->str.matches(uri.getHost()))){
+                if(keywordVisitList.stream().noneMatch(str->str.matches(uri.getHost())) || parentSetMap.containsKey(URL) && bList.stream().noneMatch(str->str.matches(uri.getHost()))){
 
                     final Document doc = Jsoup.connect(URL).get();
                     final Elements links = doc.select("a[href]");
@@ -194,7 +194,6 @@ public final class Crab {
                             final Document docTwo = Jsoup.connect(childLink).get();
                             final String sanitisedLink = childLink.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
                             final URI linkURI = new URI(childLink);
-                            boolean matchesFound;
 
                             if(blockedList.stream().noneMatch(str->str.matches(linkURI.getHost()))
                                     && keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
@@ -216,23 +215,20 @@ public final class Crab {
                                         String titleToAnalyse = linkDoc.title();
                                         int sentiment = Utility.SentimentAnalyser.analyse(titleToAnalyse);
 
-                                        matches.forEach((String match)-> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_MATCHES,new writerObj(childLink,match)));
-                                        //Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_MATCHES,new writerObj(childLink,matches,sentiment));
-
-                                        Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_SPEC, new writerObj(childLink,matches,sentiment));
+                                        if(parentSetMap.keySet().stream().noneMatch(str->str.matches(childLink))){
+                                            matches.forEach((String match)-> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_MATCHES,new writerObj(childLink,match)));
+                                            //Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_MATCHES,new writerObj(childLink,matches,sentiment));
+                                            Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_SPEC, new writerObj(childLink,matches,sentiment));
+                                        }
 
                                         if(Crab.OPTIMAL_DEPTH){ Crab.urlQueue.add(childLink);}
                                     }
-                                    matchesFound = true;
                                 }else{
-                                    matchesFound = false;
-
                                     if(keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
                                         keywordVisitList.add(sanitisedLink);
                                         Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,sanitisedLink);
                                     }
                                 }
-                                map.put(URL,matchesFound);
                             }
                         }catch(Exception ex){ex.printStackTrace();}
                     });
@@ -263,12 +259,10 @@ public final class Crab {
         }else { sr.serializeQueue(optimalURLrecord,f.getName()); }
     }
 
-    Crab() throws IOException {
-        sr.serializeQueue(visitList,"v_list.bin");
-        sr.serializeQueue(optimalURLrecord,"optimal_link_record.bin");
-        sr.serializeQueue(keywordVisitList,"kw_v_list.bin");
-    }
-
+    /**
+     * @About main crawling function.
+     * Checks which flag was set and then applies the appropriate settings for the crawl.
+     */
     public static void crabCrawl() throws IOException {
         Utility.DataIO.readInURLSeed("./test.csv");
 
@@ -294,5 +288,6 @@ public final class Crab {
         }
 
         serializeAllObj();
+        //keywordMap.values().forEach(Utility.DataIO::writeObjData);
     }
 }
