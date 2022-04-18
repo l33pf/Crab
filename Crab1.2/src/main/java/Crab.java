@@ -228,6 +228,15 @@ public final class Crab {
                                         }
 
                                         if(Crab.OPTIMAL_DEPTH){ Crab.urlQueue.add(childLink);}
+
+                                        //Builds a sentiment profile through the keyword class for a keyword by updating
+                                        if(Crab.FULL_PROFILE){
+                                            matches.forEach((String str)->{
+                                                 if(keywordMap.keySet().stream().anyMatch(key->(key.matches(str)))){
+                                                     Utility.SentimentAnalyser.detSentiment(childLink,titleToAnalyse,sentiment,keywordMap.get(str));
+                                                 }
+                                            });
+                                        }
                                     }
                                 }else{
                                     if(keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){

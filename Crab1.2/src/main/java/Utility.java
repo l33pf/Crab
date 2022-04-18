@@ -341,11 +341,10 @@ public class Utility{
                 r_sentiment.unlock();
             }
         }
-
-        public static void detSentiment(String url, String title, SentimentType sent, Crab.KeywordClass keyword){
+        public static void detSentiment(String url, String title, int sent, Crab.KeywordClass keyword){
                 try{
                     w_sentiment.lock();
-                    switch (sent) {
+                    switch (SentimentType.fromInt(sent)) {
                         case VERY_POSITIVE, POSITIVE -> keyword.positiveSent.put(url, title);
                         case NEUTRAL -> keyword.neutralSent.put(url, title);
                         case NEGATIVE, VERY_NEGATIVE -> keyword.negativeSent.put(url, title);
