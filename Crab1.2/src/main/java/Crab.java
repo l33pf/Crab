@@ -11,7 +11,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  **/
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -66,10 +65,17 @@ public final class Crab {
      */
     public static boolean RECORD_ALL = false;
 
+    /**
+     * @About setting this flag will use the keyword class to build up
+     * a sentiment distribution contained in three data structures for
+     * a given keyword.
+     */
+    public static boolean FULL_PROFILE;
+
     public static ThreadPoolExecutor exec = new ThreadPoolExecutor((FULL_UTILISATION) ? NUM_OF_THREADS : CORE_SIZE
             , NUM_OF_THREADS,
             1L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(CAPACITY), // Bounded
+            new ArrayBlockingQueue<>(CAPACITY),
             Executors.defaultThreadFactory(),
             new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
 
@@ -79,9 +85,9 @@ public final class Crab {
     public static class KeywordClass{
         final String keyword;
 
-        ConcurrentHashMap<String,Integer> negativeSent = new ConcurrentHashMap<>(DEFAULT_SIZE);
-        ConcurrentHashMap<String,Integer> neutralSent = new ConcurrentHashMap<>(DEFAULT_SIZE);
-        ConcurrentHashMap<String,Integer> positiveSent = new ConcurrentHashMap<>(DEFAULT_SIZE);
+        ConcurrentHashMap<String,String> negativeSent = new ConcurrentHashMap<>(DEFAULT_SIZE);
+        ConcurrentHashMap<String,String> neutralSent = new ConcurrentHashMap<>(DEFAULT_SIZE);
+        ConcurrentHashMap<String,String> positiveSent = new ConcurrentHashMap<>(DEFAULT_SIZE);
 
         KeywordClass(String keyWord){
             this.keyword = keyWord;
