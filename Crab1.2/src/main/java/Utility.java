@@ -240,19 +240,6 @@ public class Utility{
                 w.unlock();
             }
         }
-
-/*        public static void writeObjData(Crab.KeywordClass obj){
-            try{
-                String fname = obj.keyword + "_sentiment_results" + ".csv";
-                FileWriter fw = new FileWriter(fname);
-                CSVWriter cs = new CSVWriter(fw);
-                try{
-                    obj.positiveSentiment.keySet().forEach((String str)-> cs.writeNext(new String []{str,String.valueOf(SentimentType.fromInt(obj.positiveSentiment.get(str)))}));
-                    obj.neutralSentiment.keySet().forEach((String str)-> cs.writeNext(new String []{str,String.valueOf(SentimentType.fromInt(obj.neutralSentiment.get(str)))}));
-                    obj.negativeSentiment.keySet().forEach((String str)-> cs.writeNext(new String []{str,String.valueOf(SentimentType.fromInt(obj.negativeSentiment.get(str)))}));
-                }catch(Exception ex){ex.printStackTrace();}
-            }catch(Exception ex){ex.printStackTrace();}
-        }*/
     }
 
     /**
