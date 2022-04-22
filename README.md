@@ -84,7 +84,7 @@ Crab will need a inputted CSV file of a URL seed set to run correctly, an exampl
 <!-- ROADMAP -->
 ## Roadmap
 - [x] Crawl based on Keywords
-- [ ] Database Integration (PostgreSQL)
+- [ ] Database Integration
 
 See the [open issues](https://github.com/l33pf/Crab/issues) for a full list of proposed features (and known issues).
 
