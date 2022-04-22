@@ -18,14 +18,28 @@ limitations under the License.
  *  data from a user's given database.
  */
 
+import com.zaxxer.hikari.HikariDataSource;
+
+import javax.sql.*;
+import java.sql.*;
+
 public class CrabDB {
 
-    private final String uname;
-    private final String pwrd;
+    private static String uname = null;
+    private static String pwrd = null;
 
     CrabDB(final String uName, final String pWrd){
-            this.uname = uName;
-            this.pwrd = pWrd;
+            uname = uName;
+            pwrd = pWrd;
     }
+
+    private static DataSource initDataSource(final String jbdc_str){
+        HikariDataSource ds = new HikariDataSource();
+        ds.setJdbcUrl(jbdc_str);
+        ds.setUsername(uname);
+        ds.setPassword(pwrd);
+        return ds;
+    }
+
 
 }
