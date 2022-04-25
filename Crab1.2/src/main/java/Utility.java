@@ -41,6 +41,8 @@ import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.util.CoreMap;
 import edu.stanford.nlp.util.logging.RedwoodConfiguration;
 
+import org.tinylog.Logger;
+
 public class Utility{
 
     private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
@@ -112,7 +114,7 @@ public class Utility{
                     Input in = new Input(new FileInputStream(fileName)); Kryo kry = new Kryo();
                     kry.register(ConcurrentLinkedQueue.class);
                     q = (Collection<String>) kry.readClassAndObject(in); in.close();
-                }catch(Exception ex){ex.printStackTrace();} return  q;
+                }catch(Exception ex){Logger.error(ex);} return  q;
         }
 
 
@@ -122,7 +124,7 @@ public class Utility{
                     Input in = new Input(new FileInputStream(fileName)); Kryo kry = new Kryo();
                     kry.register(ConcurrentHashMap.class);
                     map = (Map<String, Integer>) kry.readClassAndObject(in); in.close();
-                }catch(Exception ex){ex.printStackTrace();} return map;
+                }catch(Exception ex){Logger.error(ex);} return map;
         }
     }
 
@@ -142,7 +144,7 @@ public class Utility{
                     Crab.urlQueue.add(nextURL[0]);
                     Crab.parentSetMap.put(nextURL[0],true);
                 }
-            } catch (IOException | CsvValidationException e){e.printStackTrace();} {
+            } catch (IOException | CsvValidationException e){Logger.error(e);} {
             }
 
         }
@@ -206,7 +208,7 @@ public class Utility{
                             }
                         }
                     }
-                }catch(Exception ex){ex.printStackTrace();}
+                }catch(Exception ex){Logger.error(ex);}
             }finally{
                 w.unlock();
             }
@@ -235,7 +237,7 @@ public class Utility{
                             fw.close();
                         }
                     }
-                }catch(Exception ex){ex.printStackTrace();}
+                }catch(Exception ex){Logger.error(ex);}
             }finally {
                 w.unlock();
             }
@@ -315,7 +317,7 @@ public class Utility{
                 for(String keyword : keyWordMap.keySet()){
                     for(String tag : t_map.keySet()){
                         PriorityQueue<String> p_queue = t_map.get(tag);
-
+                        
                         p_queue.forEach((String word)->{
                             if(word.matches(keyword)){
                                 matches.add(keyword);
@@ -328,7 +330,7 @@ public class Utility{
                 r_sentiment.unlock();
             }
         }
-        public static void detSentiment(String url, String title, int sent, Crab.KeywordClass keyword){
+        public static void detSentiment(final String url, final String title, final int sent, Crab.KeywordClass keyword){
                 try{
                     w_sentiment.lock();
                     switch (SentimentType.fromInt(sent)) {

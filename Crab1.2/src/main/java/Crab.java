@@ -20,6 +20,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.jsoup.nodes.Element;
+import org.tinylog.Logger;
 
 public final class Crab {
     public static final int DEFAULT_SIZE = 1000;
@@ -141,7 +142,7 @@ public final class Crab {
                                     if(OPTIMAL_DEPTH){Crab.urlQueue.add(childLink);}
                                 }
                             }
-                        }catch(Exception ex){ex.printStackTrace();}
+                        }catch(Exception ex){Logger.error(ex);}
                     });
 
                     map.keySet().forEach((String key)->{
@@ -163,7 +164,7 @@ public final class Crab {
                         }
                     }
                 }
-            }catch(Exception ex){ex.printStackTrace();}
+            }catch(Exception ex){Logger.error(ex);}
         }
     }
 
@@ -245,10 +246,10 @@ public final class Crab {
                                     }
                                 }
                             }
-                        }catch(Exception ex){ex.printStackTrace();}
+                        }catch(Exception ex){Logger.error(ex);}
                     });
                 }
-            }catch(Exception ex){ex.printStackTrace();}
+            }catch(Exception ex){Logger.error(ex);}
         }
     }
 
@@ -281,6 +282,8 @@ public final class Crab {
     public static void crabCrawl() throws IOException {
         Utility.DataIO.readInURLSeed("./test.csv");
 
+        Logger.info("Crawl Started.");
+
         deserializeAllObj();
 
         if(!KEYWORD_CRAWL){
@@ -296,13 +299,12 @@ public final class Crab {
         }else{
             System.out.println("Keyword Crawl enabled");
             if(FULL_UTILISATION){System.out.println("Full Utilisation of Threads configured.");}else {System.out.println("Full Utilisation off.\n");}
+
             while(!urlQueue.isEmpty()){
                 String urlToCrawl = urlQueue.poll();
                 exec.submit(new KeyWordRunnable(urlToCrawl,cTags));
             }
         }
-
         serializeAllObj();
-        //keywordMap.values().forEach(Utility.DataIO::writeObjData);
     }
 }
