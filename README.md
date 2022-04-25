@@ -80,6 +80,7 @@ Crab will need a inputted CSV file of a URL seed set to run correctly, an exampl
 * [CoreNLP](https://stanfordnlp.github.io/CoreNLP/)
 * [Jsoup](https://jsoup.org/)
 * [OpenCSV](http://opencsv.sourceforge.net/)
+* [Tinylog](https://tinylog.org/v2/)
 
 <!-- ROADMAP -->
 ## Roadmap
