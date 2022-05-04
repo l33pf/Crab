@@ -286,7 +286,7 @@ public class Utility{
                     final HashMap<String, PriorityQueue<String>> tagMap = new HashMap<>(Crab.DEFAULT_SIZE);
                     document.tokens().forEach((final CoreLabel tok)-> arr.forEach((final String tg)->{
                         if(tagMap.containsKey(tok.tag())){
-                            PriorityQueue q = tagMap.get(tok.tag());
+                            PriorityQueue<String> q = tagMap.get(tok.tag());
 
                             if(!q.contains(tok.word())){
                                 q.add(tok.word());
