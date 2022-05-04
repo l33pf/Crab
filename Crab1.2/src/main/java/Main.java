@@ -14,34 +14,16 @@ public class Main {
 
     public static void main(String [] args){
 
-        //Console call
+        //Example: Setting up a Keyword Crawl
 
-        Crab.crabCrawl();
+        String [] blocked = new String[]{"t.me","www.facebook.com","www.twitter.com","www.linkedin.com"};
+        String [] tags = new String[]{"NNP","JJ","NN","NNS","VB"};
+        String [] words = new String[]{"Bitcoin","Ethereum","Algorand","Cardano","Solana"};
 
-        /* EXAMPLE: Setting Up a Keyword Crawl
-        Crab.blockedList.add("t.me");
-        Crab.blockedList.add("www.facebook.com");
-        Crab.blockedList.add("www.twitter.com");
-        Crab.blockedList.add("www.linkedin.com");
-
-        Crab.cTags.add("NNP");
-        Crab.cTags.add("JJ");
-        Crab.cTags.add("NN");
-        Crab.cTags.add("NNS");
-        Crab.cTags.add("VB");
-
-        Crab.KeywordClass one = new Crab.KeywordClass("Bitcoin");
-        Crab.KeywordClass two = new Crab.KeywordClass("Ethereum");
-        Crab.KeywordClass thr = new Crab.KeywordClass("DeFi");
-
-        Crab.keywordMap.put(one.keyword,one);
-        Crab.keywordMap.put(two.keyword,two);
-        Crab.keywordMap.put(thr.keyword,thr);
+        Crab.readKwordCrawlInput(blocked,tags,words);
 
         Crab.KEYWORD_CRAWL = true;
-        
-        Crab.crabCrawl();
-        */
 
+        Crab.crabCrawl();
     }
 }
