@@ -276,6 +276,18 @@ public final class Crab {
     }
 
     /**
+     *  allows to read in large amount of user inputted data for the keyword crawl, saves the user
+     *  having to create single lines of adding data to the structures. Also useful for file input of lists.
+     */
+    public static void readKwordCrawlInput(String [] blist, String [] tags, String [] kwords){
+                Collections.addAll(blockedList,blist);
+                Collections.addAll(cTags,tags);
+                ArrayList<KeywordClass> q = new ArrayList<>(100);
+                for(String word : kwords){q.add(new KeywordClass(word));}
+                q.forEach((KeywordClass k)-> keywordMap.put(k.keyword,k));
+    }
+
+    /**
      * @About main crawling function.
      * Checks which flag was set and then applies the appropriate settings for the crawl.
      */
