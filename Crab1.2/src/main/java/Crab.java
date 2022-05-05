@@ -16,13 +16,18 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.*;
+
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.jsoup.nodes.Element;
 import org.tinylog.Logger;
 
-public final class Crab {
+//make a feature to check jsoup if we have an invalid http status code
+//https://jsoup.org/apidocs/org/jsoup/Connection.Response.html
+
+public class Crab {
     public static final int DEFAULT_SIZE = 1000;
 
     public static ConcurrentLinkedQueue<String> blockedList = new ConcurrentLinkedQueue<>();
@@ -39,6 +44,8 @@ public final class Crab {
     private static final int NUM_OF_THREADS = (Runtime.getRuntime().availableProcessors())+1;
     private static final int CORE_SIZE = (NUM_OF_THREADS % 2 == 0) ? NUM_OF_THREADS /2 : Math.floorDiv(NUM_OF_THREADS,2);
     private static final int CAPACITY = 100;
+
+    public static int [] status_codes = new int[]{900,0,400,404,999,403,503,451,429,500};
 
     public static Utility.Serialization sr = new Utility.Serialization();
 
@@ -58,7 +65,7 @@ public final class Crab {
      * @About setting this flag will run the thread pool at the maximum
      * number of available threads.
      */
-    public static boolean FULL_UTILISATION;
+    public static boolean FULL_UTILISATION = false;
 
     /**
      * @About setting this flag will record all previous 'optimal' links
@@ -73,7 +80,7 @@ public final class Crab {
      */
     public static boolean FULL_PROFILE;
 
-    public static ThreadPoolExecutor exec = new ThreadPoolExecutor((FULL_UTILISATION) ? NUM_OF_THREADS : CORE_SIZE
+    public static  ThreadPoolExecutor exec = new ThreadPoolExecutor((FULL_UTILISATION) ? NUM_OF_THREADS : CORE_SIZE
             , NUM_OF_THREADS,
             1L, TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<>(CAPACITY),
@@ -198,51 +205,58 @@ public final class Crab {
                     links.forEach((Element link)->{
                         try{
                             final String childLink = link.attr("abs:href");
-                            final Document docTwo = Jsoup.connect(childLink).get();
-                            final String sanitisedLink = childLink.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
-                            final URI linkURI = new URI(childLink);
 
-                            if(blockedList.stream().noneMatch(str->str.matches(linkURI.getHost()))
-                                    && keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
-                                System.out.println("Visited: " + childLink +  " Parent: " + URL + "\n");
-                                final HashMap<String, PriorityQueue<String>> tagMap;
-                                tagMap = Utility.SentimentAnalyser.pos_keywordTagger(docTwo.title(),tags);
+                            Connection con = Jsoup.connect(childLink).ignoreHttpErrors(true);
+                            Connection.Response res = con.execute();
+                            int status = res.statusCode();
 
-                                final Queue<String> matches = Utility.SentimentAnalyser.checkKword(tagMap,kword_map);
+                            if(Arrays.stream(status_codes).noneMatch(x->x==status)){
+                                final Document docTwo = con.get();
+                                final String sanitisedLink = childLink.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+                                final URI linkURI = new URI(childLink);
 
-                                if(!matches.isEmpty()){
-                                    System.out.println("Matches found for: " + childLink + "\n");
-                                    if(keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
-                                        keywordVisitList.add(sanitisedLink);
-                                        Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,new writerObj(childLink));
+                                if(blockedList.stream().noneMatch(str->str.matches(linkURI.getHost()))
+                                        && keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
+                                    System.out.println("Visited: " + childLink +  " Parent: " + URL + "\n");
+                                    final HashMap<String, PriorityQueue<String>> tagMap;
+                                    tagMap = Utility.SentimentAnalyser.pos_keywordTagger(docTwo.title(),tags);
 
-                                        /* Analyse the headline of the page for a keyword match
-                                        *  similiar to optimal crawl. */
-                                        Document linkDoc = Jsoup.connect(childLink).get();
-                                        String titleToAnalyse = linkDoc.title();
-                                        int sentiment = Utility.SentimentAnalyser.analyse(titleToAnalyse);
+                                    final Queue<String> matches = Utility.SentimentAnalyser.checkKword(tagMap,kword_map);
 
-                                        if(parentSetMap.keySet().stream().noneMatch(str->str.matches(childLink))){
-                                            matches.forEach((String match)-> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_MATCHES,new writerObj(childLink,match)));
-                                            //Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_MATCHES,new writerObj(childLink,matches,sentiment));
-                                            Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_SPEC, new writerObj(childLink,matches,sentiment));
+                                    if(!matches.isEmpty()){
+                                        System.out.println("Matches found for: " + childLink + "\n");
+                                        if(keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
+                                            keywordVisitList.add(sanitisedLink);
+                                            Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,new writerObj(childLink));
+
+                                            /* Analyse the headline of the page for a keyword match
+                                             *  similiar to optimal crawl. */
+                                            Document linkDoc = Jsoup.connect(childLink).get();
+                                            String titleToAnalyse = linkDoc.title();
+                                            int sentiment = Utility.SentimentAnalyser.analyse(titleToAnalyse);
+
+                                            if(parentSetMap.keySet().stream().noneMatch(str->str.matches(childLink))){
+                                                matches.forEach((String match)-> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_MATCHES,new writerObj(childLink,match)));
+                                                //Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_MATCHES,new writerObj(childLink,matches,sentiment));
+                                                Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_SPEC, new writerObj(childLink,matches,sentiment));
+                                            }
+
+                                            if(Crab.OPTIMAL_DEPTH){ Crab.urlQueue.add(childLink);}
+
+                                            //Builds a sentiment profile through the keyword class for a keyword by updating
+                                            if(Crab.FULL_PROFILE){
+                                                matches.forEach((String str)->{
+                                                    if(keywordMap.keySet().stream().anyMatch(key->(key.matches(str)))){
+                                                        Utility.SentimentAnalyser.detSentiment(childLink,titleToAnalyse,sentiment,keywordMap.get(str));
+                                                    }
+                                                });
+                                            }
                                         }
-
-                                        if(Crab.OPTIMAL_DEPTH){ Crab.urlQueue.add(childLink);}
-
-                                        //Builds a sentiment profile through the keyword class for a keyword by updating
-                                        if(Crab.FULL_PROFILE){
-                                            matches.forEach((String str)->{
-                                                 if(keywordMap.keySet().stream().anyMatch(key->(key.matches(str)))){
-                                                     Utility.SentimentAnalyser.detSentiment(childLink,titleToAnalyse,sentiment,keywordMap.get(str));
-                                                 }
-                                            });
+                                    }else{
+                                        if(keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
+                                            keywordVisitList.add(sanitisedLink);
+                                            Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,sanitisedLink);
                                         }
-                                    }
-                                }else{
-                                    if(keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
-                                        keywordVisitList.add(sanitisedLink);
-                                        Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,sanitisedLink);
                                     }
                                 }
                             }
@@ -309,7 +323,7 @@ public final class Crab {
                 exec.submit(new OptimalRunnable(urlToCrawl));
             }
         }else{
-            System.out.println("Keyword Crawl enabled");
+            System.out.println("Keyword Crawl enabled\n");
             if(FULL_UTILISATION){System.out.println("Full Utilisation of Threads configured.");}else {System.out.println("Full Utilisation off.\n");}
 
             while(!urlQueue.isEmpty()){
