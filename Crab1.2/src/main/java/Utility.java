@@ -330,6 +330,7 @@ public class Utility{
                 r_sentiment.unlock();
             }
         }
+
         public static void detSentiment(final String url, final String title, final int sent, Crab.KeywordClass keyword){
                 try{
                     w_sentiment.lock();
@@ -343,4 +344,17 @@ public class Utility{
                 }
         }
     }
+
+    public static class urlTools{
+        public static boolean checkWhiteSpace(final String URL){
+                char [] urlChar = URL.toCharArray();
+                for(char ch : urlChar){
+                        if(Character.isWhitespace(ch)){
+                            return false;
+                        }
+                }
+                return true;
+        }
+    }
+
 }
