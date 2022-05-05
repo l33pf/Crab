@@ -139,14 +139,22 @@ public class Crab {
 
                                 if(visitList.stream().noneMatch(str->str.matches(sanitised))){
 
-                                    visitList.add(sanitised);
-                                    final Document docTwo =  Jsoup.connect(childLink).get();
-                                    sentiment = Utility.SentimentAnalyser.analyse(docTwo.title());
-                                    System.out.println("Visited: " + link.attr("abs:href") + " " +  "Parent: " + URL + "\n");
+                                    Connection con = Jsoup.connect(childLink).ignoreHttpErrors(true);
+                                    Connection.Response res = con.execute();
+                                    int status = res.statusCode();
 
-                                    Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_VL_RECORD,sanitised);
-                                    if(!map.containsKey(childLink)){ map.put(childLink,sentiment);}
-                                    if(OPTIMAL_DEPTH){Crab.urlQueue.add(childLink);}
+                                    if(Arrays.stream(status_codes).noneMatch(x->x==status)){
+                                        visitList.add(sanitised);
+                                        Document docTwo = con.get();
+
+                                        sentiment = Utility.SentimentAnalyser.analyse(docTwo.title());
+                                        System.out.println("Visited: " + link.attr("abs:href") + " " +  "Parent: " + URL + "\n");
+
+                                        Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_VL_RECORD,sanitised);
+                                        if(!map.containsKey(childLink)){ map.put(childLink,sentiment);}
+
+                                        if(OPTIMAL_DEPTH){Crab.urlQueue.add(childLink);}
+                                    }
                                 }
                             }
                         }catch(Exception ex){Logger.error(ex);}
