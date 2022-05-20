@@ -247,9 +247,8 @@ public class Crab {
                                                 String titleToAnalyse = linkDoc.title();
                                                 int sentiment = Utility.SentimentAnalyser.analyse(titleToAnalyse);
 
-                                                if(parentSetMap.keySet().stream().noneMatch(str->str.matches(childLink))){
+                                                if(!parentSetMap.containsKey(childLink)){
                                                     matches.forEach((String match)-> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_MATCHES,new writerObj(childLink,match)));
-                                                    //Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_MATCHES,new writerObj(childLink,matches,sentiment));
                                                     Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_SPEC, new writerObj(childLink,matches,sentiment));
                                                 }
 
