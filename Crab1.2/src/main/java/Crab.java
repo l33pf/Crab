@@ -50,7 +50,7 @@ public class Crab {
     private static final int CAPACITY = 100;
 
     /* HTTP-status codes that prevent the crawler */
-    public static int [] status_codes = new int[]{900,0,400,404,999,403,503,451,429,500};
+    public static int [] status_codes = new int[]{900,0,400,404,999,403,503,451,429,500, 302};
 
     public static Utility.Serialization sr = new Utility.Serialization();
 
