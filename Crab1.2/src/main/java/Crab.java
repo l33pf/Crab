@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -32,6 +33,7 @@ public class Crab {
 
     public static ConcurrentLinkedQueue<String> blockedList = new ConcurrentLinkedQueue<>();
     public static ConcurrentLinkedQueue<String> visitList = new ConcurrentLinkedQueue<>();
+
     public static ConcurrentHashMap<String,Boolean> parentSetMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
     public static ConcurrentLinkedQueue<String> optimalURLrecord = new ConcurrentLinkedQueue<>();
     public static ConcurrentLinkedQueue<String> keywordVisitList = new ConcurrentLinkedQueue<>();
@@ -39,12 +41,14 @@ public class Crab {
 
     public static ConcurrentHashMap<String,KeywordClass> keywordMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
 
+    /* urlQueue is the frontier for both crawl types */
     public static ConcurrentLinkedQueue<String> urlQueue = new ConcurrentLinkedQueue<>();
 
     private static final int NUM_OF_THREADS = (Runtime.getRuntime().availableProcessors())+1;
     private static final int CORE_SIZE = (NUM_OF_THREADS % 2 == 0) ? NUM_OF_THREADS /2 : Math.floorDiv(NUM_OF_THREADS,2);
     private static final int CAPACITY = 100;
 
+    /* HTTP-status codes that prevent the crawler */
     public static int [] status_codes = new int[]{900,0,400,404,999,403,503,451,429,500};
 
     public static Utility.Serialization sr = new Utility.Serialization();
@@ -79,6 +83,15 @@ public class Crab {
      * a given keyword.
      */
     public static boolean FULL_PROFILE;
+
+
+    /**
+     * @About amountCrawled is a counter which is updated on each page visit, crawlLimit is
+     * a user-defined limit that allows to stop the crawl after visiting the defined amount of pages
+     * specified by the user. By default we set this to 1000 (arbitrary value).
+     */
+    public static AtomicInteger amountCrawled;
+    public static int crawlLimit = 1000;
 
     public static  ThreadPoolExecutor exec = new ThreadPoolExecutor((FULL_UTILISATION) ? NUM_OF_THREADS : CORE_SIZE
             , NUM_OF_THREADS,
@@ -147,6 +160,7 @@ public class Crab {
 
                                         if(Arrays.stream(status_codes).noneMatch(x->x==status)){
                                             visitList.add(sanitised);
+                                            amountCrawled.getAndIncrement();
                                             Document docTwo = con.get();
 
                                             sentiment = Utility.SentimentAnalyser.analyse(docTwo.title());
@@ -239,6 +253,9 @@ public class Crab {
                                             System.out.println("Matches found for: " + childLink + "\n");
                                             if(keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
                                                 keywordVisitList.add(sanitisedLink);
+
+                                                amountCrawled.getAndIncrement();
+
                                                 Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,new writerObj(childLink));
 
                                                 /* Analyse the headline of the page for a keyword match
@@ -286,15 +303,17 @@ public class Crab {
         sr.serializeMap(parentSetMap,"parent_set_map.bin");
     }
 
-    public static void deserializeAllObj() throws IOException {
+    public static void deserializeAllObj() throws IOException, ClassNotFoundException {
         File f = new File("v_list.bin");
         if(f.exists()){
+            //Visit List isn't being read
             visitList = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
         } else { sr.serializeQueue(visitList,f.getName()); }
         f = new File("kw_v_list.bin");
         if(f.exists()){
             keywordVisitList = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
-        } else { sr.serializeQueue(keywordVisitList,f.getName()); }
+        } else { sr.serializeQueue(keywordVisitList,f.getName()); // this could be the error, serializing an empty queue
+        }
         f = new File("optimal_link_record.bin");
         if(f.exists()){
             optimalURLrecord  = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
@@ -317,7 +336,7 @@ public class Crab {
      * @About main crawling function.
      * Checks which flag was set and then applies the appropriate settings for the crawl.
      */
-    public static void crabCrawl() throws IOException {
+    public static void crabCrawl() throws IOException, ClassNotFoundException {
         Utility.DataIO.readInURLSeed("./test.csv");
 
         Logger.info("Crawl Started.");
