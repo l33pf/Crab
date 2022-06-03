@@ -14,6 +14,7 @@ limitations under the License.
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -53,6 +54,8 @@ public class Crab {
 
     public static Utility.Serialization sr = new Utility.Serialization();
 
+    public static ConcurrentHashMap<String, LocalDateTime> crawlHistory = new ConcurrentHashMap<>(1000);
+
     /**
      * @About setting this will configure Crab into Keyword Crawl mode
      * NOTE: you must supply keywords for the crawl to run.
@@ -90,8 +93,8 @@ public class Crab {
      * a user-defined limit that allows to stop the crawl after visiting the defined amount of pages
      * specified by the user. By default we set this to 1000 (arbitrary value).
      */
-    public static AtomicInteger amountCrawled;
-    public static int crawlLimit = 1000;
+   // public static AtomicInteger amountCrawled = new AtomicInteger(1);
+   // public static int crawlLimit = 1000;
 
     public static  ThreadPoolExecutor exec = new ThreadPoolExecutor((FULL_UTILISATION) ? NUM_OF_THREADS : CORE_SIZE
             , NUM_OF_THREADS,
@@ -160,7 +163,8 @@ public class Crab {
 
                                         if(Arrays.stream(status_codes).noneMatch(x->x==status)){
                                             visitList.add(sanitised);
-                                            amountCrawled.getAndIncrement();
+                                            crawlHistory.putIfAbsent(sanitised,LocalDateTime.now());
+                                        //    amountCrawled.getAndIncrement();
                                             Document docTwo = con.get();
 
                                             sentiment = Utility.SentimentAnalyser.analyse(docTwo.title());
@@ -254,9 +258,13 @@ public class Crab {
                                             if(keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
                                                 keywordVisitList.add(sanitisedLink);
 
-                                                amountCrawled.getAndIncrement();
+                                                LocalDateTime record = LocalDateTime.now();
+                                                crawlHistory.putIfAbsent(sanitisedLink,record);
+
+                                       //         amountCrawled.getAndIncrement();
 
                                                 Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,new writerObj(childLink));
+                                                Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_HISTORY, new writerObj(childLink, record));
 
                                                 /* Analyse the headline of the page for a keyword match
                                                  *  similiar to optimal crawl. */
@@ -306,6 +314,7 @@ public class Crab {
     public static void deserializeAllObj() throws IOException, ClassNotFoundException {
         File f = new File("v_list.bin");
         if(f.exists()){
+            //Visit List isn't being read
             visitList = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
         } else { sr.serializeQueue(visitList,f.getName()); }
         f = new File("kw_v_list.bin");

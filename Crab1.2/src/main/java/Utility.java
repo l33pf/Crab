@@ -56,7 +56,8 @@ public class Utility{
         WRITE_KWORD_MATCHES,
         WRITE_KWORD_SENTIMENT_MATCHES,
         WRITE_OPT_SENTIMENT,
-        WRITE_KWORD_SENTIMENT_SPEC
+        WRITE_KWORD_SENTIMENT_SPEC,
+        WRITE_HISTORY
     }
 
     public enum SentimentType {
@@ -94,7 +95,7 @@ public class Utility{
      */
     public final static class Serialization {
 
-        public void serializeQueue(final Collection<String> q, final String fileName) throws IOException{
+        public void serializeQueue(final ConcurrentLinkedQueue<String> q, final String fileName) throws IOException{
             try(Output out = new Output(new FileOutputStream(fileName))){
                 Kryo kry = new Kryo(); kry.register(ConcurrentLinkedQueue.class);
                 kry.writeClassAndObject(out,q);
@@ -108,15 +109,15 @@ public class Utility{
             }
         }
 
-        public Collection<String> deserializeQueue(final String fileName){
-                Collection<String> q = new ConcurrentLinkedQueue<>();
+        public ConcurrentLinkedQueue<String> deserializeQueue(final String fileName){
+                ConcurrentLinkedQueue<String> q = new ConcurrentLinkedQueue<>();
                 try{
                     Input in = new Input(new FileInputStream(fileName)); Kryo kry = new Kryo();
                     kry.register(ConcurrentLinkedQueue.class);
-                    q = (Collection<String>) kry.readClassAndObject(in); in.close();
+                    q = (ConcurrentLinkedQueue<String>) kry.readClassAndObject(in);
+                    in.close();
                 }catch(Exception ex){Logger.error(ex);} return  q;
         }
-
 
         public Map deserializeMap(final String fileName){
                 Map<String,Integer> map = new ConcurrentHashMap<>(); //check
@@ -149,7 +150,7 @@ public class Utility{
 
         }
 
-        public static void writeOut(IO_LEVEL lvl,writerObj obj){
+        public static void writeOut(final IO_LEVEL lvl,final writerObj obj){
             w.lock();
             try{
                 try{
@@ -206,6 +207,13 @@ public class Utility{
                                 c.close();
                                 f_w.close();
                             }
+                        }
+                        case WRITE_HISTORY -> {
+                            fw = new FileWriter("crab_kword_crawlHistory.csv", true);
+                            CSVWriter c = new CSVWriter(fw);
+                            c.writeNext(new String[]{obj.url, String.valueOf(obj.timeStamp)});
+                            c.close();
+                            fw.close();
                         }
                     }
                 }catch(Exception ex){Logger.error(ex);}

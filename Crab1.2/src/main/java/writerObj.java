@@ -14,6 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  **/
+import java.time.LocalDateTime;
 import java.util.Queue;
 
 /**
@@ -23,6 +24,7 @@ public final class writerObj{
     String url; String keyword;
     int sentimentLevel;
     Queue<String> keywordMatches;
+    LocalDateTime timeStamp;
 
     writerObj(final String _url){this.url = _url;}
 
@@ -40,5 +42,10 @@ public final class writerObj{
         this.url = _url;
         this.keywordMatches = _matches;
         this.sentimentLevel = _sentiment;
+    }
+
+    writerObj(final String _url, final LocalDateTime _timeStamp){
+        this.url = _url;
+        this.timeStamp = _timeStamp;
     }
 }
