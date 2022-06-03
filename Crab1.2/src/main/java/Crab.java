@@ -306,7 +306,6 @@ public class Crab {
     public static void deserializeAllObj() throws IOException, ClassNotFoundException {
         File f = new File("v_list.bin");
         if(f.exists()){
-            //Visit List isn't being read
             visitList = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
         } else { sr.serializeQueue(visitList,f.getName()); }
         f = new File("kw_v_list.bin");
