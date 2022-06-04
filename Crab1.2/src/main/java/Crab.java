@@ -244,11 +244,14 @@ public class Crab {
                                 Connection con = Jsoup.connect(childLink).ignoreHttpErrors(true);
                                 Connection.Response res = con.execute();
                                 int status = res.statusCode();
+                                String contentType = res.contentType();
 
                                 if(Arrays.stream(status_codes).noneMatch(x->x==status)){
-                                    final Document docTwo = con.get();
-                                    final String sanitisedLink = childLink.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
-                                    URI linkURI = new URI(childLink);
+                                    assert contentType != null;
+                                    if(contentType.contains("text/html")){
+                                        final Document docTwo = con.get();
+                                        final String sanitisedLink = childLink.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+                                        URI linkURI = new URI(childLink);
 
                                     if(blockedList.stream().noneMatch(str->str.matches(linkURI.getHost()))
                                             && keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
@@ -304,6 +307,7 @@ public class Crab {
                                     }
                                 }
                             }
+                          }
                         }catch(Exception ex){Logger.error(ex);}
                     });
                 }
