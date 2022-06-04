@@ -26,9 +26,6 @@ import org.jsoup.select.Elements;
 import org.jsoup.nodes.Element;
 import org.tinylog.Logger;
 
-//make a feature to check jsoup if we have an invalid http status code
-//https://jsoup.org/apidocs/org/jsoup/Connection.Response.html
-
 public class Crab {
     public static final int DEFAULT_SIZE = 1000;
 
@@ -87,14 +84,19 @@ public class Crab {
      */
     public static boolean FULL_PROFILE;
 
+    /**
+     * @About if this flag is set Crab will use the defined crawl page limit and
+     * will end the crawl once reached.
+     */
+    public static boolean USE_CRAWL_LIMIT = false;
 
     /**
      * @About amountCrawled is a counter which is updated on each page visit, crawlLimit is
      * a user-defined limit that allows to stop the crawl after visiting the defined amount of pages
      * specified by the user. By default we set this to 1000 (arbitrary value).
      */
-   // public static AtomicInteger amountCrawled = new AtomicInteger(1);
-   // public static int crawlLimit = 1000;
+    public static AtomicInteger amountCrawled = new AtomicInteger(1);
+    public static int crawlLimit = 1000;
 
     public static  ThreadPoolExecutor exec = new ThreadPoolExecutor((FULL_UTILISATION) ? NUM_OF_THREADS : CORE_SIZE
             , NUM_OF_THREADS,
@@ -164,7 +166,10 @@ public class Crab {
                                         if(Arrays.stream(status_codes).noneMatch(x->x==status)){
                                             visitList.add(sanitised);
                                             crawlHistory.putIfAbsent(sanitised,LocalDateTime.now());
-                                        //    amountCrawled.getAndIncrement();
+
+                                            if(USE_CRAWL_LIMIT){
+                                                amountCrawled.getAndIncrement();
+                                            }
                                             Document docTwo = con.get();
 
                                             sentiment = Utility.SentimentAnalyser.analyse(docTwo.title());
@@ -261,7 +266,9 @@ public class Crab {
                                                 LocalDateTime record = LocalDateTime.now();
                                                 crawlHistory.putIfAbsent(sanitisedLink,record);
 
-                                       //         amountCrawled.getAndIncrement();
+                                                if(USE_CRAWL_LIMIT){ //only increment if the limit is set
+                                                    amountCrawled.getAndIncrement();
+                                                }
 
                                                 Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,new writerObj(childLink));
                                                 Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_HISTORY, new writerObj(childLink, record));
@@ -314,7 +321,6 @@ public class Crab {
     public static void deserializeAllObj() throws IOException, ClassNotFoundException {
         File f = new File("v_list.bin");
         if(f.exists()){
-            //Visit List isn't being read
             visitList = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
         } else { sr.serializeQueue(visitList,f.getName()); }
         f = new File("kw_v_list.bin");
@@ -342,7 +348,7 @@ public class Crab {
 
     /**
      * @About main crawling function.
-     * Checks which flag was set and then applies the appropriate settings for the crawl.
+     * Checks which flag was set and then applies the appropriate settings for the crawl and runs.
      */
     public static void crabCrawl() throws IOException, ClassNotFoundException {
         Utility.DataIO.readInURLSeed("./test.csv");
@@ -357,17 +363,33 @@ public class Crab {
             if(!OPTIMAL_DEPTH){System.out.println("Optimal depth off.\n");}
             System.out.println("Start time of Crawl: " + java.time.LocalTime.now());
 
-            while(!urlQueue.isEmpty()){
-                String urlToCrawl = urlQueue.poll();
-                exec.submit(new OptimalRunnable(urlToCrawl));
+            if(USE_CRAWL_LIMIT){
+                System.out.println("Crawl Limit Enabled" + " Page Crawl Limit: " + crawlLimit);
+                while(!urlQueue.isEmpty() && !(amountCrawled.intValue() == crawlLimit)){
+                    String urlToCrawl = urlQueue.poll();
+                    exec.submit(new OptimalRunnable(urlToCrawl));
+                }
+            }else{
+                while(!urlQueue.isEmpty()){
+                    String urlToCrawl = urlQueue.poll();
+                    exec.submit(new OptimalRunnable(urlToCrawl));
+               }
             }
         }else{
             System.out.println("Keyword Crawl enabled\n");
             if(FULL_UTILISATION){System.out.println("Full Utilisation of Threads configured.");}else {System.out.println("Full Utilisation off.\n");}
 
-            while(!urlQueue.isEmpty()){
-                String urlToCrawl = urlQueue.poll();
-                exec.submit(new KeyWordRunnable(urlToCrawl,cTags));
+            if(USE_CRAWL_LIMIT){
+                System.out.println("Crawl Limit Enabled" + " Page Crawl Limit: " + crawlLimit);
+                while(!urlQueue.isEmpty() && amountCrawled.intValue() != crawlLimit){
+                    String urlToCrawl = urlQueue.poll();
+                    exec.submit(new KeyWordRunnable(urlToCrawl,cTags));
+                }
+            }else{
+                while(!urlQueue.isEmpty()){
+                    String urlToCrawl = urlQueue.poll();
+                    exec.submit(new KeyWordRunnable(urlToCrawl,cTags));
+                }
             }
         }
         serializeAllObj();
