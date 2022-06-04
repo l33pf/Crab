@@ -211,7 +211,9 @@ public class Utility{
                         case WRITE_HISTORY -> {
                             fw = new FileWriter("crab_kword_crawlHistory.csv", true);
                             CSVWriter c = new CSVWriter(fw);
-                            c.writeNext(new String[]{obj.url, String.valueOf(obj.timeStamp)});
+                            DateTimeFormatter FormatObj = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+                            String formattedTime = obj.timeStamp.format(FormatObj);
+                            c.writeNext(new String[]{obj.url, formattedTime});
                             c.close();
                             fw.close();
                         }
