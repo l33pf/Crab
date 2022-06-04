@@ -46,6 +46,9 @@ public class Crab {
     private static final int CORE_SIZE = (NUM_OF_THREADS % 2 == 0) ? NUM_OF_THREADS /2 : Math.floorDiv(NUM_OF_THREADS,2);
     private static final int CAPACITY = 100;
 
+    /* Can be changed, easy heuristic to avoiding spider traps */
+    private static final int URL_CHAR_LIMIT = 256;
+
     /* HTTP-status codes that prevent the crawler */
     public static int [] status_codes = new int[]{900,0,400,404,999,403,503,451,429,500, 302};
 
@@ -240,7 +243,7 @@ public class Crab {
                         try{
                             final String childLink = link.attr("abs:href");
 
-                            if(Utility.urlTools.checkWhiteSpace(childLink)){
+                            if(Utility.urlTools.checkWhiteSpace(childLink) && childLink.length() != URL_CHAR_LIMIT){
                                 Connection con = Jsoup.connect(childLink).ignoreHttpErrors(true);
                                 Connection.Response res = con.execute();
                                 int status = res.statusCode();
