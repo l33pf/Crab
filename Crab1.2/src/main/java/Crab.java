@@ -367,12 +367,18 @@ public class Crab {
                 System.out.println("Crawl Limit Enabled" + " Page Crawl Limit: " + crawlLimit);
                 while(!urlQueue.isEmpty() && !(amountCrawled.intValue() == crawlLimit)){
                     String urlToCrawl = urlQueue.poll();
-                    exec.submit(new OptimalRunnable(urlToCrawl));
+
+                    if(!crawlHistory.containsKey(urlToCrawl)){
+                        exec.submit(new OptimalRunnable(urlToCrawl));
+                    }
                 }
             }else{
                 while(!urlQueue.isEmpty()){
                     String urlToCrawl = urlQueue.poll();
-                    exec.submit(new OptimalRunnable(urlToCrawl));
+
+                    if(!crawlHistory.containsKey(urlToCrawl)){
+                        exec.submit(new OptimalRunnable(urlToCrawl));
+                    }
                }
             }
         }else{
@@ -383,12 +389,18 @@ public class Crab {
                 System.out.println("Crawl Limit Enabled" + " Page Crawl Limit: " + crawlLimit);
                 while(!urlQueue.isEmpty() && amountCrawled.intValue() != crawlLimit){
                     String urlToCrawl = urlQueue.poll();
-                    exec.submit(new KeyWordRunnable(urlToCrawl,cTags));
+
+                    if(!crawlHistory.containsKey(urlToCrawl)){
+                        exec.submit(new KeyWordRunnable(urlToCrawl,cTags));
+                    }
                 }
             }else{
                 while(!urlQueue.isEmpty()){
                     String urlToCrawl = urlQueue.poll();
-                    exec.submit(new KeyWordRunnable(urlToCrawl,cTags));
+
+                    if(!crawlHistory.containsKey(urlToCrawl)){
+                        exec.submit(new KeyWordRunnable(urlToCrawl,cTags));
+                    }
                 }
             }
         }
