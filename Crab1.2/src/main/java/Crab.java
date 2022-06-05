@@ -44,7 +44,7 @@ public class Crab {
 
     /* Comparator used for the frontier priority queue of keyword search, higher keywords appear at the top. */
     public static Comparator<CrabTag> tagSort = Comparator.comparingInt(CrabTag::getQuantity).reversed();
-    public static PriorityBlockingQueue<CrabTag> keywordFrontier = new PriorityBlockingQueue<>(1000,tagSort);
+    public static PriorityBlockingQueue<CrabTag> frontierQueue = new PriorityBlockingQueue<>(1000,tagSort);
 
     private static final int NUM_OF_THREADS = (Runtime.getRuntime().availableProcessors())+1;
     private static final int CORE_SIZE = (NUM_OF_THREADS % 2 == 0) ? NUM_OF_THREADS /2 : Math.floorDiv(NUM_OF_THREADS,2);
@@ -185,7 +185,9 @@ public class Crab {
                                             Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_VL_RECORD,sanitised);
                                             if(!map.containsKey(childLink)){ map.put(childLink,sentiment);}
 
-                                            if(FULL_DEPTH){Crab.urlQueue.add(childLink);}
+                                            if(FULL_DEPTH){
+                                                frontierQueue.add(new CrabTag(childLink,sentiment));
+                                            }
                                         }
                                     }
                                 }
@@ -297,7 +299,7 @@ public class Crab {
 
                                                     if (Crab.FULL_DEPTH) {
                                                         //Crab.urlQueue.add(childLink);
-                                                        Crab.keywordFrontier.add(new CrabTag(childLink,matches.size()));
+                                                        Crab.frontierQueue.add(new CrabTag(childLink,matches.size()));
                                                     }
 
                                                     //Builds a sentiment profile through the keyword class for a keyword by updating
@@ -402,9 +404,9 @@ public class Crab {
 
             if(USE_CRAWL_LIMIT){
                 System.out.println("Crawl Limit Enabled" + " Page Crawl Limit: " + crawlLimit);
-                while(!keywordFrontier.isEmpty() && amountCrawled.intValue() != crawlLimit){
+                while(!frontierQueue.isEmpty() && amountCrawled.intValue() != crawlLimit){
 
-                    CrabTag tag = keywordFrontier.poll();
+                    CrabTag tag = frontierQueue.poll();
                     assert tag != null;
                     String urlToCrawl = tag.link;
 
@@ -413,9 +415,9 @@ public class Crab {
                     }
                 }
             }else{
-                while(!keywordFrontier.isEmpty()){
+                while(!frontierQueue.isEmpty()){
 
-                    CrabTag tag = keywordFrontier.poll();
+                    CrabTag tag = frontierQueue.poll();
                     assert tag != null;
 
                     String urlToCrawl = tag.link;
