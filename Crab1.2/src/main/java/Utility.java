@@ -17,6 +17,8 @@ limitations under the License.
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.Normalizer;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.io.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -147,8 +149,22 @@ public class Utility{
                 }
             } catch (IOException | CsvValidationException e){Logger.error(e);} {
             }
-
         }
+
+        public static void processURLSeedKW(final String fileName){
+            try (
+                    Reader reader = Files.newBufferedReader(Paths.get(fileName));
+                    CSVReader csvReader = new CSVReader(reader)
+            ) {
+                String[] nextURL;
+                while ((nextURL = csvReader.readNext()) != null) {
+                    Crab.keywordFrontier.add(new CrabTag(nextURL[0],0));
+                    Crab.parentSetMap.put(nextURL[0],true);
+                }
+            } catch (IOException | CsvValidationException e){Logger.error(e);} {
+            }
+        }
+
 
         public static void writeOut(final IO_LEVEL lvl,final writerObj obj){
             w.lock();

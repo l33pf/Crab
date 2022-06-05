@@ -42,6 +42,10 @@ public class Crab {
     /* urlQueue is the frontier for both crawl types */
     public static ConcurrentLinkedQueue<String> urlQueue = new ConcurrentLinkedQueue<>();
 
+    /* Comparator used for the frontier priority queue of keyword search, higher keywords appear at the top. */
+    public static Comparator<CrabTag> tagSort = Comparator.comparingInt(CrabTag::getQuantity).reversed();
+    public static PriorityBlockingQueue<CrabTag> keywordFrontier = new PriorityBlockingQueue<>(1000,tagSort);
+
     private static final int NUM_OF_THREADS = (Runtime.getRuntime().availableProcessors())+1;
     private static final int CORE_SIZE = (NUM_OF_THREADS % 2 == 0) ? NUM_OF_THREADS /2 : Math.floorDiv(NUM_OF_THREADS,2);
     private static final int CAPACITY = 100;
@@ -66,7 +70,7 @@ public class Crab {
      * @About setting this flag will ensure every thread will push links
      * onto the URL stack for crawling within an optimal crawl.
      */
-    public static boolean OPTIMAL_DEPTH = false;
+    public static boolean FULL_DEPTH = false;
 
     /**
      * @About setting this flag will run the thread pool at the maximum
@@ -181,7 +185,7 @@ public class Crab {
                                             Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_VL_RECORD,sanitised);
                                             if(!map.containsKey(childLink)){ map.put(childLink,sentiment);}
 
-                                            if(OPTIMAL_DEPTH){Crab.urlQueue.add(childLink);}
+                                            if(FULL_DEPTH){Crab.urlQueue.add(childLink);}
                                         }
                                     }
                                 }
@@ -291,8 +295,9 @@ public class Crab {
                                                         Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_SPEC, new writerObj(childLink, matches, sentiment));
                                                     }
 
-                                                    if (Crab.OPTIMAL_DEPTH) {
-                                                        Crab.urlQueue.add(childLink);
+                                                    if (Crab.FULL_DEPTH) {
+                                                        //Crab.urlQueue.add(childLink);
+                                                        Crab.keywordFrontier.add(new CrabTag(childLink,matches.size()));
                                                     }
 
                                                     //Builds a sentiment profile through the keyword class for a keyword by updating
@@ -363,6 +368,8 @@ public class Crab {
     public static void crabCrawl() throws IOException, ClassNotFoundException {
         Utility.DataIO.readInURLSeed("./test.csv");
 
+        Utility.DataIO.processURLSeedKW("./test.csv");
+
         Logger.info("Crawl Started.");
 
         deserializeAllObj();
@@ -370,7 +377,7 @@ public class Crab {
         if(!KEYWORD_CRAWL){
             System.out.println("Optimal Crawl enabled.");
             if(FULL_UTILISATION){System.out.println("Full Utilisation of Threads configured.");}else {System.out.println("Full Utilisation off.\n");}
-            if(!OPTIMAL_DEPTH){System.out.println("Optimal depth off.\n");}
+            if(!FULL_DEPTH){System.out.println("Optimal depth off.\n");}
             System.out.println("Start time of Crawl: " + java.time.LocalTime.now());
 
             if(USE_CRAWL_LIMIT){
@@ -398,7 +405,11 @@ public class Crab {
             if(USE_CRAWL_LIMIT){
                 System.out.println("Crawl Limit Enabled" + " Page Crawl Limit: " + crawlLimit);
                 while(!urlQueue.isEmpty() && amountCrawled.intValue() != crawlLimit){
-                    String urlToCrawl = urlQueue.poll();
+                    //String urlToCrawl = urlQueue.poll();
+
+                    CrabTag tag = keywordFrontier.poll();
+                    assert tag != null;
+                    String urlToCrawl = tag.link;
 
                     if(!crawlHistory.containsKey(urlToCrawl)){
                         exec.submit(new KeyWordRunnable(urlToCrawl,cTags));
@@ -406,7 +417,12 @@ public class Crab {
                 }
             }else{
                 while(!urlQueue.isEmpty()){
-                    String urlToCrawl = urlQueue.poll();
+                    //String urlToCrawl = urlQueue.poll();
+
+                    CrabTag tag = keywordFrontier.poll();
+                    assert tag != null;
+
+                    String urlToCrawl = tag.link;
 
                     if(!crawlHistory.containsKey(urlToCrawl)){
                         exec.submit(new KeyWordRunnable(urlToCrawl,cTags));
