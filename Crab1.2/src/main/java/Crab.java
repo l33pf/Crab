@@ -366,8 +366,6 @@ public class Crab {
      * Checks which flag was set and then applies the appropriate settings for the crawl and runs.
      */
     public static void crabCrawl() throws IOException, ClassNotFoundException {
-        Utility.DataIO.readInURLSeed("./test.csv");
-
         Utility.DataIO.processURLSeedKW("./test.csv");
 
         Logger.info("Crawl Started.");
@@ -404,8 +402,7 @@ public class Crab {
 
             if(USE_CRAWL_LIMIT){
                 System.out.println("Crawl Limit Enabled" + " Page Crawl Limit: " + crawlLimit);
-                while(!urlQueue.isEmpty() && amountCrawled.intValue() != crawlLimit){
-                    //String urlToCrawl = urlQueue.poll();
+                while(!keywordFrontier.isEmpty() && amountCrawled.intValue() != crawlLimit){
 
                     CrabTag tag = keywordFrontier.poll();
                     assert tag != null;
@@ -416,8 +413,7 @@ public class Crab {
                     }
                 }
             }else{
-                while(!urlQueue.isEmpty()){
-                    //String urlToCrawl = urlQueue.poll();
+                while(!keywordFrontier.isEmpty()){
 
                     CrabTag tag = keywordFrontier.poll();
                     assert tag != null;
