@@ -124,11 +124,11 @@ public class Crab {
     }
 
     /**
-     * @About Optimal runnable is the class each thread uses to implement an optimal crawl.
+     * @About Sentiment runnable is the class each thread uses to implement a sentiment-based crawl.
      */
-    private static class OptimalRunnable implements Runnable{
+    private static class SentimentRunnable implements Runnable{
 
-        OptimalRunnable(String link){this.URL = link;}
+        SentimentRunnable(String link){this.URL = link;}
         String URL, bestLink;
         int bestSentiment, sentiment;
         HashMap<String,Integer> map = new HashMap<>();
@@ -249,68 +249,71 @@ public class Crab {
                                 int status = res.statusCode();
                                 String contentType = res.contentType();
 
-                                if(Arrays.stream(status_codes).noneMatch(x->x==status)){
+                                if(Arrays.stream(status_codes).noneMatch(x -> x == status)) {
                                     assert contentType != null;
-                                    if(contentType.contains("text/html")){
+                                    if (contentType.contains("text/html")) {
+
                                         final Document docTwo = con.get();
-                                        final String sanitisedLink = childLink.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+                                        final String sanitisedLink = childLink.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)", "");
                                         URI linkURI = new URI(childLink);
 
-                                    if(blockedList.stream().noneMatch(str->str.matches(linkURI.getHost()))
-                                            && keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
-                                        System.out.println("Visited: " + childLink +  " Parent: " + URL + "\n");
-                                        final HashMap<String, PriorityQueue<String>> tagMap;
-                                        tagMap = Utility.SentimentAnalyser.pos_keywordTagger(docTwo.title(),tags);
+                                        if (blockedList.stream().noneMatch(str -> str.matches(linkURI.getHost()))
+                                                && keywordVisitList.stream().noneMatch(str -> str.matches(sanitisedLink))) {
+                                            System.out.println("Visited: " + childLink + " Parent: " + URL + "\n");
+                                            final HashMap<String, PriorityQueue<String>> tagMap;
+                                            tagMap = Utility.SentimentAnalyser.pos_keywordTagger(docTwo.title(), tags);
 
-                                        final Queue<String> matches = Utility.SentimentAnalyser.checkKword(tagMap,kword_map);
+                                            final Queue<String> matches = Utility.SentimentAnalyser.checkKword(tagMap, kword_map);
 
-                                        if(!matches.isEmpty()){
-                                            System.out.println("Matches found for: " + childLink + "\n");
-                                            if(keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
-                                                keywordVisitList.add(sanitisedLink);
+                                            if (!matches.isEmpty()) {
+                                                System.out.println("Matches found for: " + childLink + "\n");
+                                                if (keywordVisitList.stream().noneMatch(str -> str.matches(sanitisedLink))) {
+                                                    keywordVisitList.add(sanitisedLink);
 
-                                                LocalDateTime record = LocalDateTime.now();
-                                                crawlHistory.putIfAbsent(sanitisedLink,record);
+                                                    LocalDateTime record = LocalDateTime.now();
+                                                    crawlHistory.putIfAbsent(sanitisedLink, record);
 
-                                                if(USE_CRAWL_LIMIT){ //only increment if the limit is set
-                                                    amountCrawled.getAndIncrement();
+                                                    if (USE_CRAWL_LIMIT) { //only increment if the limit is set
+                                                        amountCrawled.getAndIncrement();
+                                                    }
+
+                                                    Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD, new writerObj(childLink));
+                                                    Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_HISTORY, new writerObj(childLink, record));
+
+                                                    /* Analyse the headline of the page for a keyword match
+                                                     *  similiar to optimal crawl. */
+                                                    Document linkDoc = Jsoup.connect(childLink).get();
+                                                    String titleToAnalyse = linkDoc.title();
+                                                    int sentiment = Utility.SentimentAnalyser.analyse(titleToAnalyse);
+
+                                                    if (!parentSetMap.containsKey(childLink)) {
+                                                        matches.forEach((String match) -> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_MATCHES, new writerObj(childLink, match)));
+                                                        Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_SPEC, new writerObj(childLink, matches, sentiment));
+                                                    }
+
+                                                    if (Crab.OPTIMAL_DEPTH) {
+                                                        Crab.urlQueue.add(childLink);
+                                                    }
+
+                                                    //Builds a sentiment profile through the keyword class for a keyword by updating
+                                                    if (Crab.FULL_PROFILE) {
+                                                        matches.forEach((String str) -> {
+                                                            if (keywordMap.keySet().stream().anyMatch(key -> (key.matches(str)))) {
+                                                                Utility.SentimentAnalyser.detSentiment(childLink, titleToAnalyse, sentiment, keywordMap.get(str));
+                                                            }
+                                                        });
+                                                    }
                                                 }
-
-                                                Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,new writerObj(childLink));
-                                                Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_HISTORY, new writerObj(childLink, record));
-
-                                                /* Analyse the headline of the page for a keyword match
-                                                 *  similiar to optimal crawl. */
-                                                Document linkDoc = Jsoup.connect(childLink).get();
-                                                String titleToAnalyse = linkDoc.title();
-                                                int sentiment = Utility.SentimentAnalyser.analyse(titleToAnalyse);
-
-                                                if(!parentSetMap.containsKey(childLink)){
-                                                    matches.forEach((String match)-> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_MATCHES,new writerObj(childLink,match)));
-                                                    Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_SENTIMENT_SPEC, new writerObj(childLink,matches,sentiment));
+                                            } else {
+                                                if (keywordVisitList.stream().noneMatch(str -> str.matches(sanitisedLink))) {
+                                                    keywordVisitList.add(sanitisedLink);
+                                                    Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD, sanitisedLink);
                                                 }
-
-                                                if(Crab.OPTIMAL_DEPTH){ Crab.urlQueue.add(childLink);}
-
-                                                //Builds a sentiment profile through the keyword class for a keyword by updating
-                                                if(Crab.FULL_PROFILE){
-                                                    matches.forEach((String str)->{
-                                                        if(keywordMap.keySet().stream().anyMatch(key->(key.matches(str)))){
-                                                            Utility.SentimentAnalyser.detSentiment(childLink,titleToAnalyse,sentiment,keywordMap.get(str));
-                                                        }
-                                                    });
-                                                }
-                                            }
-                                        }else{
-                                            if(keywordVisitList.stream().noneMatch(str->str.matches(sanitisedLink))){
-                                                keywordVisitList.add(sanitisedLink);
-                                                Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,sanitisedLink);
                                             }
                                         }
                                     }
                                 }
                             }
-                          }
                         }catch(Exception ex){Logger.error(ex);}
                     });
                 }
@@ -376,7 +379,7 @@ public class Crab {
                     String urlToCrawl = urlQueue.poll();
 
                     if(!crawlHistory.containsKey(urlToCrawl)){
-                        exec.submit(new OptimalRunnable(urlToCrawl));
+                        exec.submit(new SentimentRunnable(urlToCrawl));
                     }
                 }
             }else{
@@ -384,7 +387,7 @@ public class Crab {
                     String urlToCrawl = urlQueue.poll();
 
                     if(!crawlHistory.containsKey(urlToCrawl)){
-                        exec.submit(new OptimalRunnable(urlToCrawl));
+                        exec.submit(new SentimentRunnable(urlToCrawl));
                     }
                }
             }
