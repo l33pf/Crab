@@ -328,14 +328,14 @@ public class Crab {
         }
     }
 
-    public static void serializeAllObj() throws IOException {
+    private static void serializeAllObj() throws IOException {
         sr.serializeQueue(visitList,"v_list.bin");
         sr.serializeQueue(keywordVisitList,"kw_v_list.bin");
         sr.serializeQueue(optimalURLrecord,"optimal_link_record.bin");
         sr.serializeMap(parentSetMap,"parent_set_map.bin");
     }
 
-    public static void deserializeAllObj() throws IOException, ClassNotFoundException {
+    private static void deserializeAllObj() throws IOException, ClassNotFoundException {
         File f = new File("v_list.bin");
         if(f.exists()){
             visitList = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
