@@ -40,11 +40,11 @@ public class Crab {
     public static ConcurrentHashMap<String,KeywordClass> keywordMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
 
     /* urlQueue is the frontier for both crawl types */
-    public static ConcurrentLinkedQueue<String> urlQueue = new ConcurrentLinkedQueue<>();
+    protected static ConcurrentLinkedQueue<String> urlQueue = new ConcurrentLinkedQueue<>();
 
     /* Comparator used for the frontier priority queue of keyword search, higher keywords appear at the top. */
-    public static Comparator<CrabTag> tagSort = Comparator.comparingInt(CrabTag::getQuantity).reversed();
-    public static PriorityBlockingQueue<CrabTag> frontierQueue = new PriorityBlockingQueue<>(1000,tagSort);
+    private static final Comparator<CrabTag> tagSort = Comparator.comparingInt(CrabTag::getQuantity).reversed();
+    protected static PriorityBlockingQueue<CrabTag> frontierQueue = new PriorityBlockingQueue<>(1000,tagSort);
 
     private static final int NUM_OF_THREADS = (Runtime.getRuntime().availableProcessors())+1;
     private static final int CORE_SIZE = (NUM_OF_THREADS % 2 == 0) ? NUM_OF_THREADS /2 : Math.floorDiv(NUM_OF_THREADS,2);
@@ -54,9 +54,9 @@ public class Crab {
     private static final int URL_CHAR_LIMIT = 256;
 
     /* HTTP-status codes that prevent the crawler */
-    public static int [] status_codes = new int[]{900,0,400,404,999,403,503,451,429,500, 302};
+    private static final int [] status_codes = new int[]{900,0,400,404,999,403,503,451,429,500, 302};
 
-    public static Utility.Serialization sr = new Utility.Serialization();
+    private static final Utility.Serialization sr = new Utility.Serialization();
 
     public static ConcurrentHashMap<String, LocalDateTime> crawlHistory = new ConcurrentHashMap<>(1000);
 
@@ -102,10 +102,10 @@ public class Crab {
      * a user-defined limit that allows to stop the crawl after visiting the defined amount of pages
      * specified by the user. By default we set this to 1000 (arbitrary value).
      */
-    public static AtomicInteger amountCrawled = new AtomicInteger(1);
+    private static final AtomicInteger amountCrawled = new AtomicInteger(1);
     public static int crawlLimit = 1000;
 
-    public static  ThreadPoolExecutor exec = new ThreadPoolExecutor((FULL_UTILISATION) ? NUM_OF_THREADS : CORE_SIZE
+    private static final ThreadPoolExecutor exec = new ThreadPoolExecutor((FULL_UTILISATION) ? NUM_OF_THREADS : CORE_SIZE
             , NUM_OF_THREADS,
             1L, TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<>(CAPACITY),
@@ -133,11 +133,9 @@ public class Crab {
     private static class SentimentRunnable implements Runnable{
 
         SentimentRunnable(String link){this.URL = link;}
-        String URL, bestLink;
-        int bestSentiment, sentiment;
-        HashMap<String,Integer> map = new HashMap<>();
+        String URL;
+        int sentiment;
         Queue<String> blockedList = Crab.blockedList;
-        HashMap<String,Integer> optMap = new HashMap<>();
 
         public void run(){
 
@@ -160,7 +158,6 @@ public class Crab {
                             if(Utility.urlTools.checkWhiteSpace(childLink)){
                                 URI child_uri = new URI(childLink);
 
-                                //resolves some of the HTTP Status Exceptions (i.e. linkedin is within the blocklist)
                                 if(blockedList.stream().noneMatch(str->str.matches(child_uri.getHost()))){
                                     final String sanitised = childLink.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
 
@@ -172,7 +169,8 @@ public class Crab {
 
                                         if(Arrays.stream(status_codes).noneMatch(x->x==status)){
                                             visitList.add(sanitised);
-                                            crawlHistory.putIfAbsent(sanitised,LocalDateTime.now());
+                                            LocalDateTime record = LocalDateTime.now();
+                                            crawlHistory.putIfAbsent(sanitised,record);
 
                                             if(USE_CRAWL_LIMIT){
                                                 amountCrawled.getAndIncrement();
@@ -182,37 +180,16 @@ public class Crab {
                                             sentiment = Utility.SentimentAnalyser.analyse(docTwo.title());
                                             System.out.println("Visited: " + link.attr("abs:href") + " " +  "Parent: " + URL + "\n");
 
-                                            Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_VL_RECORD,sanitised);
-                                            if(!map.containsKey(childLink)){ map.put(childLink,sentiment);}
+                                            Crab.frontierQueue.add(new CrabTag(childLink,sentiment));
 
-                                            if(FULL_DEPTH){
-                                                frontierQueue.add(new CrabTag(childLink,sentiment));
-                                            }
+                                            Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_VL_RECORD,sanitised);
+                                            Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_HISTORY, new writerObj(childLink, record));
                                         }
                                     }
                                 }
                             }
                         }catch(Exception ex){Logger.error(ex);}
                     });
-
-                    map.keySet().forEach((String key)->{
-                        int x = map.get(key);
-                        if(x>bestSentiment){
-                            bestLink = key;
-                            bestSentiment = x;
-                            if(Crab.RECORD_ALL){ optMap.putIfAbsent(bestLink,bestSentiment); }
-                        }
-                    });
-
-                    if(optimalURLrecord.stream().noneMatch(str->str.matches(bestLink))){
-                        if(Crab.RECORD_ALL){
-                            optMap.keySet().forEach((String str)-> Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_OPT_SENTIMENT, new writerObj(str,optMap.get(str))));
-                        }else{
-                            optimalURLrecord.add(bestLink);
-                            System.out.println("Best Link for: " + URL + "is" + bestLink + "\n");
-                            Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_OPT_SENTIMENT, new writerObj(bestLink,bestSentiment));
-                        }
-                    }
                 }
             }catch(Exception ex){Logger.error(ex);}
         }
@@ -375,28 +352,33 @@ public class Crab {
         deserializeAllObj();
 
         if(!KEYWORD_CRAWL){
-            System.out.println("Optimal Crawl enabled.");
+            System.out.println("Sentiment Crawl enabled.");
             if(FULL_UTILISATION){System.out.println("Full Utilisation of Threads configured.");}else {System.out.println("Full Utilisation off.\n");}
             if(!FULL_DEPTH){System.out.println("Optimal depth off.\n");}
             System.out.println("Start time of Crawl: " + java.time.LocalTime.now());
 
             if(USE_CRAWL_LIMIT){
                 System.out.println("Crawl Limit Enabled" + " Page Crawl Limit: " + crawlLimit);
-                while(!urlQueue.isEmpty() && !(amountCrawled.intValue() == crawlLimit)){
-                    String urlToCrawl = urlQueue.poll();
+
+                while(!frontierQueue.isEmpty() && !(amountCrawled.intValue() == crawlLimit)) {
+                    CrabTag tag = frontierQueue.poll();
+                    assert tag != null;
+                    String urlToCrawl = tag.link;
+
+                    if (!crawlHistory.containsKey(urlToCrawl)) {
+                        exec.submit(new SentimentRunnable(urlToCrawl));
+                    }
+                }
+            }else{
+                while(!frontierQueue.isEmpty()){
+                    CrabTag tag = frontierQueue.poll();
+                    assert tag != null;
+                    String urlToCrawl = tag.link;
 
                     if(!crawlHistory.containsKey(urlToCrawl)){
                         exec.submit(new SentimentRunnable(urlToCrawl));
                     }
                 }
-            }else{
-                while(!urlQueue.isEmpty()){
-                    String urlToCrawl = urlQueue.poll();
-
-                    if(!crawlHistory.containsKey(urlToCrawl)){
-                        exec.submit(new SentimentRunnable(urlToCrawl));
-                    }
-               }
             }
         }else{
             System.out.println("Keyword Crawl enabled\n");
