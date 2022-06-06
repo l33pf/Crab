@@ -129,6 +129,28 @@ public class Utility{
                     map = (Map<String, Integer>) kry.readClassAndObject(in); in.close();
                 }catch(Exception ex){Logger.error(ex);} return map;
         }
+
+        public static void serializeCrawlHistory(ConcurrentHashMap<String, LocalDateTime> map, final String fileName) throws FileNotFoundException {
+            try(Output out = new Output(new FileOutputStream(fileName))){
+                Kryo kry = new Kryo();
+                kry.register(ConcurrentHashMap.class);
+                kry.register(LocalDateTime.class);
+                kry.writeClassAndObject(out,map);
+            }
+        }
+
+        public static ConcurrentHashMap<String,LocalDateTime> deserializeCrawlHistory(final String fname){
+            ConcurrentHashMap<String,LocalDateTime> map = new ConcurrentHashMap<>();
+            try{
+                Input in = new Input(new FileInputStream(fname));
+                Kryo kry = new Kryo();
+                kry.register(ConcurrentHashMap.class);
+                kry.register(LocalDateTime.class);
+                map = (ConcurrentHashMap<String, LocalDateTime>) kry.readClassAndObject(in);
+                in.close();
+            }catch(Exception ex){Logger.error(ex);}
+            return map;
+        }
     }
 
     /**
