@@ -345,7 +345,7 @@ public class Crab {
      * Checks which flag was set and then applies the appropriate settings for the crawl and runs.
      */
     public static void crabCrawl() throws IOException, ClassNotFoundException {
-        Utility.DataIO.processURLSeedKW("./test.csv");
+        Utility.DataIO.processURLSeed("./test.csv");
 
         Logger.info("Crawl Started.");
 

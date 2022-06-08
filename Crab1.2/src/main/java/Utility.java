@@ -17,7 +17,7 @@ limitations under the License.
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.Normalizer;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.io.*;
@@ -159,28 +159,14 @@ public class Utility{
      */
     public final static class DataIO {
 
-        public static void readInURLSeed(final String fileName){
+        public static void processURLSeed(final String fileName){
             try (
                     Reader reader = Files.newBufferedReader(Paths.get(fileName));
                     CSVReader csvReader = new CSVReader(reader)
             ) {
                 String[] nextURL;
                 while ((nextURL = csvReader.readNext()) != null) {
-                    Crab.urlQueue.add(nextURL[0]);
-                    Crab.parentSetMap.put(nextURL[0],true);
-                }
-            } catch (IOException | CsvValidationException e){Logger.error(e);} {
-            }
-        }
-
-        public static void processURLSeedKW(final String fileName){
-            try (
-                    Reader reader = Files.newBufferedReader(Paths.get(fileName));
-                    CSVReader csvReader = new CSVReader(reader)
-            ) {
-                String[] nextURL;
-                while ((nextURL = csvReader.readNext()) != null) {
-                    Crab.keywordFrontier.add(new CrabTag(nextURL[0],0));
+                    Crab.frontierQueue.add(new CrabTag(nextURL[0],0));
                     Crab.parentSetMap.put(nextURL[0],true);
                 }
             } catch (IOException | CsvValidationException e){Logger.error(e);} {
