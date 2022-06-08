@@ -30,11 +30,11 @@ public class Crab {
     public static final int DEFAULT_SIZE = 1000;
 
     public static ConcurrentLinkedQueue<String> blockedList = new ConcurrentLinkedQueue<>();
-    public static ConcurrentLinkedQueue<String> visitList = new ConcurrentLinkedQueue<>();
+    private static ConcurrentLinkedQueue<String> visitList = new ConcurrentLinkedQueue<>();
 
-    public static ConcurrentHashMap<String,Boolean> parentSetMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
-    public static ConcurrentLinkedQueue<String> optimalURLrecord = new ConcurrentLinkedQueue<>();
-    public static ConcurrentLinkedQueue<String> keywordVisitList = new ConcurrentLinkedQueue<>();
+    protected static ConcurrentHashMap<String,Boolean> parentSetMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
+    private static ConcurrentLinkedQueue<String> optimalURLrecord = new ConcurrentLinkedQueue<>();
+    private static ConcurrentLinkedQueue<String> keywordVisitList = new ConcurrentLinkedQueue<>();
     public static ArrayList<String> cTags = new ArrayList<>(DEFAULT_SIZE);
 
     public static ConcurrentHashMap<String,KeywordClass> keywordMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
