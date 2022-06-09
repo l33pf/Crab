@@ -139,17 +139,13 @@ public class Crab {
 
         public void run(){
 
-            final String sanitised_url = URL.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
             try{
                 URI uri = new URI(URL);
-                if(visitList.stream().noneMatch(str->str.matches(sanitised_url)) ||
+                if(crawlHistory.keySet().stream().noneMatch(str->str.matches(URL)) ||
                         parentSetMap.containsKey(URL) || blockedList.stream().noneMatch(str->str.matches(uri.getHost()))){
 
-                    visitList.add(sanitised_url);
                     final Document doc = Jsoup.connect(URL).get(); System.out.println("Visiting: " + URL + "\n");
                     final Elements links = doc.select("a[href]");
-
-                    Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_VL_RECORD,new writerObj(sanitised_url));
 
                     links.forEach((Element link)->{
                         try{
@@ -161,20 +157,19 @@ public class Crab {
                                 if(blockedList.stream().noneMatch(str->str.matches(child_uri.getHost()))){
                                     final String sanitised = childLink.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
 
-                                    if(visitList.stream().noneMatch(str->str.matches(sanitised))){
-
+                                    if(crawlHistory.keySet().stream().noneMatch(str->str.matches(childLink))){
                                         Connection con = Jsoup.connect(childLink).ignoreHttpErrors(true);
                                         Connection.Response res = con.execute();
                                         int status = res.statusCode();
 
                                         if(Arrays.stream(status_codes).noneMatch(x->x==status)){
-                                            visitList.add(sanitised);
                                             LocalDateTime record = LocalDateTime.now();
                                             crawlHistory.putIfAbsent(sanitised,record);
 
                                             if(USE_CRAWL_LIMIT){
                                                 amountCrawled.getAndIncrement();
                                             }
+
                                             Document docTwo = con.get();
 
                                             sentiment = Utility.SentimentAnalyser.analyse(docTwo.title());
@@ -214,13 +209,14 @@ public class Crab {
             final String sanitised_url = URL.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
             try{
                 URI uri = new URI(URL);
-                if(keywordVisitList.stream().noneMatch(str->str.matches(uri.getHost())) || parentSetMap.containsKey(URL) && bList.stream().noneMatch(str->str.matches(uri.getHost()))){
+                if(crawlHistory.keySet().stream().noneMatch(str->str.matches(URL)) || parentSetMap.containsKey(URL) && bList.stream().noneMatch(str->str.matches(uri.getHost()))){
 
                     final Document doc = Jsoup.connect(URL).get();
                     final Elements links = doc.select("a[href]");
 
-                    keywordVisitList.add(sanitised_url);
-                    Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD,new writerObj(URL));
+                    LocalDateTime parentRecord = LocalDateTime.now();
+                    crawlHistory.putIfAbsent(URL,parentRecord);
+                    Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_HISTORY, new writerObj(URL, parentRecord));
 
                     links.forEach((Element link)->{
                         try{
@@ -241,7 +237,8 @@ public class Crab {
                                         URI linkURI = new URI(childLink);
 
                                         if (blockedList.stream().noneMatch(str -> str.matches(linkURI.getHost()))
-                                                && keywordVisitList.stream().noneMatch(str -> str.matches(sanitisedLink))) {
+                                                && crawlHistory.keySet().stream().noneMatch(str->str.matches(childLink))) {
+
                                             System.out.println("Visited: " + childLink + " Parent: " + URL + "\n");
                                             final HashMap<String, PriorityQueue<String>> tagMap;
                                             tagMap = Utility.SentimentAnalyser.pos_keywordTagger(docTwo.title(), tags);
@@ -250,8 +247,7 @@ public class Crab {
 
                                             if (!matches.isEmpty()) {
                                                 System.out.println("Matches found for: " + childLink + "\n");
-                                                if (keywordVisitList.stream().noneMatch(str -> str.matches(sanitisedLink))) {
-                                                    keywordVisitList.add(sanitisedLink);
+                                                if (crawlHistory.keySet().stream().noneMatch(str->str.matches(childLink))) {
 
                                                     LocalDateTime record = LocalDateTime.now();
                                                     crawlHistory.putIfAbsent(sanitisedLink, record);
