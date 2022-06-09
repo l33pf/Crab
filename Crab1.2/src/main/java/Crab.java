@@ -11,6 +11,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  **/
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -28,19 +29,11 @@ import org.tinylog.Logger;
 
 public class Crab {
     public static final int DEFAULT_SIZE = 1000;
-
     public static ConcurrentLinkedQueue<String> blockedList = new ConcurrentLinkedQueue<>();
-    private static ConcurrentLinkedQueue<String> visitList = new ConcurrentLinkedQueue<>();
-
     protected static ConcurrentHashMap<String,Boolean> parentSetMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
-    private static ConcurrentLinkedQueue<String> optimalURLrecord = new ConcurrentLinkedQueue<>();
-    private static ConcurrentLinkedQueue<String> keywordVisitList = new ConcurrentLinkedQueue<>();
     public static ArrayList<String> cTags = new ArrayList<>(DEFAULT_SIZE);
 
     public static ConcurrentHashMap<String,KeywordClass> keywordMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
-
-    /* urlQueue is the frontier for both crawl types */
-    protected static ConcurrentLinkedQueue<String> urlQueue = new ConcurrentLinkedQueue<>();
 
     /* Comparator used for the frontier priority queue of keyword search, higher keywords appear at the top. */
     private static final Comparator<CrabTag> tagSort = Comparator.comparingInt(CrabTag::getQuantity).reversed();
@@ -206,7 +199,6 @@ public class Crab {
         }
 
         public void run(){
-            final String sanitised_url = URL.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
             try{
                 URI uri = new URI(URL);
                 if(crawlHistory.keySet().stream().noneMatch(str->str.matches(URL)) || parentSetMap.containsKey(URL) && bList.stream().noneMatch(str->str.matches(uri.getHost()))){
@@ -271,7 +263,6 @@ public class Crab {
                                                     }
 
                                                     if (Crab.FULL_DEPTH) {
-                                                        //Crab.urlQueue.add(childLink);
                                                         Crab.frontierQueue.add(new CrabTag(childLink,matches.size()));
                                                     }
 
@@ -283,11 +274,6 @@ public class Crab {
                                                             }
                                                         });
                                                     }
-                                                }
-                                            } else {
-                                                if (keywordVisitList.stream().noneMatch(str -> str.matches(sanitisedLink))) {
-                                                    keywordVisitList.add(sanitisedLink);
-                                                    Utility.DataIO.writeOut(Utility.IO_LEVEL.WRITE_KWORD_VL_RECORD, sanitisedLink);
                                                 }
                                             }
                                         }
@@ -302,26 +288,16 @@ public class Crab {
     }
 
     private static void serializeAllObj() throws IOException {
-        sr.serializeQueue(visitList,"v_list.bin");
-        sr.serializeQueue(keywordVisitList,"kw_v_list.bin");
-        sr.serializeQueue(optimalURLrecord,"optimal_link_record.bin");
-        sr.serializeMap(parentSetMap,"parent_set_map.bin");
+        Utility.Serialization.serializeCrawlHistory(crawlHistory,"crawlHistoryPersistent.bin");
     }
 
     private static void deserializeAllObj() throws IOException, ClassNotFoundException {
-        File f = new File("v_list.bin");
+        File f = new File("crawlHistoryPersistent.bin");
         if(f.exists()){
-            visitList = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
-        } else { sr.serializeQueue(visitList,f.getName()); }
-        f = new File("kw_v_list.bin");
-        if(f.exists()){
-            keywordVisitList = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
-        } else { sr.serializeQueue(keywordVisitList,f.getName()); // this could be the error, serializing an empty queue
+            crawlHistory = Utility.Serialization.deserializeCrawlHistory("crawlHistoryPersistent.bin");
+        } else {
+            Utility.Serialization.serializeCrawlHistory(crawlHistory,f.getName());
         }
-        f = new File("optimal_link_record.bin");
-        if(f.exists()){
-            optimalURLrecord  = (ConcurrentLinkedQueue<String>) sr.deserializeQueue(f.getName());
-        }else { sr.serializeQueue(optimalURLrecord,f.getName()); }
     }
 
     /**
