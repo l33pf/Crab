@@ -53,6 +53,9 @@ public class Crab {
 
     public static ConcurrentHashMap<String, LocalDateTime> crawlHistory = new ConcurrentHashMap<>(1000);
 
+    /* used in the keyword crawl for collecting sentiment stats  */
+    private static ConcurrentHashMap<String,SentimentTag> statsMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
+
     /**
      * @About setting this will configure Crab into Keyword Crawl mode
      * NOTE: you must supply keywords for the crawl to run.
@@ -89,6 +92,13 @@ public class Crab {
      * will end the crawl once reached.
      */
     public static boolean USE_CRAWL_LIMIT = false;
+
+    /**
+     * @About setting this flag within the keyword crawl will make Crab apply the
+     * SentimentTag to store statistics on the sentiment distribution of a defined keyword
+     * used within the crawl. This is useful for deriving sentiment indicators based on a keyword.
+     */
+    public static boolean USE_STATS = true;
 
     /**
      * @About amountCrawled is a counter which is updated on each page visit, crawlLimit is
@@ -310,6 +320,9 @@ public class Crab {
                 ArrayList<KeywordClass> q = new ArrayList<>(100);
                 for(String word : kwords){q.add(new KeywordClass(word));}
                 q.forEach((KeywordClass k)-> keywordMap.put(k.keyword,k));
+                if(USE_STATS){
+                    q.forEach((KeywordClass k) -> statsMap.put(k.keyword,new SentimentTag()));
+                }
     }
 
     /**
