@@ -30,10 +30,10 @@ import org.tinylog.Logger;
 public class Crab {
     public static final int DEFAULT_SIZE = 1000;
     public static ConcurrentLinkedQueue<String> blockedList = new ConcurrentLinkedQueue<>();
-    protected static ConcurrentHashMap<String,Boolean> parentSetMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
+    protected static ConcurrentHashMap<String,Boolean> parentSetMap = new ConcurrentHashMap<>(DEFAULT_SIZE,0.9f,1);
     public static ArrayList<String> cTags = new ArrayList<>(DEFAULT_SIZE);
 
-    public static ConcurrentHashMap<String,KeywordClass> keywordMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
+    public static ConcurrentHashMap<String,KeywordClass> keywordMap = new ConcurrentHashMap<>(DEFAULT_SIZE,0.9f,1);
 
     /* Comparator used for the frontier priority queue of keyword search, higher keywords appear at the top. */
     private static final Comparator<CrabTag> tagSort = Comparator.comparingInt(CrabTag::getQuantity).reversed();
@@ -51,7 +51,7 @@ public class Crab {
 
     private static final Utility.Serialization sr = new Utility.Serialization();
 
-    public static ConcurrentHashMap<String, LocalDateTime> crawlHistory = new ConcurrentHashMap<>(1000);
+    public static ConcurrentHashMap<String, LocalDateTime> crawlHistory = new ConcurrentHashMap<>(1000,0.9f,1);
 
     /* used in the keyword crawl for collecting sentiment stats  */
     private static ConcurrentHashMap<String,SentimentTag> statsMap = new ConcurrentHashMap<>(DEFAULT_SIZE);
